@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  bcrypt: true
+permissions:
+  esbuild:
+    build: true
+  phaser:
+    skills: true
+skills:
+  dirs:
+    - ".claude/skills"
