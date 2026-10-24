@@ -1,0 +1,547 @@
+.confirm-adventure,
+.confirm-adventure * {
+  box-sizing: border-box;
+}
+
+.confirm-adventure {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  overflow-y: auto;
+  padding: 22px 28px 30px;
+
+  background-color: #174f48;
+  background-image: url("/tambour-des-sons/images/decor.png");
+  background-position: center;
+  background-size: cover;
+
+  color: #fff8df;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.confirm-adventure button {
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.confirm-adventure button:focus-visible {
+  outline: 4px solid #ffffff;
+  outline-offset: 5px;
+}
+
+.confirm-adventure button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.confirm-adventure__shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background: linear-gradient(
+    180deg,
+    rgba(6, 49, 44, 0.65),
+    rgba(6, 49, 44, 0.12) 55%,
+    rgba(6, 49, 44, 0.3)
+  );
+}
+
+.confirm-adventure__header {
+  position: relative;
+  flex-shrink: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 80px;
+  text-align: center;
+}
+
+.confirm-adventure__header > div {
+  max-width: calc(100% - 290px);
+}
+
+.confirm-adventure__header p {
+  margin: 0 0 4px;
+  color: #fff0c5;
+
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  text-shadow: 0 2px 4px #144a3d;
+}
+
+.confirm-adventure__header h1 {
+  margin: 0;
+
+  color: #ffe39b;
+  font-size: clamp(27px, 3.5vw, 44px);
+  line-height: 1.1;
+
+  text-shadow:
+    0 3px 0 #83512b,
+    0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-adventure__back {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  min-height: 48px;
+  padding: 10px 18px;
+
+  border: 2px solid #ffedb1;
+  border-radius: 17px;
+
+  background: linear-gradient(#ffe49a, #efb749);
+  box-shadow: 0 5px 0 #8f5928;
+
+  color: #62401e;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.confirm-adventure__back span {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.confirm-adventure__panel {
+  flex-shrink: 0;
+
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+
+  width: min(1000px, 100%);
+  margin: auto;
+
+  border: 4px solid #ffdb91;
+  border-radius: 30px;
+
+  background: #164e43;
+
+  box-shadow:
+    0 9px 0 #704b29,
+    0 18px 35px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-adventure__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+  padding: 28px;
+
+  border-right: 2px solid rgba(255, 219, 145, 0.3);
+  border-radius: 25px 0 0 25px;
+
+  background: linear-gradient(150deg, #fff4d4, #e7ca8e);
+  color: #654326;
+  text-align: center;
+}
+
+.confirm-adventure__badge {
+  padding: 7px 15px;
+  margin-bottom: 17px;
+
+  border: 2px solid #d8b56e;
+  border-radius: 20px;
+
+  background: #fff9e6;
+  color: #7e5b2b;
+
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.confirm-adventure__portrait {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 154px;
+  height: 154px;
+
+  border: 6px solid #fff8e2;
+  border-radius: 50%;
+
+  box-shadow:
+    inset 0 -10px 0 rgba(0, 0, 0, 0.07),
+    0 7px 0 rgba(111, 74, 33, 0.2);
+
+  font-size: 93px;
+  line-height: 1;
+}
+
+.confirm-adventure__name {
+  max-width: 100%;
+  margin: 19px 0 4px;
+
+  font-size: clamp(30px, 3.5vw, 43px);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.confirm-adventure__avatar-label {
+  margin: 0;
+  color: #81643f;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.confirm-adventure__wallet {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  max-width: 100%;
+  margin-top: 22px;
+  padding: 12px 18px;
+
+  border: 2px solid #d9b671;
+  border-radius: 18px;
+
+  background: #fff5d7;
+  text-align: left;
+}
+
+.confirm-adventure__star {
+  color: #efb52c;
+  font-size: 47px;
+  line-height: 1;
+  text-shadow: 0 2px 0 #b77b28;
+}
+
+.confirm-adventure__wallet-label,
+.confirm-adventure__wallet-value {
+  display: block;
+}
+
+.confirm-adventure__wallet-label {
+  margin-bottom: 3px;
+  color: #896a3f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.confirm-adventure__wallet-value {
+  color: #66411e;
+  font-size: 25px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.confirm-adventure__warning {
+  margin: 12px 0 0;
+  color: #80562e;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.confirm-adventure__welcome {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-width: 0;
+  padding: 30px;
+
+  text-align: center;
+}
+
+.confirm-adventure__ornament {
+  color: #ffdb84;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.confirm-adventure__welcome h2 {
+  margin: 10px 0 15px;
+
+  color: #ffe6a4;
+  font-size: clamp(27px, 3vw, 37px);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.confirm-adventure__question {
+  margin: 0 0 10px;
+
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.confirm-adventure__description {
+  margin: 0 0 25px;
+
+  color: #cfe7d8;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.confirm-adventure__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 60px;
+  padding: 13px 18px;
+
+  border: 3px solid;
+  border-radius: 18px;
+
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.2;
+
+  transition:
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+.confirm-adventure__button + .confirm-adventure__button {
+  margin-top: 18px;
+}
+
+.confirm-adventure__button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.confirm-adventure__button:active:not(:disabled) {
+  transform: translateY(4px);
+}
+
+.confirm-adventure__button--gold {
+  border-color: #fff0ba;
+  background: linear-gradient(#ffe89b, #f5bc49);
+  box-shadow: 0 6px 0 #9a6024;
+  color: #62401e;
+}
+
+.confirm-adventure__button--teal {
+  border-color: #aeebcf;
+  background: linear-gradient(#3baf99, #237d73);
+  box-shadow: 0 6px 0 #0d3a35;
+  color: #ffffff;
+}
+
+.confirm-adventure__hint {
+  min-height: 18px;
+  margin: 22px 0 0;
+
+  color: #c3ddce;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.confirm-adventure__error {
+  margin: 0 0 18px;
+  padding: 12px;
+
+  border: 1px solid #efbb95;
+  border-radius: 12px;
+
+  background: #793f32;
+  color: #fff0de;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.confirm-adventure__message {
+  grid-column: 1 / -1;
+
+  width: min(540px, 100%);
+  min-height: 300px;
+  margin: 0 auto;
+  padding: 35px;
+
+  text-align: center;
+}
+
+.confirm-adventure__message > span {
+  color: #ffdc8b;
+  font-size: 60px;
+}
+
+.confirm-adventure__message h2 {
+  margin: 15px 0 10px;
+  color: #ffe6a4;
+  font-size: 28px;
+}
+
+.confirm-adventure__message p {
+  margin: 0 0 25px;
+  color: #d5efdf;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .confirm-adventure {
+    gap: 12px;
+    padding: 10px 20px 20px;
+  }
+
+  .confirm-adventure__header {
+    min-height: 58px;
+  }
+
+  .confirm-adventure__header p {
+    font-size: 12px;
+  }
+
+  .confirm-adventure__header h1 {
+    font-size: 30px;
+  }
+
+  .confirm-adventure__identity {
+    padding: 16px 20px;
+  }
+
+  .confirm-adventure__badge {
+    margin-bottom: 10px;
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .confirm-adventure__portrait {
+    width: 105px;
+    height: 105px;
+    font-size: 65px;
+  }
+
+  .confirm-adventure__name {
+    margin-top: 13px;
+    font-size: 31px;
+  }
+
+  .confirm-adventure__avatar-label {
+    font-size: 15px;
+  }
+
+  .confirm-adventure__wallet {
+    margin-top: 12px;
+    padding: 8px 14px;
+  }
+
+  .confirm-adventure__star {
+    font-size: 35px;
+  }
+
+  .confirm-adventure__wallet-value {
+    font-size: 22px;
+  }
+
+  .confirm-adventure__welcome {
+    padding: 18px 24px;
+  }
+
+  .confirm-adventure__ornament {
+    font-size: 25px;
+  }
+
+  .confirm-adventure__welcome h2 {
+    margin: 6px 0 10px;
+    font-size: 28px;
+  }
+
+  .confirm-adventure__question {
+    font-size: 19px;
+  }
+
+  .confirm-adventure__description {
+    margin-bottom: 15px;
+    font-size: 15px;
+  }
+
+  .confirm-adventure__button {
+    min-height: 48px;
+    padding: 10px 15px;
+    font-size: 20px;
+  }
+
+  .confirm-adventure__button + .confirm-adventure__button {
+    margin-top: 14px;
+  }
+
+  .confirm-adventure__hint {
+    margin-top: 16px;
+    font-size: 12px;
+  }
+}
+
+@media (orientation: portrait) {
+  .confirm-adventure {
+    padding: 12px 14px 25px;
+  }
+
+  .confirm-adventure__header {
+    align-items: flex-end;
+    min-height: 115px;
+  }
+
+  .confirm-adventure__header > div {
+    max-width: 100%;
+  }
+
+  .confirm-adventure__header h1 {
+    font-size: 28px;
+  }
+
+  .confirm-adventure__back {
+    top: 0;
+    transform: none;
+  }
+
+  .confirm-adventure__panel {
+    grid-template-columns: 1fr;
+  }
+
+  .confirm-adventure__identity {
+    padding: 22px;
+
+    border-right: 0;
+    border-bottom: 2px solid #d2b77e;
+    border-radius: 25px 25px 0 0;
+  }
+
+  .confirm-adventure__portrait {
+    width: 115px;
+    height: 115px;
+    font-size: 72px;
+  }
+
+  .confirm-adventure__welcome {
+    padding: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-adventure__button {
+    transition: none;
+  }
+}
