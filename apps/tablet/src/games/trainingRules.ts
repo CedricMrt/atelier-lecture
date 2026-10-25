@@ -1,11 +1,11 @@
 import type { Session, SessionActivity } from "../db/db";
 
 export const TRAINING_RULES = {
-  sessionLimitSeconds: 60, //20 * 60,
+  sessionLimitSeconds: 20 * 60,
 
   // Budgets provisoires pour les deux activités disponibles.
-  rhythmBudgetSeconds: 20, // 5 * 60,
-  syllablesBudgetSeconds: 20, //3 * 60,
+  rhythmBudgetSeconds: 30, //5 * 60,
+  syllablesBudgetSeconds: 3 * 60,
 
   // Fréquence cible des points de sauvegarde du compteur.
   checkpointIntervalMs: 1000,

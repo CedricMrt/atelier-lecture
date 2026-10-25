@@ -47,9 +47,13 @@ export class RhythmDrumScene extends Phaser.Scene {
   private rounds: RhythmRound[] = [
     { sequence: [0, 0], tempoMs: 900 },
     { sequence: [0, 1], tempoMs: 900 },
+    { sequence: [1, 0], tempoMs: 900 },
     { sequence: [0, 1, 0], tempoMs: 800 },
     { sequence: [1, 1, 0], tempoMs: 800 },
+    { sequence: [1, 0, 1], tempoMs: 800 },
     { sequence: [0, 1, 1, 0], tempoMs: 700 },
+    { sequence: [1, 0, 1, 0], tempoMs: 700 },
+    { sequence: [0, 1, 0, 1], tempoMs: 700 },
   ];
 
   private readonly soundSpacingMs = 650;

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { ActivityEndReason } from "../db/db";
 import type { TrainingClock } from "./TrainingClock";
 import { getRatingStars } from "./trainingRules";
+import { SYLLABLE_WORDS } from "../data/syllableWords";
 
 export type SyllableRound = {
   word: string;
@@ -42,39 +43,48 @@ type SceneData = {
   onFinish?: (result: SyllableResult) => void | Promise<void>;
 };
 
+type ImagePoint = {
+  u: number;
+  v: number;
+};
+
+type SyllableLandscape = {
+  key: string;
+  url: string;
+  stones: ImagePoint[];
+};
+
 type Phase = "ready" | "speaking" | "answering" | "feedback" | "finished";
 
 export class SyllablePathScene extends Phaser.Scene {
   private readonly maxAttempts = 5;
 
-  private readonly words: SyllableRound[] = [
-    { word: "chat", expectedSyllables: 1 },
-    { word: "loup", expectedSyllables: 1 },
-    { word: "pain", expectedSyllables: 1 },
-    { word: "rat", expectedSyllables: 1 },
-    { word: "chou", expectedSyllables: 1 },
+  private readonly words: readonly SyllableRound[] = SYLLABLE_WORDS;
 
-    { word: "lapin", expectedSyllables: 2 },
-    { word: "bateau", expectedSyllables: 2 },
-    { word: "ballon", expectedSyllables: 2 },
-    { word: "mouton", expectedSyllables: 2 },
-    { word: "tapis", expectedSyllables: 2 },
+  private readonly stepsPerPath = 5;
 
-    { word: "domino", expectedSyllables: 3 },
-    { word: "chocolat", expectedSyllables: 3 },
-    { word: "ananas", expectedSyllables: 3 },
-    { word: "cinéma", expectedSyllables: 3 },
-    { word: "éléphant", expectedSyllables: 3 },
+  private readonly landscapes: SyllableLandscape[] = [
+    {
+      key: "syllable-decor",
+      url: "/chemin-des-syllabes/images/syllable-decor.png",
+
+      // Positions relatives dans l’image :
+      // u = proportion horizontale, v = proportion verticale.
+      stones: [
+        { u: 0.2, v: 0.66 },
+        { u: 0.31, v: 0.64 },
+        { u: 0.41, v: 0.61 },
+        { u: 0.52, v: 0.6 },
+        { u: 0.61, v: 0.56 },
+        { u: 0.68, v: 0.5 },
+      ],
+    },
   ];
 
-  private readonly stones = [
-    { x: 155, y: 490 },
-    { x: 345, y: 450 },
-    { x: 535, y: 490 },
-    { x: 725, y: 440 },
-    { x: 915, y: 480 },
-    { x: 1115, y: 435 },
-  ];
+  private pathNumber = 0;
+  private pathTransition = false;
+
+  private pathContainer!: Phaser.GameObjects.Container;
 
   private currentRound = 0;
   private score = 0;
@@ -144,13 +154,19 @@ export class SyllablePathScene extends Phaser.Scene {
 
     this.score = this.history.filter((answer) => answer.correct).length;
 
+    this.pathNumber = this.trainingClock
+      ? Math.floor(this.score / this.stepsPerPath)
+      : 0;
+
+    this.pathTransition = false;
+
     this.hintsUsed = data.initialHintsUsed ?? 0;
     this.startTime = data.activityStartedAt ?? Date.now();
 
     this.roundStartTime = 0;
     this.studentSyllables = 0;
 
-    this.usedWords = new Set(this.history.map((answer) => answer.word));
+    this.restoreUsedWords();
 
     this.phase = "ready";
     this.heardCurrentWord = false;
@@ -158,9 +174,11 @@ export class SyllablePathScene extends Phaser.Scene {
   }
 
   preload() {
-    const path = "/chemin-des-syllabes/images";
-
-    this.load.image("syllable-decor", `${path}/syllable-decor.png`);
+    for (const landscape of this.landscapes) {
+      if (!this.textures.exists(landscape.key)) {
+        this.load.image(landscape.key, landscape.url);
+      }
+    }
 
     if (!this.avatarUrl || !this.avatarTextureKey) {
       throw new Error("L’avatar de l’élève n’a pas été transmis aux syllabes.");
@@ -176,6 +194,10 @@ export class SyllablePathScene extends Phaser.Scene {
 
     if (!this.cache.audio.exists("error")) {
       this.load.audio("error", "/audio/error.mp3");
+    }
+
+    if (!this.cache.audio.exists("syllable-clap")) {
+      this.load.audio("syllable-clap", "/audio/clap.mp3");
     }
   }
 
@@ -222,12 +244,137 @@ export class SyllablePathScene extends Phaser.Scene {
     }
   }
 
-  private getAvatarStone() {
-    const index = this.trainingClock
-      ? this.score % this.stones.length
-      : Math.min(this.score, this.stones.length - 1);
+  private restoreUsedWords() {
+    this.usedWords = new Set<string>();
 
-    return this.stones[index];
+    for (const answer of this.history) {
+      const group = this.words.filter(
+        (item) => item.expectedSyllables === answer.expectedSyllables,
+      );
+
+      if (group.length === 0) continue;
+
+      const groupExhausted = group.every((item) =>
+        this.usedWords.has(item.word),
+      );
+
+      if (groupExhausted) {
+        group.forEach((item) => {
+          this.usedWords.delete(item.word);
+        });
+      }
+
+      const wordStillExists = group.some((item) => item.word === answer.word);
+
+      if (wordStillExists) {
+        this.usedWords.add(answer.word);
+      }
+    }
+  }
+
+  private getCurrentLandscape(): SyllableLandscape {
+    return this.landscapes[this.pathNumber % this.landscapes.length];
+  }
+
+  private imagePointToWorld(point: ImagePoint) {
+    return {
+      x:
+        this.background.x +
+        (point.u - this.background.originX) * this.background.displayWidth,
+
+      y:
+        this.background.y +
+        (point.v - this.background.originY) * this.background.displayHeight,
+    };
+  }
+
+  private getAvatarStone() {
+    const landscape = this.getCurrentLandscape();
+
+    // Pendant le retour de réussite, l’avatar peut encore
+    // occuper la dernière pierre du parcours précédent.
+    const progress = this.score - this.pathNumber * this.stepsPerPath;
+
+    const index = Math.max(0, Math.min(progress, this.stepsPerPath));
+
+    return this.imagePointToWorld(landscape.stones[index]);
+  }
+
+  private redrawPath() {
+    this.pathContainer.removeAll(true);
+
+    const landscape = this.getCurrentLandscape();
+
+    const points = landscape.stones.map((point) =>
+      this.imagePointToWorld(point),
+    );
+
+    const trail = this.add.graphics();
+
+    trail.lineStyle(20, 0xd4b67d, 0.55);
+    trail.beginPath();
+    trail.moveTo(points[0].x, points[0].y);
+
+    for (let index = 1; index < points.length; index += 1) {
+      trail.lineTo(points[index].x, points[index].y);
+    }
+
+    trail.strokePath();
+    this.pathContainer.add(trail);
+
+    points.forEach((point, index) => {
+      // Les pierres rétrécissent légèrement vers le pont.
+      const width = 125 - index * 7;
+      const height = 54 - index * 2;
+
+      const shadow = this.add.ellipse(
+        point.x,
+        point.y + 9,
+        width + 8,
+        height * 0.7,
+        0x384a39,
+        0.2,
+      );
+
+      const stone = this.add
+        .ellipse(point.x, point.y, width, height, 0x8c9e90)
+        .setStrokeStyle(3, 0xe1e4be);
+
+      const highlight = this.add.ellipse(
+        point.x,
+        point.y - 8,
+        width * 0.72,
+        14,
+        0xc9d1ad,
+        0.7,
+      );
+
+      const label = this.add
+        .text(point.x, point.y + 2, `${index}`, {
+          fontFamily: "Arial",
+          fontSize: "18px",
+          fontStyle: "bold",
+          color: "#3e5947",
+        })
+        .setOrigin(0.5);
+
+      this.pathContainer.add([shadow, stone, highlight, label]);
+    });
+
+    const destination = points[points.length - 1];
+
+    const arrival = this.add
+      .text(destination.x + 42, destination.y - 35, "", {
+        fontFamily: "Arial",
+        fontSize: "18px",
+        fontStyle: "bold",
+        color: "#fff0b8",
+        backgroundColor: "#276b50",
+        //padding: { x: 9, y: 6 },
+      })
+      .setOrigin(0.5);
+
+    this.pathContainer.add(arrival);
   }
 
   private getResponseNow() {
@@ -235,60 +382,20 @@ export class SyllablePathScene extends Phaser.Scene {
   }
 
   private createWorld() {
-    this.background = this.add.image(640, 360, "syllable-decor");
+    const landscape = this.getCurrentLandscape();
 
-    // Sentier sous les pierres.
-    const trail = this.add.graphics();
+    this.background = this.add.image(640, 360, landscape.key);
 
-    trail.lineStyle(32, 0xd4b67d, 0.8);
-    trail.beginPath();
-    trail.moveTo(this.stones[0].x, this.stones[0].y);
+    this.pathContainer = this.add.container(0, 0);
 
-    for (let index = 1; index < this.stones.length; index += 1) {
-      trail.lineTo(this.stones[index].x, this.stones[index].y);
-    }
-
-    trail.strokePath();
-
-    this.stones.forEach((stone, index) => {
-      this.add.ellipse(stone.x, stone.y + 12, 140, 42, 0x384a39, 0.2);
-
-      this.add
-        .ellipse(stone.x, stone.y, 135, 62, 0x8c9e90)
-        .setStrokeStyle(4, 0xe1e4be);
-
-      this.add.ellipse(stone.x, stone.y - 10, 100, 20, 0xc9d1ad, 0.7);
-
-      this.add
-        .text(stone.x, stone.y + 3, `${index}`, {
-          fontFamily: "Arial",
-          fontSize: "19px",
-          fontStyle: "bold",
-          color: "#3e5947",
-        })
-        .setOrigin(0.5);
-    });
-
-    this.add
-      .text(1145, 305, "ARRIVÉE", {
-        fontFamily: "Arial",
-        fontSize: "22px",
-        fontStyle: "bold",
-        color: "#fff0b8",
-        backgroundColor: "#276b50",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(0.5);
-
-    const start = this.getAvatarStone();
-
-    this.avatar = this.add
-      .image(start.x, start.y - 8, this.avatarTextureKey)
-      .setOrigin(0.5, 1);
+    this.avatar = this.add.image(0, 0, this.avatarTextureKey).setOrigin(0.5, 1);
 
     this.avatar.setScale(
       Math.min(135 / this.avatar.width, 175 / this.avatar.height),
     );
+
+    // Le placement définitif sera calculé dans
+    // updateResponsiveLayout(), après l’échelle du fond.
   }
 
   private createInterface() {
@@ -381,39 +488,71 @@ export class SyllablePathScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Écouter / réécouter.
     this.listenText = this.createButton(
       200,
       620,
       280,
-      "Écouter le mot",
+      "👂",
       0xf4ce78,
       () => this.speakWord(),
+      42,
     );
 
-    this.createButton(565, 620, 310, "Tape les syllabes", 0x94d7b1, () =>
-      this.handleTap(),
+    // Une pression = une syllabe.
+    this.createButton(
+      565,
+      620,
+      310,
+      "👏",
+      0x94d7b1,
+      () => this.handleTap(),
+      44,
     );
 
-    this.createButton(860, 620, 170, "Effacer", 0xe0d3b3, () => {
-      if (this.phase !== "answering") return;
+    // Validation : ancien emplacement d’Effacer.
+    this.createButton(
+      860,
+      620,
+      170,
+      "✓",
+      0x94d7b1,
+      () => {
+        void this.validateRound();
+      },
+      44,
+    );
 
-      this.studentSyllables = 0;
-      this.updateCounter();
-    });
+    // Effacer : ancien emplacement de J’ai fini.
+    this.createButton(
+      1110,
+      620,
+      220,
+      "Effacer",
+      0xe0d3b3,
+      () => {
+        if (this.phase !== "answering") return;
 
-    this.createButton(1110, 620, 220, "J’ai fini !", 0xf4ce78, () => {
-      void this.validateRound();
-    });
+        this.studentSyllables = 0;
+        this.updateCounter();
+      },
+      22,
+    );
 
     this.add
-      .text(640, 687, "Écoute • Tape une fois par syllabe • Valide", {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        fontStyle: "bold",
-        color: "#ffffff",
-        stroke: "#174339",
-        strokeThickness: 4,
-      })
+      .text(
+        640,
+        687,
+        "Oreille : écoute • Mains : compte les syllabes • Coche : valide",
+        {
+          fontFamily: "Arial",
+          fontSize: "18px",
+          fontStyle: "bold",
+          color: "#ffffff",
+          stroke: "#174339",
+          strokeThickness: 4,
+        },
+      )
       .setOrigin(0.5);
   }
 
@@ -424,6 +563,7 @@ export class SyllablePathScene extends Phaser.Scene {
     label: string,
     color: number,
     action: () => void,
+    fontSize = 22,
   ): Phaser.GameObjects.Text {
     const graphics = this.add.graphics();
 
@@ -438,8 +578,9 @@ export class SyllablePathScene extends Phaser.Scene {
 
     const text = this.add
       .text(0, 0, label, {
-        fontFamily: "Arial",
-        fontSize: "22px",
+        fontFamily:
+          'Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+        fontSize: `${fontSize}px`,
         fontStyle: "bold",
         color: "#354c35",
       })
@@ -468,12 +609,170 @@ export class SyllablePathScene extends Phaser.Scene {
       .setZoom(zoom)
       .centerOn(640, 360);
 
-    this.background.setScale(
-      Math.max(
-        width / zoom / this.background.width,
-        height / zoom / this.background.height,
-      ),
+    this.background
+      .setPosition(640, 360)
+      .setScale(
+        Math.max(
+          width / zoom / this.background.width,
+          height / zoom / this.background.height,
+        ),
+      );
+
+    this.redrawPath();
+
+    const position = this.getAvatarStone();
+
+    this.tweens.killTweensOf(this.avatar);
+
+    this.avatar.setPosition(position.x, position.y - 8);
+  }
+
+  private transitionToPath(nextPathNumber: number) {
+    if (this.pathTransition || this.stoppingForLimit || this.finishing) {
+      return;
+    }
+
+    this.pathTransition = true;
+    this.phase = "feedback";
+
+    this.wordText.setText("");
+
+    this.instructionText
+      .setText("Le pont mène à un nouveau chemin !")
+      .setColor("#ffe8aa");
+
+    const camera = this.cameras.main;
+
+    const cover = this.add
+      .rectangle(
+        camera.midPoint.x,
+        camera.midPoint.y,
+        camera.width / camera.zoom + 100,
+        camera.height / camera.zoom + 100,
+        0x123f35,
+        1,
+      )
+      .setAlpha(0)
+      .setDepth(1000);
+
+    this.tweens.add({
+      targets: cover,
+      alpha: 1,
+      duration: 350,
+
+      onComplete: () => {
+        if (this.stoppingForLimit || this.finishing || !this.sys.isActive()) {
+          cover.destroy();
+          this.pathTransition = false;
+          return;
+        }
+
+        this.pathNumber = nextPathNumber;
+
+        const landscape = this.getCurrentLandscape();
+
+        this.background.setTexture(landscape.key);
+        this.updateResponsiveLayout();
+
+        this.tweens.add({
+          targets: cover,
+          alpha: 0,
+          duration: 350,
+
+          onComplete: () => {
+            cover.destroy();
+            this.pathTransition = false;
+
+            if (
+              this.stoppingForLimit ||
+              this.finishing ||
+              !this.sys.isActive()
+            ) {
+              return;
+            }
+
+            this.startRound();
+          },
+        });
+      },
+    });
+  }
+
+  private drawSyllableCount(): number {
+    const blockSize = 6;
+    const quotaPerCount = 2;
+
+    // Le bloc courant est reconstruit à partir
+    // des seules réponses validées.
+    const blockStart = Math.floor(this.history.length / blockSize) * blockSize;
+
+    const currentBlock = this.history.slice(blockStart);
+
+    const remaining: number[] = [];
+
+    for (const count of [1, 2, 3]) {
+      const alreadyUsed = currentBlock.filter(
+        (answer) => answer.expectedSyllables === count,
+      ).length;
+
+      const available = Math.max(0, quotaPerCount - alreadyUsed);
+
+      for (let index = 0; index < available; index += 1) {
+        remaining.push(count);
+      }
+    }
+
+    const lastAnswers = this.history.slice(-2);
+
+    const repeatedCount =
+      lastAnswers.length === 2 &&
+      lastAnswers[0].expectedSyllables === lastAnswers[1].expectedSyllables
+        ? lastAnswers[0].expectedSyllables
+        : null;
+
+    // Empêche trois nombres identiques consécutifs,
+    // y compris à la jonction entre deux blocs.
+    const alternatives = remaining.filter((count) => count !== repeatedCount);
+
+    const pool = alternatives.length > 0 ? alternatives : remaining;
+
+    if (pool.length === 0) {
+      throw new Error("Impossible de préparer le tirage des syllabes.");
+    }
+
+    return pool[Phaser.Math.Between(0, pool.length - 1)];
+  }
+
+  private drawWord(syllableCount: number): SyllableRound {
+    const group = this.words.filter(
+      (item) => item.expectedSyllables === syllableCount,
     );
+
+    if (group.length === 0) {
+      throw new Error(`Aucun mot disponible pour ${syllableCount} syllabe(s).`);
+    }
+
+    let candidates = group.filter((item) => !this.usedWords.has(item.word));
+
+    if (candidates.length === 0) {
+      // Tous les mots de ce groupe ont été présentés :
+      // on ouvre un nouveau cycle pour ce groupe.
+      group.forEach((item) => {
+        this.usedWords.delete(item.word);
+      });
+
+      const lastValidatedWord = this.history[this.history.length - 1]?.word;
+
+      candidates = group.filter(
+        (item) => group.length === 1 || item.word !== lastValidatedWord,
+      );
+    }
+
+    const selected = candidates[Phaser.Math.Between(0, candidates.length - 1)];
+
+    this.usedWords.add(selected.word);
+
+    return selected;
   }
 
   private startRound() {
@@ -491,29 +790,20 @@ export class SyllablePathScene extends Phaser.Scene {
       return;
     }
 
-    const syllableCount = this.score === 0 ? 1 : this.score < 4 ? 2 : 3;
+    if (this.pathTransition) return;
 
-    const group = this.words.filter(
-      (item) => item.expectedSyllables === syllableCount,
-    );
+    if (this.trainingClock) {
+      const expectedPathNumber = Math.floor(this.score / this.stepsPerPath);
 
-    let candidates = group.filter((item) => !this.usedWords.has(item.word));
-
-    if (candidates.length === 0) {
-      // Renouvelle uniquement le groupe épuisé.
-      group.forEach((item) => {
-        this.usedWords.delete(item.word);
-      });
-
-      candidates = group.filter(
-        (item) => group.length === 1 || item.word !== this.currentWord?.word,
-      );
+      if (expectedPathNumber !== this.pathNumber) {
+        this.transitionToPath(expectedPathNumber);
+        return;
+      }
     }
 
-    const selected = candidates[Phaser.Math.Between(0, candidates.length - 1)];
+    const syllableCount = this.drawSyllableCount();
 
-    this.currentWord = selected;
-    this.usedWords.add(selected.word);
+    this.currentWord = this.drawWord(syllableCount);
 
     this.studentSyllables = 0;
     this.heardCurrentWord = false;
@@ -521,7 +811,7 @@ export class SyllablePathScene extends Phaser.Scene {
 
     this.wordText.setText(this.currentRound === 0 ? "" : this.currentWord.word);
 
-    this.listenText.setText("Écouter le mot");
+    this.listenText.setText("👂");
 
     this.roundText.setText(
       this.trainingClock
@@ -532,20 +822,18 @@ export class SyllablePathScene extends Phaser.Scene {
     this.updateCounter();
 
     if (this.currentRound === 0) {
-      // Le premier mot attend l'appui de l'élève.
       this.instructionText
-        .setText("Appuie sur « Écouter le mot »")
+        .setText("Appuie sur l’oreille pour écouter le mot.")
         .setColor("#ffffff");
     } else {
-      // Les mots suivants sont lus automatiquement.
       this.instructionText
         .setText("Prépare-toi à écouter…")
         .setColor("#ffffff");
 
       this.time.delayedCall(600, () => {
-        // Si l'élève a déjà appuyé sur Écouter,
-        // ne pas lancer une seconde lecture.
-        if (this.phase !== "ready") return;
+        if (this.phase !== "ready" || this.stoppingForLimit) {
+          return;
+        }
 
         this.speakWord();
       });
@@ -611,10 +899,10 @@ export class SyllablePathScene extends Phaser.Scene {
       this.phase = "answering";
       this.roundStartTime = this.getResponseNow();
 
-      this.listenText.setText("Réécouter");
+      this.listenText.setText("👂");
 
       this.instructionText
-        .setText("À toi ! Tape une fois par syllabe.")
+        .setText("À toi ! Appuie sur les mains une fois par syllabe.")
         .setColor("#baffbf");
     };
 
@@ -652,7 +940,14 @@ export class SyllablePathScene extends Phaser.Scene {
 
   private handleTap() {
     if (this.phase !== "answering") return;
+    if (this.stoppingForLimit || this.finishing) return;
     if (this.studentSyllables >= 6) return;
+
+    if (this.cache.audio.exists("syllable-clap")) {
+      this.sound.play("syllable-clap", {
+        volume: 1,
+      });
+    }
 
     this.studentSyllables += 1;
     this.updateCounter();
@@ -753,7 +1048,9 @@ export class SyllablePathScene extends Phaser.Scene {
     }
 
     if (this.studentSyllables === 0) {
-      this.instructionText.setText("Tape d’abord les syllabes du mot.");
+      this.instructionText.setText(
+        "Appuie d’abord sur les mains pour compter les syllabes.",
+      );
       return;
     }
 
@@ -802,9 +1099,7 @@ export class SyllablePathScene extends Phaser.Scene {
       this.phase = "answering";
 
       this.instructionText
-        .setText(
-          "Sauvegarde impossible. Appuie sur « J’ai fini ! » pour réessayer.",
-        )
+        .setText("Sauvegarde impossible. Appuie sur la coche pour réessayer.")
         .setColor("#ffe2a0");
 
       return;
