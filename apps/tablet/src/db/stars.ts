@@ -6,9 +6,12 @@ export async function getStarBalance(studentId: string): Promise<number> {
   return wallet?.balance ?? 0;
 }
 
-export async function creditRhythmRoundStars(
+type RewardActivityCode = "tambour_des_sons" | "chemin_des_syllabes";
+
+async function creditActivityRoundStars(
   sessionActivityId: string,
   roundIndex: number,
+  expectedActivityCode: RewardActivityCode,
 ): Promise<number> {
   if (!Number.isInteger(roundIndex) || roundIndex < 0) {
     throw new Error("Numéro de round invalide.");
@@ -30,11 +33,16 @@ export async function creditRhythmRoundStars(
         throw new Error("Activité introuvable.");
       }
 
-      if (activity.activityCode !== "tambour_des_sons") {
-        throw new Error("Cette activité n'est pas le Tambour des sons.");
+      if (activity.activityCode !== expectedActivityCode) {
+        throw new Error(
+          "L’activité ne correspond pas à la récompense demandée.",
+        );
       }
 
-      if (roundIndex >= activity.maxScore) {
+      if (
+        activity.timingMode !== "active_time" &&
+        roundIndex >= activity.maxScore
+      ) {
         throw new Error("Ce round dépasse le nombre prévu.");
       }
 
@@ -50,16 +58,13 @@ export async function creditRhythmRoundStars(
         throw new Error("Élève introuvable.");
       }
 
-      const studentId = student.id;
-
-      // Identifiant stable pour ce round de cette activité.
       const transactionId = `${sessionActivityId}:round:${roundIndex}:stars`;
 
       const existingTransaction = await db.starTransactions.get(transactionId);
 
-      const wallet = await db.starWallets.get(studentId);
+      const wallet = await db.starWallets.get(student.id);
 
-      // Si le round a déjà été crédité, ne rien ajouter.
+      // Un round déjà récompensé ne crédite pas une seconde fois.
       if (existingTransaction) {
         return wallet?.balance ?? 0;
       }
@@ -68,7 +73,7 @@ export async function creditRhythmRoundStars(
         activity.status !== "in_progress" ||
         session.status !== "in_progress"
       ) {
-        throw new Error("La séance ou l'activité n'est plus en cours.");
+        throw new Error("La séance ou l’activité n’est plus en cours.");
       }
 
       const amount = 5;
@@ -77,7 +82,7 @@ export async function creditRhythmRoundStars(
 
       await db.starTransactions.add({
         id: transactionId,
-        studentId,
+        studentId: student.id,
         sessionId: session.id,
         sessionActivityId: activity.id,
         activityCode: activity.activityCode,
@@ -87,7 +92,7 @@ export async function creditRhythmRoundStars(
       });
 
       await db.starWallets.put({
-        studentId,
+        studentId: student.id,
         balance,
         totalEarned: (wallet?.totalEarned ?? 0) + amount,
         updatedAt: now,
@@ -95,5 +100,27 @@ export async function creditRhythmRoundStars(
 
       return balance;
     },
+  );
+}
+
+export async function creditRhythmRoundStars(
+  sessionActivityId: string,
+  roundIndex: number,
+): Promise<number> {
+  return creditActivityRoundStars(
+    sessionActivityId,
+    roundIndex,
+    "tambour_des_sons",
+  );
+}
+
+export async function creditSyllableRoundStars(
+  sessionActivityId: string,
+  roundIndex: number,
+): Promise<number> {
+  return creditActivityRoundStars(
+    sessionActivityId,
+    roundIndex,
+    "chemin_des_syllabes",
   );
 }

@@ -16,15 +16,37 @@ export type Student = {
   comprehensionMastery: number;
 };
 
+export type TimingMode = "fixed_rounds" | "active_time";
+
+export type SessionEndReason = "activities_finished" | "time_limit" | "manual";
+
+export type ActivityEndReason =
+  | "rounds_finished"
+  | "time_budget"
+  | "session_time_limit";
+
 export type Session = {
   id: string;
   studentId: string;
+
   startedAt: number;
   endedAt?: number;
+
   durationLimitSeconds: number;
+
   status: "in_progress" | "completed" | "interrupted";
   mode: "automatic" | "forced";
+
   totalStars: number;
+
+  // Absent sur les anciennes séances :
+  // elles conservent le fonctionnement historique.
+  timingMode?: TimingMode;
+
+  // Temps d’entraînement persisté, en millisecondes.
+  activeDurationMs?: number;
+
+  endReason?: SessionEndReason;
 };
 
 export type SessionActivity = {
@@ -34,13 +56,29 @@ export type SessionActivity = {
   activityCode: string;
   position: number;
   level: number;
+
   status: "pending" | "in_progress" | "completed" | "skipped";
+
   startedAt?: number;
   completedAt?: number;
+
   score?: number;
   maxScore: number;
   stars?: number;
   durationSeconds?: number;
+
+  timingMode?: TimingMode;
+
+  // Budget de la mission.
+  timeBudgetSeconds?: number;
+
+  // Temps réellement consommé dans cette mission.
+  activeDurationMs?: number;
+
+  // Nombre de réponses validées.
+  answeredRounds?: number;
+
+  endReason?: ActivityEndReason;
 };
 
 export type Result = {

@@ -1,120 +1,466 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { db } from "../db/db";
+import { db, type SessionActivity } from "../db/db";
+import { getStarBalance } from "../db/stars";
+import { endSession } from "../db/sessions";
+import "./IslandPage.css";
+
+type IslandStudent = {
+  id: string;
+  firstName: string;
+  avatarKey: string;
+  avatarVariant: string;
+};
+
+function getAvatarSymbol(avatarKey: string): string {
+  const key = avatarKey
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+  const symbols: Record<string, string> = {
+    renard: "🦊",
+    renarde: "🦊",
+    hibou: "🦉",
+    robot: "🤖",
+    chat: "🐱",
+    tortue: "🐢",
+    lapin: "🐰",
+    ours: "🐻",
+    grenouille: "🐸",
+    dragon: "🐲",
+    pieuvre: "🐙",
+  };
+
+  return symbols[key] ?? "✦";
+}
+
+function getActivityPresentation(activity: SessionActivity) {
+  switch (activity.activityCode) {
+    case "tambour_des_sons":
+      return {
+        title: "Île du Rythme",
+        description: "Écoute les tambours et rejoue les sons.",
+        symbol: "🥁",
+      };
+
+    case "chemin_des_syllabes":
+      return {
+        title: "Île des Syllabes",
+        description: "Écoute les mots et avance sur le chemin.",
+        symbol: "🪨",
+      };
+
+    default:
+      return {
+        title: "Île de l’aventure",
+        description: "Une nouvelle mission t’attend.",
+        symbol: "🧭",
+      };
+  }
+}
 
 export default function IslandPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
 
-  const [student, setStudent] = useState<
-    | {
-        id: string;
-        firstName: string;
-        avatarKey: string;
-        avatarVariant: string;
-      }
-    | undefined
-  >();
+  const [student, setStudent] = useState<IslandStudent | null>(null);
+  const [activities, setActivities] = useState<SessionActivity[]>([]);
 
-  const [totalStars, setTotalStars] = useState(0);
-  const [hasRemainingActivity, setHasRemainingActivity] = useState(false);
+  const [starBalance, setStarBalance] = useState<number | null>(null);
+  const [sessionStatus, setSessionStatus] = useState("");
+  const [expired, setExpired] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    if (!sessionId) return;
+    let active = true;
 
     const load = async () => {
-      const session = await db.sessions.get(sessionId);
+      setLoading(true);
+      setError(null);
+      setActionError(null);
+      setStudent(null);
+      setActivities([]);
+      setStarBalance(null);
 
-      if (!session) {
-        navigate("/scan");
-        return;
+      try {
+        if (!sessionId) {
+          throw new Error("Aucune séance n’a été sélectionnée.");
+        }
+
+        const session = await db.sessions.get(sessionId);
+
+        if (!session) {
+          throw new Error("Cette séance est introuvable.");
+        }
+
+        const foundStudent = await db.students.get(session.studentId);
+
+        if (!foundStudent) {
+          throw new Error("Le profil de cet élève est introuvable.");
+        }
+
+        const sessionActivities = await db.sessionActivities
+          .where("sessionId")
+          .equals(sessionId)
+          .sortBy("position");
+
+        let balance: number | null = null;
+
+        try {
+          balance = await getStarBalance(foundStudent.id);
+        } catch (walletError) {
+          console.error("Lecture de la réserve impossible :", walletError);
+        }
+
+        if (!active) return;
+
+        setStudent({
+          id: foundStudent.id,
+          firstName: foundStudent.firstName,
+          avatarKey: foundStudent.avatarKey,
+          avatarVariant: foundStudent.avatarVariant,
+        });
+
+        setActivities(sessionActivities);
+        setStarBalance(balance);
+        setSessionStatus(session.status);
+
+        setExpired(
+          session.timingMode === "active_time"
+            ? (session.activeDurationMs ?? 0) >=
+                session.durationLimitSeconds * 1000
+            : Date.now() - session.startedAt >=
+                session.durationLimitSeconds * 1000,
+        );
+      } catch (err) {
+        console.error("Chargement de l’archipel impossible :", err);
+
+        if (active) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Impossible de charger ton archipel.",
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
-
-      const student = await db.students.get(session.studentId);
-
-      const activities = await db.sessionActivities
-        .where("sessionId")
-        .equals(sessionId)
-        .sortBy("position");
-
-      const remaining = activities.filter(
-        (activity) => activity.status !== "completed",
-      );
-
-      const stars = activities.reduce(
-        (total, activity) => total + (activity.stars ?? 0),
-        0,
-      );
-
-      setStudent(student);
-      setTotalStars(stars);
-      setHasRemainingActivity(remaining.length > 0);
     };
 
-    load();
-  }, [sessionId, navigate]);
+    void load();
 
-  const startGame = () => {
-    if (!sessionId) return;
-    navigate(`/game/${sessionId}`);
+    return () => {
+      active = false;
+    };
+  }, [sessionId, reloadKey]);
+
+  const completedCount = activities.filter(
+    (activity) => activity.status === "completed",
+  ).length;
+
+  const resolvedCount = activities.filter(
+    (activity) =>
+      activity.status === "completed" || activity.status === "skipped",
+  ).length;
+
+  const sessionStars = activities.reduce(
+    (total, activity) => total + (activity.stars ?? 0),
+    0,
+  );
+
+  const nextActivity = activities.find(
+    (activity) =>
+      activity.status === "pending" || activity.status === "in_progress",
+  );
+
+  const allResolved =
+    activities.length > 0 && resolvedCount === activities.length;
+
+  const sessionClosed = sessionStatus !== "" && sessionStatus !== "in_progress";
+
+  const canPlay = !sessionClosed && !expired && Boolean(nextActivity);
+
+  const openGame = () => {
+    if (!sessionId || !canPlay) return;
+
+    navigate(`/game/${encodeURIComponent(sessionId)}`);
   };
 
-  if (!student) {
-    return (
-      <div className='min-h-screen bg-slate-900 text-white flex items-center justify-center'>
-        <p>Chargement…</p>
-      </div>
-    );
-  }
+  const finishSession = async () => {
+    if (!sessionId || finishing) return;
+
+    setFinishing(true);
+    setActionError(null);
+
+    try {
+      if (!sessionClosed) {
+        await endSession(sessionId);
+      }
+
+      navigate(`/session-end/${encodeURIComponent(sessionId)}`);
+    } catch (err) {
+      console.error("Fin de séance impossible :", err);
+
+      setActionError("Impossible de terminer la séance. Tu peux réessayer.");
+
+      setFinishing(false);
+    }
+  };
+
+  const nextPresentation = nextActivity
+    ? getActivityPresentation(nextActivity)
+    : null;
 
   return (
-    <div className='min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6'>
-      <div className='w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center text-4xl mb-4'>
-        🦊
-      </div>
+    <main className='island-adventure'>
+      <header className='island-adventure__header'>
+        <button
+          type='button'
+          className='island-adventure__change'
+          onClick={() => navigate("/scan")}
+          disabled={finishing}
+        >
+          ← Changer d’élève
+        </button>
 
-      <h1 className='text-2xl font-bold mb-2'>Bonjour {student.firstName} !</h1>
+        <div className='island-adventure__heading'>
+          <p>Atelier Lecture</p>
+          <h1>Mon archipel</h1>
+        </div>
 
-      <p className='text-yellow-400 text-xl mb-6'>★ {totalStars} étoiles</p>
+        <div
+          className='island-adventure__wallet'
+          aria-label={
+            starBalance === null
+              ? "Réserve d’étoiles indisponible"
+              : `Réserve personnelle : ${starBalance} étoiles`
+          }
+        >
+          <span aria-hidden='true'>★</span>
 
-      <div className='bg-slate-800 p-6 rounded-2xl mb-6 text-center'>
-        <h2 className='text-xl font-semibold mb-2'>Île du Rythme</h2>
+          <div>
+            <small>Ma réserve</small>
+            <strong>{starBalance === null ? "—" : starBalance}</strong>
+          </div>
+        </div>
+      </header>
 
-        {hasRemainingActivity ? (
-          <>
-            <p className='text-slate-300 mb-4'>
-              Ta prochaine activité est prête.
-            </p>
+      {loading ? (
+        <section className='island-adventure__message' role='status'>
+          <h2>Préparation de ton archipel…</h2>
+          <p>Les îles t’attendent.</p>
+        </section>
+      ) : error || !student ? (
+        <section className='island-adventure__message' role='alert'>
+          <h2>Un petit contretemps !</h2>
+          <p>{error ?? "Ton profil est indisponible."}</p>
 
-            <button
-              onClick={startGame}
-              className='bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold'
+          <button
+            type='button'
+            className='island-adventure__primary'
+            onClick={() => setReloadKey((value) => value + 1)}
+          >
+            Réessayer
+          </button>
+        </section>
+      ) : (
+        <>
+          <section className='island-adventure__summary'>
+            <div className='island-adventure__student'>
+              <span
+                className='island-adventure__student-symbol'
+                aria-hidden='true'
+              >
+                {getAvatarSymbol(student.avatarKey)}
+              </span>
+
+              <div>
+                <h2>Bonjour {student.firstName} !</h2>
+                <p>
+                  {student.avatarKey} {student.avatarVariant}
+                </p>
+              </div>
+            </div>
+
+            <div className='island-adventure__progress'>
+              <span>
+                {completedCount} / {activities.length} activités terminées
+              </span>
+
+              <span>★ {sessionStars} étoiles de bilan</span>
+            </div>
+          </section>
+
+          <section
+            className='island-adventure__map'
+            aria-label='Les îles de ta séance'
+          >
+            <div
+              className='island-adventure__sea-mark island-adventure__sea-mark--one'
+              aria-hidden='true'
             >
-              Commencer ma séance
-            </button>
-          </>
-        ) : (
-          <>
-            <p className='text-slate-300 mb-4'>
-              Tu as terminé toutes les activités !
-            </p>
+              ≋
+            </div>
 
-            <button
-              onClick={() => navigate(`/session-end/${sessionId}`)}
-              className='bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold'
+            <div
+              className='island-adventure__sea-mark island-adventure__sea-mark--two'
+              aria-hidden='true'
             >
-              Voir ma séance terminée
-            </button>
-          </>
-        )}
-      </div>
+              ≋
+            </div>
 
-      <button
-        onClick={() => navigate("/scan")}
-        className='text-slate-400 underline'
-      >
-        Changer d’élève
-      </button>
-    </div>
+            <div className='island-adventure__route'>
+              {activities.map((activity, index) => {
+                const presentation = getActivityPresentation(activity);
+
+                const completed = activity.status === "completed";
+                const skipped = activity.status === "skipped";
+                const current = canPlay && activity.id === nextActivity?.id;
+
+                const statusLabel = completed
+                  ? "Terminée"
+                  : skipped
+                    ? "Passée"
+                    : current
+                      ? "À toi de jouer"
+                      : sessionClosed || expired
+                        ? "Non terminée"
+                        : "À débloquer";
+
+                return (
+                  <div
+                    key={activity.id}
+                    className={[
+                      "island-stop",
+                      current ? "island-stop--current" : "",
+                      completed ? "island-stop--completed" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <span className='island-stop__number'>
+                      Étape {index + 1}
+                    </span>
+
+                    <button
+                      type='button'
+                      className='island-stop__land'
+                      onClick={openGame}
+                      disabled={!current}
+                      aria-label={`${presentation.title} : ${statusLabel}`}
+                    >
+                      <span className='island-stop__palm' aria-hidden='true'>
+                        🌴
+                      </span>
+
+                      <span
+                        className='island-stop__instrument'
+                        aria-hidden='true'
+                      >
+                        {presentation.symbol}
+                      </span>
+
+                      {completed && (
+                        <span className='island-stop__check' aria-hidden='true'>
+                          ✓
+                        </span>
+                      )}
+                    </button>
+
+                    <div className='island-stop__plaque'>
+                      <h3>{presentation.title}</h3>
+
+                      <span
+                        className={[
+                          "island-stop__status",
+                          current ? "island-stop__status--current" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        {statusLabel}
+                      </span>
+
+                      {completed && (
+                        <span className='island-stop__stars'>
+                          ★ {activity.stars ?? 0} étoiles de bilan
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {activities.length === 0 && (
+                <p className='island-adventure__empty'>
+                  Aucune activité n’a été préparée pour cette séance.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className='island-adventure__mission'>
+            <div>
+              <h2>
+                {sessionClosed
+                  ? "Cette séance est terminée"
+                  : expired
+                    ? "Le temps de la séance est écoulé"
+                    : allResolved
+                      ? "Ton parcours est terminé !"
+                      : nextPresentation
+                        ? nextPresentation.title
+                        : "Aucune mission disponible"}
+              </h2>
+
+              <p>
+                {sessionClosed || expired || allResolved
+                  ? "Retrouve le bilan de ton aventure."
+                  : (nextPresentation?.description ??
+                    "Demande à ton enseignant de vérifier la séance.")}
+              </p>
+
+              {actionError && (
+                <p className='island-adventure__error' role='alert'>
+                  {actionError}
+                </p>
+              )}
+            </div>
+
+            {canPlay ? (
+              <button
+                type='button'
+                className='island-adventure__primary'
+                onClick={openGame}
+              >
+                {nextActivity?.status === "in_progress"
+                  ? "Rejoindre mon île"
+                  : "Embarquer !"}
+              </button>
+            ) : sessionClosed || expired || allResolved ? (
+              <button
+                type='button'
+                className='island-adventure__primary'
+                onClick={() => void finishSession()}
+                disabled={finishing}
+              >
+                {finishing
+                  ? "Préparation du bilan…"
+                  : "Voir ma séance terminée"}
+              </button>
+            ) : null}
+          </section>
+        </>
+      )}
+    </main>
   );
 }

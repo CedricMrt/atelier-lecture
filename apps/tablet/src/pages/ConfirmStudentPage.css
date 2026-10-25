@@ -41,10 +41,13 @@
   opacity: 0.65;
 }
 
+/* Voile sur le décor */
+
 .confirm-adventure__shade {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -1;
+
   pointer-events: none;
 
   background: linear-gradient(
@@ -55,26 +58,30 @@
   );
 }
 
+/* En-tête */
+
 .confirm-adventure__header {
   position: relative;
   flex-shrink: 0;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   min-height: 80px;
+
   text-align: center;
 }
 
 .confirm-adventure__header > div {
+  min-width: 0;
   max-width: calc(100% - 290px);
 }
 
 .confirm-adventure__header p {
   margin: 0 0 4px;
-  color: #fff0c5;
 
+  color: #fff0c5;
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 2px;
@@ -95,11 +102,12 @@
     0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Retour à l'accueil */
+
 .confirm-adventure__back {
   position: absolute;
   top: 50%;
   left: 0;
-  transform: translateY(-50%);
 
   display: flex;
   align-items: center;
@@ -117,12 +125,16 @@
   color: #62401e;
   font-size: 18px;
   font-weight: 900;
+
+  transform: translateY(-50%);
 }
 
 .confirm-adventure__back span {
   font-size: 26px;
   line-height: 1;
 }
+
+/* Passeport */
 
 .confirm-adventure__panel {
   flex-shrink: 0;
@@ -143,6 +155,8 @@
     0 18px 35px rgba(0, 0, 0, 0.3);
 }
 
+/* Identité de l'élève */
+
 .confirm-adventure__identity {
   display: flex;
   flex-direction: column;
@@ -150,65 +164,130 @@
   justify-content: center;
 
   min-width: 0;
-  padding: 28px;
+  padding: 24px 28px;
 
   border-right: 2px solid rgba(255, 219, 145, 0.3);
   border-radius: 25px 0 0 25px;
 
   background: linear-gradient(150deg, #fff4d4, #e7ca8e);
+
   color: #654326;
   text-align: center;
 }
 
 .confirm-adventure__badge {
+  max-width: 100%;
+  margin-bottom: 14px;
   padding: 7px 15px;
-  margin-bottom: 17px;
 
   border: 2px solid #d8b56e;
   border-radius: 20px;
 
   background: #fff9e6;
-  color: #7e5b2b;
 
+  color: #7e5b2b;
   font-size: 14px;
   font-weight: 900;
   letter-spacing: 0.5px;
 }
 
+/* Avatar entier sur fond transparent */
+
 .confirm-adventure__portrait {
-  display: grid;
-  place-items: center;
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 
-  width: 154px;
-  height: 154px;
+  width: 205px;
+  max-width: 100%;
+  height: 235px;
+  padding: 10px;
 
-  border: 6px solid #fff8e2;
-  border-radius: 50%;
+  overflow: hidden;
+
+  border: 3px solid #fff8e2;
+  border-radius: 26px;
+
+  background: radial-gradient(
+    ellipse at center,
+    #fffdf3 0%,
+    #f6e7c4 65%,
+    #ecd29f 100%
+  );
 
   box-shadow:
-    inset 0 -10px 0 rgba(0, 0, 0, 0.07),
-    0 7px 0 rgba(111, 74, 33, 0.2);
-
-  font-size: 93px;
-  line-height: 1;
+    inset 0 -6px 0 rgba(111, 74, 33, 0.04),
+    0 6px 0 rgba(111, 74, 33, 0.16);
 }
+
+.confirm-card__avatar {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  filter: drop-shadow(0 4px 3px rgba(91, 61, 30, 0.18));
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Symbole de secours si l'image ne peut pas être chargée */
+
+.confirm-adventure__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  display: grid;
+  place-items: center;
+
+  color: #b18d51;
+  font-size: 64px;
+
+  visibility: hidden;
+}
+
+.confirm-adventure__portrait:has(.confirm-card__avatar[style*="display: none"])
+  .confirm-adventure__fallback {
+  visibility: visible;
+}
+
+/* Prénom et description */
 
 .confirm-adventure__name {
   max-width: 100%;
-  margin: 19px 0 4px;
+  margin: 17px 0 4px;
 
   font-size: clamp(30px, 3.5vw, 43px);
   line-height: 1.1;
+
   overflow-wrap: anywhere;
 }
 
 .confirm-adventure__avatar-label {
+  max-width: 100%;
   margin: 0;
+
   color: #81643f;
   font-size: 18px;
+  line-height: 1.3;
+
   overflow-wrap: anywhere;
 }
+
+/* Réserve d'étoiles */
 
 .confirm-adventure__wallet {
   display: flex;
@@ -216,20 +295,28 @@
   gap: 14px;
 
   max-width: 100%;
-  margin-top: 22px;
+  margin-top: 20px;
   padding: 12px 18px;
 
   border: 2px solid #d9b671;
   border-radius: 18px;
 
   background: #fff5d7;
+
   text-align: left;
 }
 
+.confirm-adventure__wallet > div {
+  min-width: 0;
+}
+
 .confirm-adventure__star {
+  flex-shrink: 0;
+
   color: #efb52c;
   font-size: 47px;
   line-height: 1;
+
   text-shadow: 0 2px 0 #b77b28;
 }
 
@@ -240,24 +327,34 @@
 
 .confirm-adventure__wallet-label {
   margin-bottom: 3px;
+
   color: #896a3f;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.3;
 }
 
 .confirm-adventure__wallet-value {
   color: #66411e;
   font-size: 25px;
   font-weight: 900;
+  line-height: 1.2;
+
   overflow-wrap: anywhere;
 }
 
 .confirm-adventure__warning {
+  max-width: 100%;
   margin: 12px 0 0;
+
   color: #80562e;
   font-size: 13px;
   line-height: 1.4;
+
+  overflow-wrap: anywhere;
 }
+
+/* Message de bienvenue */
 
 .confirm-adventure__welcome {
   display: flex;
@@ -282,6 +379,7 @@
   color: #ffe6a4;
   font-size: clamp(27px, 3vw, 37px);
   line-height: 1.15;
+
   overflow-wrap: anywhere;
 }
 
@@ -302,6 +400,8 @@
   line-height: 1.5;
 }
 
+/* Boutons */
+
 .confirm-adventure__button {
   display: flex;
   align-items: center;
@@ -318,6 +418,8 @@
   font-weight: 900;
   line-height: 1.2;
 
+  overflow-wrap: anywhere;
+
   transition:
     transform 120ms ease,
     filter 120ms ease;
@@ -327,8 +429,10 @@
   margin-top: 18px;
 }
 
-.confirm-adventure__button:hover:not(:disabled) {
-  filter: brightness(1.05);
+@media (hover: hover) {
+  .confirm-adventure__button:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
 }
 
 .confirm-adventure__button:active:not(:disabled) {
@@ -337,17 +441,23 @@
 
 .confirm-adventure__button--gold {
   border-color: #fff0ba;
+
   background: linear-gradient(#ffe89b, #f5bc49);
   box-shadow: 0 6px 0 #9a6024;
+
   color: #62401e;
 }
 
 .confirm-adventure__button--teal {
   border-color: #aeebcf;
+
   background: linear-gradient(#3baf99, #237d73);
   box-shadow: 0 6px 0 #0d3a35;
+
   color: #ffffff;
 }
+
+/* Informations et erreurs */
 
 .confirm-adventure__hint {
   min-height: 18px;
@@ -366,10 +476,13 @@
   border-radius: 12px;
 
   background: #793f32;
+
   color: #fff0de;
   font-size: 15px;
   line-height: 1.4;
 }
+
+/* Chargement et profil introuvable */
 
 .confirm-adventure__message {
   grid-column: 1 / -1;
@@ -389,16 +502,20 @@
 
 .confirm-adventure__message h2 {
   margin: 15px 0 10px;
+
   color: #ffe6a4;
   font-size: 28px;
 }
 
 .confirm-adventure__message p {
   margin: 0 0 25px;
+
   color: #d5efdf;
   font-size: 18px;
   line-height: 1.5;
 }
+
+/* Tablettes en paysage de faible hauteur */
 
 @media (orientation: landscape) and (max-height: 600px) {
   .confirm-adventure {
@@ -419,23 +536,30 @@
   }
 
   .confirm-adventure__identity {
-    padding: 16px 20px;
+    padding: 14px 20px;
   }
 
   .confirm-adventure__badge {
-    margin-bottom: 10px;
+    margin-bottom: 9px;
     padding: 5px 12px;
+
     font-size: 12px;
   }
 
   .confirm-adventure__portrait {
-    width: 105px;
-    height: 105px;
-    font-size: 65px;
+    width: 130px;
+    height: 150px;
+    padding: 6px;
+
+    border-radius: 20px;
+  }
+
+  .confirm-adventure__fallback {
+    font-size: 45px;
   }
 
   .confirm-adventure__name {
-    margin-top: 13px;
+    margin-top: 12px;
     font-size: 31px;
   }
 
@@ -444,6 +568,8 @@
   }
 
   .confirm-adventure__wallet {
+    gap: 10px;
+
     margin-top: 12px;
     padding: 8px 14px;
   }
@@ -481,6 +607,7 @@
   .confirm-adventure__button {
     min-height: 48px;
     padding: 10px 15px;
+
     font-size: 20px;
   }
 
@@ -493,6 +620,8 @@
     font-size: 12px;
   }
 }
+
+/* Affichage en portrait */
 
 @media (orientation: portrait) {
   .confirm-adventure {
@@ -530,9 +659,10 @@
   }
 
   .confirm-adventure__portrait {
-    width: 115px;
-    height: 115px;
-    font-size: 72px;
+    width: 165px;
+    height: 190px;
+
+    border-radius: 22px;
   }
 
   .confirm-adventure__welcome {
@@ -540,8 +670,14 @@
   }
 }
 
+/* Réduction des animations */
+
 @media (prefers-reduced-motion: reduce) {
   .confirm-adventure__button {
     transition: none;
+  }
+
+  .confirm-adventure__button:active:not(:disabled) {
+    transform: none;
   }
 }

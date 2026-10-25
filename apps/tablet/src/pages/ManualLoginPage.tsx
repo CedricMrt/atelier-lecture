@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../db/db";
 import "./ManualLoginPage.css";
+import { getAvatarImageUrl } from "../data/avatars";
 
 type StudentCard = {
   id: string;
@@ -16,65 +17,6 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-}
-
-function getAvatarSymbol(avatarKey: string): string {
-  const key = normalize(avatarKey);
-
-  const symbols: Record<string, string> = {
-    renard: "🦊",
-    renarde: "🦊",
-    hibou: "🦉",
-    robot: "🤖",
-    chat: "🐱",
-    tortue: "🐢",
-    lapin: "🐰",
-    ours: "🐻",
-    grenouille: "🐸",
-    dragon: "🐲",
-    pieuvre: "🐙",
-  };
-
-  return symbols[key] ?? "✦";
-}
-
-function getVariantColor(avatarVariant: string): string {
-  const variant = normalize(avatarVariant);
-
-  const colors: Record<string, string> = {
-    orange: "#f3a54a",
-    bleu: "#68b6eb",
-    bleue: "#68b6eb",
-    blue: "#68b6eb",
-    violet: "#b08be2",
-    violette: "#b08be2",
-    purple: "#b08be2",
-    marron: "#b98c65",
-    brown: "#b98c65",
-    vert: "#83c98b",
-    verte: "#83c98b",
-    green: "#83c98b",
-    gris: "#b8c2c9",
-    grey: "#b8c2c9",
-    gray: "#b8c2c9",
-    rouge: "#e98a7d",
-    red: "#e98a7d",
-    turquoise: "#70d0c4",
-    noir: "#7c8793",
-    black: "#7c8793",
-    creme: "#f0dfb2",
-    cream: "#f0dfb2",
-    blanc: "#e8edf1",
-    blanche: "#e8edf1",
-    white: "#e8edf1",
-    rose: "#eda6c4",
-    pink: "#eda6c4",
-    beige: "#d9bc94",
-    jaune: "#edcf69",
-    yellow: "#edcf69",
-  };
-
-  return colors[variant] ?? "#e5c783";
 }
 
 export default function ManualLoginPage() {
@@ -261,14 +203,27 @@ export default function ManualLoginPage() {
                     navigate(`/confirm/${encodeURIComponent(student.id)}`)
                   }
                 >
-                  <span
-                    className='explorer-card__portrait'
-                    style={{
-                      backgroundColor: getVariantColor(student.avatarVariant),
-                    }}
-                    aria-hidden='true'
-                  >
-                    {getAvatarSymbol(student.avatarKey)}
+                  <span className='explorer-card__portrait' aria-hidden='true'>
+                    <img
+                      key={`${student.avatarKey}-${student.avatarVariant}`}
+                      src={getAvatarImageUrl(
+                        student.avatarKey,
+                        student.avatarVariant,
+                      )}
+                      alt=''
+                      draggable={false}
+                      className='explorer-card__avatar'
+                      onError={(event) => {
+                        const image = event.currentTarget;
+
+                        console.warn(
+                          `Avatar introuvable pour ${student.firstName} :`,
+                          image.src,
+                        );
+
+                        image.style.display = "none";
+                      }}
+                    />
                   </span>
 
                   <span className='explorer-card__name'>

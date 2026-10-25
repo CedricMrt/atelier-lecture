@@ -41,10 +41,13 @@
   outline-offset: 4px;
 }
 
+/* Fond assombri */
+
 .manual-adventure__shade {
   position: absolute;
   inset: 0;
   z-index: -1;
+
   pointer-events: none;
 
   background: linear-gradient(
@@ -54,6 +57,8 @@
     rgba(6, 49, 44, 0.4)
   );
 }
+
+/* En-tête */
 
 .manual-adventure__header {
   position: relative;
@@ -68,9 +73,8 @@
 
 .manual-adventure__back {
   position: absolute;
-  left: 0;
   top: 50%;
-  transform: translateY(-50%);
+  left: 0;
 
   display: flex;
   align-items: center;
@@ -88,6 +92,8 @@
   color: #62401e;
   font-size: 18px;
   font-weight: 900;
+
+  transform: translateY(-50%);
 }
 
 .manual-adventure__back span {
@@ -102,8 +108,8 @@
 
 .manual-adventure__heading p {
   margin: 0 0 3px;
-  color: #fff0c5;
 
+  color: #fff0c5;
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 2px;
@@ -123,6 +129,8 @@
     0 3px 0 #83512b,
     0 6px 12px rgba(0, 0, 0, 0.3);
 }
+
+/* Panneau principal */
 
 .manual-adventure__panel {
   flex: 1;
@@ -146,6 +154,8 @@
     0 15px 30px rgba(0, 0, 0, 0.25);
 }
 
+/* Introduction et recherche */
+
 .manual-adventure__toolbar {
   flex-shrink: 0;
 
@@ -155,19 +165,27 @@
   gap: 24px;
 
   padding: 20px 24px;
+
   border-bottom: 2px solid rgba(255, 219, 145, 0.2);
+}
+
+.manual-adventure__intro {
+  min-width: 0;
 }
 
 .manual-adventure__intro h2 {
   margin: 0 0 5px;
+
   color: #ffeab0;
   font-size: 25px;
 }
 
 .manual-adventure__intro p {
   margin: 0;
+
   color: #d5efdf;
   font-size: 16px;
+  line-height: 1.4;
 }
 
 .manual-adventure__search {
@@ -176,6 +194,7 @@
   display: flex;
   align-items: center;
   flex: 0 1 360px;
+
   min-width: 240px;
 }
 
@@ -188,8 +207,8 @@
   border-radius: 17px;
 
   background: #fff5d9;
-  color: #493c26;
 
+  color: #493c26;
   font-size: 19px;
   font-weight: 700;
 
@@ -212,6 +231,7 @@
 
   color: #7e633a;
   font-size: 30px;
+
   pointer-events: none;
 }
 
@@ -226,16 +246,19 @@
   border-radius: 50%;
 
   background: #ead8ad;
+
   color: #67512e;
   font-size: 26px;
   line-height: 1;
 }
 
+/* Liste défilante */
+
 .manual-adventure__list {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
 
+  overflow-y: auto;
   padding: 22px;
 
   overscroll-behavior: contain;
@@ -252,6 +275,8 @@
   gap: 22px;
 }
 
+/* Carte d'élève */
+
 .explorer-card {
   display: flex;
   flex-direction: column;
@@ -259,7 +284,7 @@
   justify-content: flex-start;
 
   min-width: 0;
-  min-height: 234px;
+  min-height: 292px;
   padding: 17px 12px 14px;
 
   border: 3px solid #ffe8b0;
@@ -279,34 +304,86 @@
     filter 120ms ease;
 }
 
-.explorer-card:hover {
-  filter: brightness(1.04);
-  transform: translateY(-3px);
+@media (hover: hover) {
+  .explorer-card:hover {
+    filter: brightness(1.04);
+    transform: translateY(-3px);
+  }
 }
 
 .explorer-card:active {
   transform: translateY(4px);
 }
 
+/* Portrait : styles communs à toutes les tailles d'écran */
+
 .explorer-card__portrait {
-  display: grid;
-  place-items: center;
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 
-  width: 88px;
-  height: 88px;
-  margin-bottom: 11px;
+  width: 150px;
+  max-width: 100%;
+  height: 170px;
 
-  border: 4px solid #ffffff;
-  border-radius: 50%;
+  margin: 0 auto 12px;
+  padding: 8px;
 
-  box-shadow:
-    inset 0 -6px 0 rgba(0, 0, 0, 0.08),
-    0 4px 0 rgba(97, 61, 30, 0.18);
+  overflow: hidden;
 
-  font-size: 53px;
-  line-height: 1;
+  border: 2px solid #e0bd7e;
+  border-radius: 24px;
+
+  background: radial-gradient(ellipse at center, #fff9e9 0%, #f2dfb5 100%);
+
+  box-shadow: 0 4px 0 rgba(97, 61, 30, 0.12);
 }
+
+.explorer-card__avatar {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: center bottom;
+
+  filter: drop-shadow(0 4px 3px rgba(91, 61, 30, 0.18));
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Symbole de secours si le span correspondant est présent */
+
+.explorer-card__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  display: grid;
+  place-items: center;
+
+  color: #b18d51;
+  font-size: 48px;
+
+  visibility: hidden;
+}
+
+.explorer-card__portrait:has(.explorer-card__avatar[style*="display: none"])
+  .explorer-card__fallback {
+  visibility: visible;
+}
+
+/* Informations de l'élève */
 
 .explorer-card__name {
   max-width: 100%;
@@ -315,15 +392,18 @@
   font-size: 25px;
   font-weight: 900;
   line-height: 1.15;
+
   overflow-wrap: anywhere;
 }
 
 .explorer-card__description {
+  max-width: 100%;
   margin-bottom: 13px;
 
   color: #795f3b;
   font-size: 14px;
   line-height: 1.3;
+
   overflow-wrap: anywhere;
 }
 
@@ -335,11 +415,13 @@
   border-radius: 20px;
 
   background: #277b63;
-  color: #ffffff;
 
+  color: #ffffff;
   font-size: 15px;
   font-weight: 900;
 }
+
+/* Pied du panneau */
 
 .manual-adventure__footer {
   flex-shrink: 0;
@@ -349,11 +431,15 @@
   gap: 15px;
 
   padding: 12px 24px;
+
   border-top: 2px solid rgba(255, 219, 145, 0.2);
 
   color: #d2ead8;
   font-size: 14px;
+  line-height: 1.4;
 }
+
+/* Chargement, erreur et liste vide */
 
 .manual-adventure__message {
   display: flex;
@@ -363,6 +449,7 @@
 
   min-height: 220px;
   padding: 20px;
+
   text-align: center;
 }
 
@@ -372,12 +459,14 @@
 
 .manual-adventure__message h2 {
   margin: 12px 0 8px;
+
   color: #ffe5a4;
   font-size: 25px;
 }
 
 .manual-adventure__message p {
   margin: 0;
+
   color: #d5efdf;
   font-size: 17px;
   line-height: 1.5;
@@ -391,11 +480,13 @@
   border-radius: 16px;
 
   background: #f7cf72;
-  color: #62401e;
 
+  color: #62401e;
   font-size: 18px;
   font-weight: 900;
 }
+
+/* Texte réservé aux lecteurs d'écran */
 
 .manual-adventure__sr-only {
   position: absolute;
@@ -406,10 +497,13 @@
   margin: -1px;
 
   overflow: hidden;
+
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
+
+/* Écrans de largeur intermédiaire */
 
 @media (max-width: 1000px) {
   .manual-adventure__grid {
@@ -429,6 +523,8 @@
     font-size: 14px;
   }
 }
+
+/* Tablettes en paysage avec une faible hauteur */
 
 @media (orientation: landscape) and (max-height: 600px) {
   .manual-adventure {
@@ -466,15 +562,23 @@
   }
 
   .explorer-card {
-    min-height: 195px;
+    min-height: 242px;
     padding-top: 12px;
+    padding-bottom: 12px;
   }
 
   .explorer-card__portrait {
-    width: 68px;
-    height: 68px;
+    width: 112px;
+    height: 128px;
+
     margin-bottom: 8px;
-    font-size: 43px;
+    padding: 5px;
+
+    border-radius: 18px;
+  }
+
+  .explorer-card__fallback {
+    font-size: 38px;
   }
 
   .explorer-card__name {
@@ -486,11 +590,18 @@
     font-size: 12px;
   }
 
+  .explorer-card__action {
+    padding: 6px 16px;
+    font-size: 14px;
+  }
+
   .manual-adventure__footer {
     padding: 8px 18px;
     font-size: 12px;
   }
 }
+
+/* Affichage en portrait */
 
 @media (orientation: portrait) {
   .manual-adventure {
@@ -531,8 +642,53 @@
   }
 }
 
+/* Petites largeurs */
+
+@media (max-width: 420px) {
+  .manual-adventure__list {
+    padding: 12px;
+  }
+
+  .manual-adventure__grid {
+    gap: 12px;
+  }
+
+  .explorer-card {
+    min-height: 250px;
+    padding: 12px 8px;
+  }
+
+  .explorer-card__portrait {
+    width: 110px;
+    height: 135px;
+    padding: 5px;
+
+    border-radius: 18px;
+  }
+
+  .explorer-card__name {
+    font-size: 21px;
+  }
+
+  .explorer-card__description {
+    font-size: 12px;
+  }
+
+  .explorer-card__action {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Réduction des animations */
+
 @media (prefers-reduced-motion: reduce) {
   .explorer-card {
     transition: none;
+  }
+
+  .explorer-card:hover,
+  .explorer-card:active {
+    transform: none;
   }
 }

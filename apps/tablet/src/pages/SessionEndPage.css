@@ -1,0 +1,594 @@
+.session-expedition,
+.session-expedition * {
+  box-sizing: border-box;
+}
+
+.session-expedition {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  overflow-y: auto;
+  padding: 20px 24px 30px;
+
+  background-color: #174f48;
+  background-image: url("/tambour-des-sons/images/decor.png");
+  background-position: center;
+  background-size: cover;
+
+  color: #fff8df;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.session-expedition__shade {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background: linear-gradient(
+    180deg,
+    rgba(6, 49, 44, 0.72),
+    rgba(6, 49, 44, 0.25) 50%,
+    rgba(6, 49, 44, 0.45)
+  );
+}
+
+.session-expedition__header {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.session-expedition__header p {
+  margin: 0 0 5px;
+
+  color: #e4fff0;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.session-expedition__header h1 {
+  margin: 0;
+
+  color: #ffe39b;
+  font-size: clamp(31px, 4vw, 49px);
+  line-height: 1.1;
+
+  text-shadow:
+    0 3px 0 #83512b,
+    0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.session-expedition__panel {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  flex-shrink: 0;
+
+  width: min(1100px, 100%);
+  margin: auto;
+
+  border: 4px solid #ffdb91;
+  border-radius: 30px;
+
+  background: #164e43;
+
+  box-shadow:
+    0 8px 0 #704b29,
+    0 18px 35px rgba(0, 0, 0, 0.3);
+}
+
+.session-expedition__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+  padding: 24px;
+
+  border-right: 2px solid #d7b575;
+  border-radius: 25px 0 0 25px;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 235, 0.9),
+      transparent 65%
+    ),
+    linear-gradient(#fff1ce, #e6c589);
+
+  color: #674526;
+  text-align: center;
+}
+
+.session-expedition__badge {
+  padding: 7px 14px;
+
+  border: 2px solid #d1a965;
+  border-radius: 20px;
+
+  background: #fff7df;
+  color: #7c572c;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.session-expedition__hero img {
+  display: block;
+
+  width: 100%;
+  height: 230px;
+  margin: 12px 0;
+
+  object-fit: contain;
+  filter: drop-shadow(0 8px 4px rgba(103, 69, 38, 0.18));
+}
+
+.session-expedition__hero h2 {
+  max-width: 100%;
+  margin: 0 0 10px;
+
+  font-size: 33px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.session-expedition__hero > p {
+  margin: 0;
+  color: #7a5a35;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.session-expedition__rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 17px;
+  padding: 10px 20px;
+
+  border: 2px solid #d3ad68;
+  border-radius: 17px;
+
+  background: #fff4d3;
+  text-align: left;
+}
+
+.session-expedition__rating > span {
+  color: #eeb52e;
+  font-size: 46px;
+  line-height: 1;
+
+  text-shadow: 0 2px 0 #b57c2b;
+}
+
+.session-expedition__rating small,
+.session-expedition__rating strong {
+  display: block;
+}
+
+.session-expedition__rating small {
+  margin-bottom: 3px;
+  color: #89683b;
+  font-size: 13px;
+}
+
+.session-expedition__rating strong {
+  color: #69441e;
+  font-size: 28px;
+}
+
+.session-expedition__details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-width: 0;
+  padding: 26px;
+}
+
+.session-expedition__rewards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.session-expedition__reward {
+  min-width: 0;
+  padding: 15px 12px;
+
+  border: 2px solid #b9d69e;
+  border-radius: 18px;
+
+  background: #103d35;
+  text-align: center;
+}
+
+.session-expedition__reward-label {
+  display: block;
+  min-height: 34px;
+  margin-bottom: 7px;
+
+  color: #d1e6d6;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.session-expedition__reward strong {
+  display: block;
+
+  color: #ffda75;
+  font-size: 33px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.session-expedition__missions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin: 24px 0 12px;
+}
+
+.session-expedition__missions-heading h3 {
+  margin: 0;
+  color: #ffe5a4;
+  font-size: 22px;
+}
+
+.session-expedition__missions-heading > span {
+  color: #c5dfce;
+  font-size: 12px;
+  text-align: right;
+}
+
+.session-expedition__missions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-mission {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 13px;
+
+  border: 2px solid rgba(255, 222, 159, 0.5);
+  border-radius: 17px;
+
+  background: rgba(8, 45, 39, 0.5);
+}
+
+.session-mission__symbol {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 49px;
+  height: 49px;
+
+  border: 2px solid #f4dca8;
+  border-radius: 14px;
+
+  background: #e7ca90;
+  font-size: 31px;
+}
+
+.session-mission__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-mission__identity h4 {
+  margin: 0 0 5px;
+
+  color: #fff0c4;
+  font-size: 17px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.session-mission__identity p {
+  margin: 0;
+  color: #c6dfce;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.session-mission__result {
+  flex-shrink: 0;
+}
+
+.session-mission__stars {
+  display: flex;
+  gap: 2px;
+
+  color: #587366;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.session-mission__star--earned {
+  color: #ffd34f;
+  text-shadow: 0 2px 0 #966727;
+}
+
+.session-mission__unfinished {
+  color: #d8dfca;
+  font-size: 12px;
+}
+
+.session-expedition__saved {
+  margin: 18px 0;
+
+  color: #c2ddcc;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.session-expedition__button,
+.session-expedition__secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 57px;
+  padding: 12px 20px;
+
+  border: 3px solid #fff0ba;
+  border-radius: 18px;
+
+  background: linear-gradient(#ffe89b, #f5bc49);
+  box-shadow: 0 6px 0 #9a6024;
+
+  color: #62401e;
+  font-family: inherit;
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.2;
+
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+.session-expedition__button:hover,
+.session-expedition__secondary:hover {
+  filter: brightness(1.05);
+}
+
+.session-expedition__button:active,
+.session-expedition__secondary:active {
+  transform: translateY(4px);
+}
+
+.session-expedition__button:focus-visible,
+.session-expedition__secondary:focus-visible {
+  outline: 4px solid #ffffff;
+  outline-offset: 5px;
+}
+
+.session-expedition__secondary {
+  margin-top: 18px;
+
+  border-color: #aeebcf;
+  background: linear-gradient(#3baf99, #237d73);
+  box-shadow: 0 6px 0 #0d3a35;
+
+  color: #ffffff;
+  font-size: 19px;
+}
+
+.session-expedition__warning {
+  margin: 12px 0;
+  padding: 10px 12px;
+
+  border: 1px solid #e0bc84;
+  border-radius: 12px;
+
+  background: #705132;
+  color: #fff0d5;
+
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.session-expedition__message {
+  width: min(600px, 100%);
+  margin: auto;
+  padding: 35px;
+
+  border: 4px solid #ffdb91;
+  border-radius: 28px;
+
+  background: #164e43;
+  text-align: center;
+}
+
+.session-expedition__message > span {
+  color: #ffdc8b;
+  font-size: 55px;
+}
+
+.session-expedition__message h2 {
+  color: #ffe5a4;
+  font-size: 27px;
+}
+
+.session-expedition__message p {
+  margin-bottom: 25px;
+  color: #d5efdf;
+  line-height: 1.5;
+}
+
+.session-expedition__empty {
+  padding: 20px;
+  color: #d5efdf;
+  text-align: center;
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .session-expedition {
+    gap: 12px;
+    padding: 10px 18px 20px;
+  }
+
+  .session-expedition__header p {
+    font-size: 11px;
+  }
+
+  .session-expedition__header h1 {
+    font-size: 32px;
+  }
+
+  .session-expedition__hero {
+    padding: 15px 20px;
+  }
+
+  .session-expedition__hero img {
+    height: 145px;
+    margin: 8px 0;
+  }
+
+  .session-expedition__hero h2 {
+    font-size: 27px;
+  }
+
+  .session-expedition__hero > p {
+    font-size: 14px;
+  }
+
+  .session-expedition__badge {
+    padding: 5px 12px;
+    font-size: 11px;
+  }
+
+  .session-expedition__rating {
+    margin-top: 12px;
+    padding: 7px 15px;
+  }
+
+  .session-expedition__rating > span {
+    font-size: 34px;
+  }
+
+  .session-expedition__rating strong {
+    font-size: 24px;
+  }
+
+  .session-expedition__details {
+    padding: 17px 20px;
+  }
+
+  .session-expedition__reward {
+    padding: 10px;
+  }
+
+  .session-expedition__reward-label {
+    font-size: 12px;
+  }
+
+  .session-expedition__reward strong {
+    font-size: 27px;
+  }
+
+  .session-expedition__missions-heading {
+    margin: 15px 0 9px;
+  }
+
+  .session-expedition__missions-heading h3 {
+    font-size: 19px;
+  }
+
+  .session-mission {
+    gap: 9px;
+    padding: 9px;
+  }
+
+  .session-mission__symbol {
+    width: 40px;
+    height: 40px;
+    font-size: 26px;
+  }
+
+  .session-mission__identity h4 {
+    font-size: 15px;
+  }
+
+  .session-mission__stars {
+    font-size: 23px;
+  }
+
+  .session-expedition__saved {
+    margin: 12px 0;
+    font-size: 11px;
+  }
+
+  .session-expedition__button {
+    min-height: 46px;
+    padding: 10px 16px;
+    font-size: 20px;
+  }
+}
+
+@media (orientation: portrait) {
+  .session-expedition {
+    padding: 15px 12px 25px;
+  }
+
+  .session-expedition__panel {
+    grid-template-columns: 1fr;
+  }
+
+  .session-expedition__hero {
+    border-right: 0;
+    border-bottom: 2px solid #d7b575;
+    border-radius: 25px 25px 0 0;
+  }
+
+  .session-expedition__hero img {
+    height: 180px;
+  }
+
+  .session-expedition__details {
+    padding: 20px 15px;
+  }
+
+  .session-mission {
+    flex-wrap: wrap;
+  }
+
+  .session-mission__result {
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-expedition__button,
+  .session-expedition__secondary {
+    transition: none;
+  }
+}

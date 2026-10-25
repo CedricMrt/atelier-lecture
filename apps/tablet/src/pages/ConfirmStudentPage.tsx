@@ -4,6 +4,7 @@ import { db } from "../db/db";
 import { createDemoSession } from "../db/sessions";
 import { getStarBalance } from "../db/stars";
 import "./ConfirmStudentPage.css";
+import { getAvatarImageUrl } from "../data/avatars";
 
 type ConfirmStudent = {
   id: string;
@@ -11,69 +12,6 @@ type ConfirmStudent = {
   avatarKey: string;
   avatarVariant: string;
 };
-
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-function getAvatarSymbol(avatarKey: string): string {
-  const symbols: Record<string, string> = {
-    renard: "🦊",
-    renarde: "🦊",
-    hibou: "🦉",
-    robot: "🤖",
-    chat: "🐱",
-    tortue: "🐢",
-    lapin: "🐰",
-    ours: "🐻",
-    grenouille: "🐸",
-    dragon: "🐲",
-    pieuvre: "🐙",
-  };
-
-  return symbols[normalize(avatarKey)] ?? "✦";
-}
-
-function getVariantColor(avatarVariant: string): string {
-  const colors: Record<string, string> = {
-    orange: "#f3a54a",
-    bleu: "#68b6eb",
-    bleue: "#68b6eb",
-    blue: "#68b6eb",
-    violet: "#b08be2",
-    violette: "#b08be2",
-    purple: "#b08be2",
-    marron: "#b98c65",
-    brown: "#b98c65",
-    vert: "#83c98b",
-    verte: "#83c98b",
-    green: "#83c98b",
-    gris: "#b8c2c9",
-    grey: "#b8c2c9",
-    gray: "#b8c2c9",
-    rouge: "#e98a7d",
-    red: "#e98a7d",
-    turquoise: "#70d0c4",
-    noir: "#7c8793",
-    black: "#7c8793",
-    creme: "#f0dfb2",
-    cream: "#f0dfb2",
-    blanc: "#e8edf1",
-    blanche: "#e8edf1",
-    white: "#e8edf1",
-    rose: "#eda6c4",
-    pink: "#eda6c4",
-    beige: "#d9bc94",
-    jaune: "#edcf69",
-    yellow: "#edcf69",
-  };
-
-  return colors[normalize(avatarVariant)] ?? "#e5c783";
-}
 
 export default function ConfirmStudentPage() {
   const { studentId } = useParams();
@@ -189,7 +127,10 @@ export default function ConfirmStudentPage() {
     setSessionError(null);
 
     try {
-      const sessionId = await createDemoSession(selectedStudentId);
+      const sessionId = await createDemoSession(
+        selectedStudentId,
+        "active_time",
+      );
 
       if (
         mountedRef.current &&
@@ -280,14 +221,29 @@ export default function ConfirmStudentPage() {
                 Explorateur des îles
               </span>
 
-              <div
-                className='confirm-adventure__portrait'
-                style={{
-                  backgroundColor: getVariantColor(student.avatarVariant),
-                }}
-                aria-hidden='true'
-              >
-                {getAvatarSymbol(student.avatarKey)}
+              <div className='confirm-adventure__portrait' aria-hidden='true'>
+                <span className='confirm-adventure__fallback'>✦</span>
+
+                <img
+                  key={`${student.avatarKey}-${student.avatarVariant}`}
+                  src={getAvatarImageUrl(
+                    student.avatarKey,
+                    student.avatarVariant,
+                  )}
+                  alt=''
+                  draggable={false}
+                  className='confirm-card__avatar'
+                  onError={(event) => {
+                    const image = event.currentTarget;
+
+                    console.warn(
+                      "Avatar introuvable :",
+                      image.getAttribute("src"),
+                    );
+
+                    image.style.display = "none";
+                  }}
+                />
               </div>
 
               <h2 className='confirm-adventure__name'>{student.firstName}</h2>

@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import type { ActivityEndReason } from "../db/db";
+import type { TrainingClock } from "./TrainingClock";
+import { getRatingStars } from "./trainingRules";
 
 export type RhythmRound = {
   sequence: number[];
@@ -6,6 +9,7 @@ export type RhythmRound = {
 };
 
 export type RhythmResult = {
+  endReason?: ActivityEndReason;
   score: number;
   maxScore: number;
   stars: number;
@@ -20,9 +24,21 @@ export type RhythmResult = {
 };
 
 type SceneData = {
+  avatarUrl: string;
+  avatarTextureKey: string;
+  trainingClock?: TrainingClock;
   initialStarBalance: number;
-  onCorrectRound: (roundIndex: number) => Promise<number>;
-  onFinish?: (result: RhythmResult) => void;
+  initialAnswers: RhythmResult["answers"];
+  initialHintsUsed: number;
+  activityStartedAt: number;
+
+  onRoundValidated: (
+    roundIndex: number,
+    answer: RhythmResult["answers"][number],
+    totalHints: number,
+  ) => Promise<number>;
+
+  onFinish?: (result: RhythmResult) => void | Promise<void>;
 };
 
 type GamePhase = "listening" | "answering" | "feedback" | "finished";
@@ -50,7 +66,7 @@ export class RhythmDrumScene extends Phaser.Scene {
   private starsText!: Phaser.GameObjects.Text;
   private starsIcon!: Phaser.GameObjects.Star;
 
-  private onCorrectRound?: (roundIndex: number) => Promise<number>;
+  private onRoundValidated?: SceneData["onRoundValidated"];
   private hintsUsed = 0;
   private startTime = 0;
   private roundStartTime = 0;
@@ -61,11 +77,15 @@ export class RhythmDrumScene extends Phaser.Scene {
   private rhythmHistory: RhythmResult["answers"] = [];
 
   private phase: GamePhase = "listening";
-  private onFinish?: (result: RhythmResult) => void;
+  private onFinish?: (result: RhythmResult) => void | Promise<void>;
 
+  private background!: Phaser.GameObjects.Image;
   private drum!: Phaser.GameObjects.Image;
   private cymbal!: Phaser.GameObjects.Image;
   private avatar!: Phaser.GameObjects.Image;
+
+  private avatarUrl = "";
+  private avatarTextureKey = "";
 
   private instructionText!: Phaser.GameObjects.Text;
   private roundText!: Phaser.GameObjects.Text;
@@ -81,27 +101,46 @@ export class RhythmDrumScene extends Phaser.Scene {
   private cymbalScale = 1;
   private avatarScale = 1;
 
+  private trainingClock?: TrainingClock;
+  private pendingSave: Promise<number> | null = null;
+  private stoppingForLimit = false;
+  private finishing = false;
+
   constructor() {
     super("RhythmDrumScene");
   }
 
   init(data: Partial<SceneData> = {}) {
+    this.trainingClock = data.trainingClock;
+    this.pendingSave = null;
+    this.stoppingForLimit = false;
+    this.finishing = false;
+    this.avatarUrl = data.avatarUrl ?? "";
+    this.avatarTextureKey = data.avatarTextureKey ?? "";
+
     this.onFinish = data.onFinish;
-    this.onCorrectRound = data.onCorrectRound;
+    this.onRoundValidated = data.onRoundValidated;
 
     this.starBalance = data.initialStarBalance ?? 0;
     this.displayedStars = this.starBalance;
 
-    this.currentRound = 0;
-    this.score = 0;
-    this.hintsUsed = 0;
-    this.startTime = Date.now();
+    this.rhythmHistory = (data.initialAnswers ?? []).map((answer) => ({
+      ...answer,
+      sequence: [...answer.sequence],
+      studentSequence: [...answer.studentSequence],
+    }));
+
+    this.currentRound = this.rhythmHistory.length;
+
+    this.score = this.rhythmHistory.filter((answer) => answer.correct).length;
+
+    this.hintsUsed = data.initialHintsUsed ?? 0;
+    this.startTime = data.activityStartedAt ?? Date.now();
 
     this.roundStartTime = 0;
     this.responseTimeMs = 0;
     this.currentSequence = [];
     this.studentSequence = [];
-    this.rhythmHistory = [];
     this.roundDots = [];
 
     this.phase = "listening";
@@ -111,7 +150,15 @@ export class RhythmDrumScene extends Phaser.Scene {
     const path = "/tambour-des-sons/images";
 
     this.load.image("rhythm-decor", `${path}/decor.png`);
-    this.load.image("rhythm-avatar", `${path}/avatar.png`);
+
+    if (!this.avatarUrl || !this.avatarTextureKey) {
+      throw new Error("L’avatar de l’élève n’a pas été transmis au Tambour.");
+    }
+
+    if (!this.textures.exists(this.avatarTextureKey)) {
+      this.load.image(this.avatarTextureKey, this.avatarUrl);
+    }
+
     this.load.image("rhythm-drum", `${path}/tambour.png`);
     this.load.image("rhythm-cymbal", `${path}/cymbale.png`);
 
@@ -126,31 +173,73 @@ export class RhythmDrumScene extends Phaser.Scene {
     this.createInstruments();
     this.createInterface();
 
+    this.updateResponsiveLayout();
+
+    const onResize = () => {
+      this.updateResponsiveLayout();
+    };
+
+    this.scale.on("resize", onResize);
+
+    this.events.once("shutdown", () => {
+      this.scale.off("resize", onResize);
+    });
+    this.trainingClock?.start();
+    this.scoreText.setText(
+      this.trainingClock
+        ? `${this.score} / ${this.rhythmHistory.length} réussis`
+        : `${this.score} / ${this.rounds.length} réussis`,
+    );
+
     this.time.delayedCall(700, () => {
-      this.startRound();
+      if (!this.trainingClock && this.currentRound >= this.rounds.length) {
+        void this.finish();
+      } else {
+        this.startRound();
+      }
     });
   }
 
-  private createBackground() {
-    const width = this.scale.width;
-    const height = this.scale.height;
+  private updateResponsiveLayout() {
+    const width = this.scale.gameSize.width;
+    const height = this.scale.gameSize.height;
 
-    const background = this.add.image(width / 2, height / 2, "rhythm-decor");
+    if (width <= 0 || height <= 0) return;
 
-    // Remplit l'écran sans déformer l'image.
-    const scale = Math.max(
-      width / background.width,
-      height / background.height,
+    // Les instruments et l'interface restent dans leur espace
+    // de référence de 1280 × 720, sans être coupés.
+    const zoom = Math.min(width / 1280, height / 720);
+
+    const camera = this.cameras.main;
+
+    camera.setViewport(0, 0, width, height);
+    camera.setZoom(zoom);
+    camera.centerOn(640, 360);
+
+    // Le décor couvre aussi l'espace supplémentaire visible
+    // autour de la zone de jeu.
+    const visibleWorldWidth = width / zoom;
+    const visibleWorldHeight = height / zoom;
+
+    const backgroundScale = Math.max(
+      visibleWorldWidth / this.background.width,
+      visibleWorldHeight / this.background.height,
     );
 
-    background.setScale(scale);
+    this.background.setPosition(640, 360).setScale(backgroundScale);
+  }
+
+  private createBackground() {
+    this.background = this.add.image(640, 360, "rhythm-decor");
 
     // Ombre douce sous les objets.
     this.add.ellipse(202, 598, 150, 30, 0x243f26, 0.18);
     this.add.ellipse(540, 567, 255, 40, 0x243f26, 0.2);
     this.add.ellipse(975, 570, 220, 35, 0x243f26, 0.18);
 
-    this.avatar = this.add.image(200, 605, "rhythm-avatar").setOrigin(0.5, 1);
+    this.avatar = this.add
+      .image(200, 605, this.avatarTextureKey)
+      .setOrigin(0.5, 1);
 
     this.fitImage(this.avatar, 230, 330);
     this.avatarScale = this.avatar.scaleX;
@@ -296,6 +385,15 @@ export class RhythmDrumScene extends Phaser.Scene {
     this.replayButton.on("pointerdown", () => {
       if (this.phase !== "answering") return;
 
+      // Après une erreur de sauvegarde, la réponse complète
+      // est conservée et le bouton réessaie son enregistrement.
+      if (this.studentSequence.length === this.currentSequence.length) {
+        this.phase = "feedback";
+        this.replayButton.setAlpha(0.5);
+        void this.validateRound();
+        return;
+      }
+
       this.hintsUsed += 1;
       this.playSequence();
     });
@@ -331,24 +429,44 @@ export class RhythmDrumScene extends Phaser.Scene {
   }
 
   private startRound() {
-    if (this.phase === "finished") return;
+    if (this.phase === "finished" || this.stoppingForLimit) {
+      return;
+    }
 
-    const round = this.rounds[this.currentRound];
+    if (this.trainingClock?.sessionExpired()) {
+      void this.stopForSessionLimit();
+      return;
+    }
+
+    if (this.trainingClock?.budgetReached()) {
+      void this.finish("time_budget");
+      return;
+    }
+
+    // En mode chronométré, les modèles se répètent.
+    // La difficulté adaptative sera ajoutée dans le lot 2.
+    const modelIndex = this.trainingClock
+      ? this.currentRound % this.rounds.length
+      : this.currentRound;
+
+    const round = this.rounds[modelIndex];
 
     this.currentSequence = [...round.sequence];
 
     this.roundText.setText(
-      `Round ${this.currentRound + 1} / ${this.rounds.length}`,
+      this.trainingClock
+        ? `Séquence ${this.currentRound + 1}`
+        : `Round ${this.currentRound + 1} / ${this.rounds.length}`,
     );
 
     this.roundDots.forEach((dot, index) => {
       dot.setFillStyle(
-        index < this.currentRound
+        index < modelIndex
           ? 0x8fe094
-          : index === this.currentRound
+          : index === modelIndex
             ? 0xffd36a
             : 0xffffff,
-        index <= this.currentRound ? 1 : 0.35,
+        index <= modelIndex ? 1 : 0.35,
       );
     });
 
@@ -390,7 +508,7 @@ export class RhythmDrumScene extends Phaser.Scene {
 
     this.time.delayedCall(this.soundSpacingMs + this.answerDelayMs, () => {
       this.phase = "answering";
-      this.roundStartTime = Date.now();
+      this.roundStartTime = this.trainingClock?.activityNow() ?? Date.now();
 
       this.instructionText.setText("À toi de jouer !");
       this.instructionText.setColor("#baffbf");
@@ -402,6 +520,10 @@ export class RhythmDrumScene extends Phaser.Scene {
   private handlePad(pad: number) {
     if (this.phase !== "answering") return;
 
+    if (this.studentSequence.length >= this.currentSequence.length) {
+      return;
+    }
+
     this.playAudio(pad === 0 ? "drum-low" : "drum-high");
     this.animateInstrument(pad);
 
@@ -412,7 +534,8 @@ export class RhythmDrumScene extends Phaser.Scene {
     );
 
     if (this.studentSequence.length === this.currentSequence.length) {
-      this.responseTimeMs = Date.now() - this.roundStartTime;
+      this.responseTimeMs =
+        (this.trainingClock?.activityNow() ?? Date.now()) - this.roundStartTime;
 
       this.phase = "feedback";
       this.replayButton.setAlpha(0.5);
@@ -450,58 +573,81 @@ export class RhythmDrumScene extends Phaser.Scene {
   }
 
   private async validateRound(): Promise<void> {
+    if (this.stoppingForLimit || this.phase === "finished") {
+      return;
+    }
+
     const correct =
       this.studentSequence.length === this.currentSequence.length &&
       this.studentSequence.every(
         (pad, index) => pad === this.currentSequence[index],
       );
 
-    if (correct) {
-      try {
-        if (!this.onCorrectRound) {
-          throw new Error("La sauvegarde des étoiles n'est pas configurée.");
-        }
-
-        const confirmedBalance = await this.onCorrectRound(this.currentRound);
-
-        if (!this.sys.isActive()) return;
-
-        this.score += 1;
-        this.awardStars(confirmedBalance);
-      } catch (error) {
-        console.error(
-          "Impossible d'enregistrer ou d'afficher les étoiles :",
-          error,
-        );
-
-        if (!this.sys.isActive()) return;
-
-        this.instructionText.setText("Un problème est survenu");
-        this.instructionText.setColor("#ffe2a0");
-        this.answerText.setText(
-          "Vérifie le message dans la console avant de continuer",
-        );
-
-        return;
-      }
-    }
-
-    this.rhythmHistory.push({
+    const answer: RhythmResult["answers"][number] = {
       sequence: [...this.currentSequence],
       studentSequence: [...this.studentSequence],
       correct,
       responseTimeMs: this.responseTimeMs,
-    });
+    };
+
+    try {
+      if (!this.onRoundValidated) {
+        throw new Error("La sauvegarde des réponses n’est pas configurée.");
+      }
+
+      this.pendingSave = this.onRoundValidated(
+        this.currentRound,
+        answer,
+        this.hintsUsed,
+      );
+
+      const balance = await this.pendingSave;
+
+      if (!this.sys.isActive()) return;
+
+      if (correct) {
+        this.score += 1;
+        this.awardStars(balance);
+      }
+
+      this.rhythmHistory.push(answer);
+      this.currentRound += 1;
+    } catch (error) {
+      console.error("Sauvegarde du round impossible :", error);
+
+      if (!this.sys.isActive() || this.stoppingForLimit) {
+        return;
+      }
+
+      this.phase = "answering";
+      this.replayButton.setAlpha(1);
+
+      this.instructionText
+        .setText("La réponse n’a pas pu être enregistrée")
+        .setColor("#ffe2a0");
+
+      this.answerText.setText(
+        "Appuie sur Réécouter pour réessayer la sauvegarde",
+      );
+
+      return;
+    } finally {
+      this.pendingSave = null;
+    }
+
+    if (this.stoppingForLimit) return;
 
     this.playAudio(correct ? "success" : "error");
 
-    this.scoreText.setText(`${this.score} / ${this.rounds.length} réussis`);
-
-    this.instructionText.setText(
-      correct ? "Bravo, bien joué !" : "On continue, courage !",
+    this.scoreText.setText(
+      this.trainingClock
+        ? `${this.score} / ${this.rhythmHistory.length} réussis`
+        : `${this.score} / ${this.rounds.length} réussis`,
     );
 
-    this.instructionText.setColor(correct ? "#baffbf" : "#ffe2a0");
+    this.instructionText
+      .setText(correct ? "Bravo, bien joué !" : "On continue, courage !")
+      .setColor(correct ? "#baffbf" : "#ffe2a0");
 
     this.answerText.setText(
       correct ? "Séquence réussie !" : "Une nouvelle séquence arrive",
@@ -513,11 +659,9 @@ export class RhythmDrumScene extends Phaser.Scene {
       this.showReward();
     }
 
-    this.currentRound += 1;
-
     this.time.delayedCall(this.feedbackDelayMs, () => {
-      if (this.currentRound >= this.rounds.length) {
-        this.finish();
+      if (!this.trainingClock && this.currentRound >= this.rounds.length) {
+        void this.finish();
       } else {
         this.startRound();
       }
@@ -649,31 +793,63 @@ export class RhythmDrumScene extends Phaser.Scene {
     this.sound.play(key);
   }
 
-  private finish() {
-    if (this.phase === "finished") return;
-
-    this.phase = "finished";
-    this.replayButton.setAlpha(0.5);
-
-    const durationSeconds = Math.round((Date.now() - this.startTime) / 1000);
-
-    let stars = 1;
-
-    if (this.score >= 3 && this.score <= 4) {
-      stars = 2;
-    } else if (this.score === this.rounds.length) {
-      stars = 3;
+  public async stopForSessionLimit(): Promise<void> {
+    if (this.stoppingForLimit || this.finishing) {
+      return;
     }
 
-    this.onFinish?.({
+    this.stoppingForLimit = true;
+    this.input.enabled = false;
+
+    this.time.removeAllEvents();
+    this.sound.stopAll();
+
+    // Attend la sauvegarde engagée avant la clôture.
+    const pending = this.pendingSave;
+
+    if (pending) {
+      await pending;
+    }
+
+    await this.finish("session_time_limit");
+  }
+
+  private async finish(endReason?: ActivityEndReason): Promise<void> {
+    if (this.finishing) return;
+
+    this.finishing = true;
+    this.phase = "finished";
+    this.input.enabled = false;
+    this.replayButton.setAlpha(0.5);
+
+    const maxScore = this.trainingClock
+      ? this.rhythmHistory.length
+      : this.rounds.length;
+
+    const stars = this.trainingClock
+      ? getRatingStars(this.score, maxScore)
+      : this.score === this.rounds.length
+        ? 3
+        : this.score >= 3
+          ? 2
+          : 1;
+
+    const durationSeconds = this.trainingClock
+      ? this.trainingClock.activityNow() / 1000
+      : Math.round((Date.now() - this.startTime) / 1000);
+
+    await this.onFinish?.({
       score: this.score,
-      maxScore: this.rounds.length,
+      maxScore,
       stars,
       durationSeconds,
       hintsUsed: this.hintsUsed,
       answers: this.rhythmHistory,
+      endReason,
     });
 
-    this.scene.stop();
+    if (this.sys.isActive()) {
+      this.scene.stop();
+    }
   }
 }
