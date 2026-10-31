@@ -8,6 +8,7 @@ import {
   SyllablePathScene,
   type SyllableResult,
 } from "../games/SyllablePathScene";
+import { SoundHuntScene, type SoundHuntResult } from "../games/SoundHuntScene";
 import { db } from "../db/db";
 import {
   completeSessionActivity,
@@ -15,13 +16,18 @@ import {
   isSessionExpired,
 } from "../db/sessions";
 import { getStarBalance } from "../db/stars";
-import { saveRhythmRound, saveSyllableRound } from "../db/rounds";
+import {
+  saveRhythmRound,
+  saveSyllableRound,
+  saveSoundHuntRound,
+} from "../db/rounds";
 
 import { getActivityResume } from "../db/activityResume";
 import { getAvatarImageUrl } from "../data/avatars";
 import { beginTrainingClock } from "../db/trainingTime";
 import { TrainingClock, type ClockDisplay } from "../games/TrainingClock";
 import { formatRemainingTime } from "../games/trainingRules";
+import RaftTransitionScene from "../games/RaftTransitionScene";
 
 export default function GamePage() {
   const { sessionId } = useParams();
@@ -86,6 +92,7 @@ function GameSession({ sessionId }: GameSessionProps) {
           : "L’activité a rencontré un problème.",
       );
     };
+
     const load = async () => {
       if (!sessionId || !containerRef.current) return;
 
@@ -162,8 +169,6 @@ function GameSession({ sessionId }: GameSessionProps) {
 
       if (!isMounted) return;
 
-      // Nombre total d’aides déjà persistées.
-      // Chaque nouveau round enregistrera seulement la différence.
       let persistedHints = resume.hintsUsed;
 
       function getNewHints(totalHints: number) {
@@ -193,8 +198,9 @@ function GameSession({ sessionId }: GameSessionProps) {
           height: 720,
           expandParent: false,
         },
-        scene: [],
       });
+
+      game.scene.add("RaftTransition", RaftTransitionScene, false);
 
       if (!isMounted) {
         game.destroy(true);
@@ -212,18 +218,23 @@ function GameSession({ sessionId }: GameSessionProps) {
           ? "SyllablePathScene"
           : currentActivity.type === "rhythm"
             ? "RhythmDrumScene"
-            : null;
+            : currentActivity.type === "sound_hunt"
+              ? "SoundHuntScene"
+              : null;
 
       if (!sceneKey) {
         throw new Error("Type d’activité non pris en charge.");
       }
 
-      // Une instance réelle est créée ici.
-      // Le compteur et Phaser utiliseront le même objet.
-      const activityScene: RhythmDrumScene | SyllablePathScene =
+      const activityScene:
+        | RhythmDrumScene
+        | SyllablePathScene
+        | SoundHuntScene =
         currentActivity.type === "syllables"
           ? new SyllablePathScene()
-          : new RhythmDrumScene();
+          : currentActivity.type === "rhythm"
+            ? new RhythmDrumScene()
+            : new SoundHuntScene();
 
       let trainingClock: TrainingClock | undefined;
 
@@ -270,141 +281,146 @@ function GameSession({ sessionId }: GameSessionProps) {
         }
       }
 
+      const handleActivityFinish = async (
+        result: SyllableResult | RhythmResult | SoundHuntResult,
+      ) => {
+        try {
+          await trainingClock?.close();
+
+          await completeSessionActivity(
+            currentActivity.id,
+            result.score,
+            result.stars,
+            result.durationSeconds,
+            result.endReason,
+          );
+
+          if (result.endReason === "session_time_limit") {
+            await endSession(sessionId);
+
+            if (isMounted) {
+              navigate(`/session-end/${sessionId}`, {
+                replace: true,
+              });
+            }
+
+            return;
+          }
+
+          if (isMounted) {
+            navigate(`/activity-end/${sessionId}/${currentActivity.id}`);
+          }
+        } catch (error) {
+          showGameError(error);
+        }
+      };
+
+      const activityConfig: Record<string, unknown> = {
+        trainingClock,
+        avatarUrl,
+        avatarTextureKey,
+        initialStarBalance,
+
+        activityStartedAt,
+      };
+
       if (currentActivity.type === "syllables") {
-        game.scene.add("SyllablePathScene", activityScene, true, {
-          trainingClock,
-          avatarUrl,
-          avatarTextureKey,
-          initialStarBalance,
+        activityConfig.initialAnswers = resume.syllableAnswers;
+        activityConfig.initialHintsUsed = resume.hintsUsed;
 
-          initialAnswers: resume.syllableAnswers,
-          initialHintsUsed: resume.hintsUsed,
-          activityStartedAt,
+        activityConfig.onRoundValidated = async (
+          roundIndex: number,
+          answer: SyllableResult["answers"][number],
+          totalHints: number,
+        ) => {
+          const saved = await saveSyllableRound({
+            sessionId,
+            sessionActivityId: currentActivity.id,
+            studentId: session.studentId,
+            roundIndex,
 
-          onRoundValidated: async (
-            roundIndex: number,
-            answer: SyllableResult["answers"][number],
-            totalHints: number,
-          ) => {
-            const saved = await saveSyllableRound({
-              sessionId,
-              sessionActivityId: currentActivity.id,
-              studentId: session.studentId,
-              roundIndex,
+            ...answer,
 
-              ...answer,
+            hintsUsed: getNewHints(totalHints),
+          });
 
-              hintsUsed: getNewHints(totalHints),
-            });
+          persistedHints = totalHints;
 
-            persistedHints = totalHints;
+          return saved.starBalance;
+        };
 
-            return saved.starBalance;
-          },
-
-          onFinish: async (result: SyllableResult) => {
-            try {
-              // Le compteur est persisté avant de clôturer
-              // l’activité ou la séance.
-              await trainingClock?.close();
-
-              await completeSessionActivity(
-                currentActivity.id,
-                result.score,
-                result.stars,
-                result.durationSeconds,
-                result.endReason,
-              );
-
-              if (result.endReason === "session_time_limit") {
-                await endSession(sessionId);
-
-                if (isMounted) {
-                  navigate(`/session-end/${sessionId}`, {
-                    replace: true,
-                  });
-                }
-
-                return;
-              }
-
-              if (isMounted) {
-                navigate(`/activity-end/${sessionId}/${currentActivity.id}`);
-              }
-            } catch (error) {
-              showGameError(error);
-            }
-          },
-        });
+        activityConfig.onFinish = async (result: SyllableResult) => {
+          await handleActivityFinish(result);
+        };
       } else if (currentActivity.type === "rhythm") {
-        game.scene.add("RhythmDrumScene", activityScene, true, {
-          trainingClock,
-          avatarUrl,
-          avatarTextureKey,
-          initialStarBalance,
+        activityConfig.initialAnswers = resume.rhythmAnswers;
+        activityConfig.initialHintsUsed = resume.hintsUsed;
 
-          initialAnswers: resume.rhythmAnswers,
-          initialHintsUsed: resume.hintsUsed,
-          activityStartedAt,
+        activityConfig.onRoundValidated = async (
+          roundIndex: number,
+          answer: RhythmResult["answers"][number],
+          totalHints: number,
+        ) => {
+          const saved = await saveRhythmRound({
+            sessionId,
+            sessionActivityId: currentActivity.id,
+            studentId: session.studentId,
+            roundIndex,
 
-          onRoundValidated: async (
-            roundIndex: number,
-            answer: RhythmResult["answers"][number],
-            totalHints: number,
-          ) => {
-            const saved = await saveRhythmRound({
-              sessionId,
-              sessionActivityId: currentActivity.id,
-              studentId: session.studentId,
-              roundIndex,
+            ...answer,
 
-              ...answer,
+            hintsUsed: getNewHints(totalHints),
+          });
 
-              hintsUsed: getNewHints(totalHints),
-            });
+          persistedHints = totalHints;
 
-            persistedHints = totalHints;
+          return saved.starBalance;
+        };
 
-            return saved.starBalance;
-          },
+        activityConfig.onFinish = async (result: RhythmResult) => {
+          await handleActivityFinish(result);
+        };
+      } else if (currentActivity.type === "sound_hunt") {
+        activityConfig.initialAnswers = resume.soundHuntAnswers;
+        activityConfig.initialHintsUsed = resume.hintsUsed;
 
-          onFinish: async (result: RhythmResult) => {
-            try {
-              // Le compteur est persisté avant de clôturer
-              // l’activité ou la séance.
-              await trainingClock?.close();
+        activityConfig.onRoundValidated = async (
+          roundIndex: number,
+          answer: SoundHuntResult["answers"][number],
+          totalHints: number,
+        ) => {
+          const saved = await saveSoundHuntRound({
+            sessionId,
+            sessionActivityId: currentActivity.id,
+            studentId: session.studentId,
+            roundIndex,
 
-              await completeSessionActivity(
-                currentActivity.id,
-                result.score,
-                result.stars,
-                result.durationSeconds,
-                result.endReason,
-              );
+            ...answer,
 
-              if (result.endReason === "session_time_limit") {
-                await endSession(sessionId);
+            hintsUsed: getNewHints(totalHints),
+          });
 
-                if (isMounted) {
-                  navigate(`/session-end/${sessionId}`, {
-                    replace: true,
-                  });
-                }
+          persistedHints = totalHints;
 
-                return;
-              }
+          return saved.starBalance;
+        };
 
-              if (isMounted) {
-                navigate(`/activity-end/${sessionId}/${currentActivity.id}`);
-              }
-            } catch (error) {
-              showGameError(error);
-            }
-          },
-        });
+        activityConfig.onFinish = async (result: SoundHuntResult) => {
+          await handleActivityFinish(result);
+        };
       } else {
         throw new Error("Type d’activité non pris en charge.");
       }
+
+      game.scene.add(sceneKey, activityScene, false, activityConfig);
+
+      game.scene.start("RaftTransition", {
+        avatarUrl,
+        avatarTextureKey,
+        onFinished: () => {
+          game.scene.start(sceneKey, activityConfig);
+        },
+      });
     };
 
     void load().catch((error) => {

@@ -88,6 +88,8 @@ export type Result = {
   studentId: string;
   activityCode: string;
   skillCode: string;
+  contentId?: string;
+  contentVersion?: number;
   contentLabel: string;
   correct: 0 | 1;
   responseTimeMs: number;

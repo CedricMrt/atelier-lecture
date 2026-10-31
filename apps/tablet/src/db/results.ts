@@ -1,4 +1,6 @@
 import { db, type Result } from "./db";
+import type { SoundHuntRoundParams } from "./rounds";
+import { encodeSoundHuntContent } from "../data/soundHuntAnswers";
 
 type CommonResultParams = {
   sessionId: string;
@@ -24,6 +26,8 @@ type SyllableResultParams = CommonResultParams & {
 type SaveResultParams = CommonResultParams & {
   activityCode: string;
   skillCode: string;
+  contentId?: string;
+  contentVersion?: number;
   contentLabel: string;
   errorType?: string;
 };
@@ -108,6 +112,13 @@ async function saveActivityResult(params: SaveResultParams): Promise<Result> {
         studentId: params.studentId,
         activityCode: params.activityCode,
         skillCode: params.skillCode,
+        ...(params.contentId !== undefined &&
+        params.contentVersion !== undefined
+          ? {
+              contentId: params.contentId,
+              contentVersion: params.contentVersion,
+            }
+          : {}),
         contentLabel: params.contentLabel,
         correct: params.correct ? 1 : 0,
         responseTimeMs: params.responseTimeMs,
@@ -212,5 +223,28 @@ export async function markSyncItemAsFailed(id: string) {
       status: "failed",
       attempts: item.attempts + 1,
     });
+  });
+}
+
+export async function saveSoundHuntResult(
+  params: SoundHuntRoundParams,
+): Promise<Result> {
+  const contentLabel = encodeSoundHuntContent(params);
+
+  const correct = params.selectedSyllableIndex === params.targetSyllableIndex;
+
+  if (correct !== params.correct) {
+    throw new Error("Le résultat de Chasse au son est incohérent.");
+  }
+
+  return saveActivityResult({
+    ...params,
+
+    activityCode: "chasse_aux_sons",
+    skillCode: "phonologie",
+
+    contentLabel,
+
+    errorType: correct ? undefined : "syllabe_incorrecte",
   });
 }

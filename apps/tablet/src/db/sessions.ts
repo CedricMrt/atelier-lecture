@@ -68,6 +68,24 @@ export async function createDemoSession(
       activeDurationMs: 0,
       answeredRounds: 0,
     },
+    {
+      id: `${sessionId}-activity-3`,
+      sessionId,
+      activityCode: "chasse_aux_sons",
+      position: 3,
+      level: 1,
+      status: "pending",
+      maxScore: 5,
+      type: "sound_hunt",
+      timingMode,
+      timeBudgetSeconds:
+        timingMode === "active_time"
+          ? TRAINING_RULES.soundHuntBudgetSeconds
+          : undefined,
+
+      activeDurationMs: 0,
+      answeredRounds: 0,
+    },
   ];
 
   await db.transaction(

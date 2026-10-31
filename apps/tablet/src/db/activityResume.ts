@@ -2,6 +2,8 @@ import { db } from "./db";
 
 import type { RhythmResult } from "../games/RhythmDrumScene";
 import type { SyllableResult } from "../games/SyllablePathScene";
+import type { SoundHuntResult } from "../games/SoundHuntScene";
+import { decodeSoundHuntContent } from "../data/soundHuntAnswers";
 
 export async function getActivityResume(
   sessionActivityId: string,
@@ -68,6 +70,7 @@ export async function getActivityResume(
 
   const rhythmAnswers: RhythmResult["answers"] = [];
   const syllableAnswers: SyllableResult["answers"] = [];
+  const soundHuntAnswers: SoundHuntResult["answers"] = [];
 
   let hintsUsed = 0;
 
@@ -108,6 +111,33 @@ export async function getActivityResume(
         correct: result.correct === 1,
         responseTimeMs: result.responseTimeMs,
       });
+    } else if (activityCode === "chasse_aux_sons") {
+      const content = decodeSoundHuntContent(result.contentLabel);
+      if (
+        result.contentId !== content.contentId ||
+        result.contentVersion !== content.contentVersion
+      ) {
+        throw new Error(
+          "L’identifiant ou la version du résultat " +
+            "ne correspond pas au contenu enregistré.",
+        );
+      }
+
+      const correct =
+        content.selectedSyllableIndex === content.targetSyllableIndex;
+
+      if (correct !== (result.correct === 1)) {
+        throw new Error(
+          "Le résultat enregistré de Chasse au son est incohérent.",
+        );
+      }
+
+      soundHuntAnswers.push({
+        ...content,
+        syllables: [...content.syllables],
+        correct,
+        responseTimeMs: result.responseTimeMs,
+      });
     } else {
       throw new Error("Cette activité ne possède pas encore de reprise.");
     }
@@ -116,6 +146,7 @@ export async function getActivityResume(
   return {
     rhythmAnswers,
     syllableAnswers,
+    soundHuntAnswers,
     hintsUsed,
   };
 }

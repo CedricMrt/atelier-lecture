@@ -8,6 +8,9 @@ import SessionEndPage from "./pages/SessionEndPage";
 import DexieTestPage from "./pages/DexieTestPage";
 import PhaserTestPage from "./pages/PhaserTestPage";
 import ManualLoginPage from "./pages/ManualLoginPage";
+import TeacherStudentsPage from "./pages/TeacherStudentsPage.tsx";
+import TeacherStudentPage from "./pages/TeacherStudentPage";
+import TeacherSessionPage from "./pages/TeacherSessionPage";
 
 function App() {
   return (
@@ -26,6 +29,15 @@ function App() {
         <Route path='/test/dexie' element={<DexieTestPage />} />
         <Route path='/test/phaser' element={<PhaserTestPage />} />
         <Route path='/manual-login' element={<ManualLoginPage />} />
+        <Route path='/adulte/eleves' element={<TeacherStudentsPage />} />
+        <Route
+          path='/adulte/eleves/:studentId'
+          element={<TeacherStudentPage />}
+        />
+        <Route
+          path='/adulte/eleves/:studentId/seances/:sessionId'
+          element={<TeacherSessionPage />}
+        />
       </Routes>
     </BrowserRouter>
   );

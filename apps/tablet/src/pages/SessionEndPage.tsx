@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { db, type Session, type SessionActivity } from "../db/db";
 import { getStarBalance } from "../db/stars";
 import "./SessionEndPage.css";
+import { syncPendingResults } from "../services/resultSync";
 
 type SessionSummary = {
   session: Session;
@@ -59,6 +60,10 @@ export default function SessionEndPage() {
   const [error, setError] = useState<string | null>(null);
   const [walletWarning, setWalletWarning] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    void syncPendingResults();
+  }, []);
 
   useEffect(() => {
     let active = true;

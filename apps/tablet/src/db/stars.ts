@@ -6,7 +6,10 @@ export async function getStarBalance(studentId: string): Promise<number> {
   return wallet?.balance ?? 0;
 }
 
-type RewardActivityCode = "tambour_des_sons" | "chemin_des_syllabes";
+type RewardActivityCode =
+  | "tambour_des_sons"
+  | "chemin_des_syllabes"
+  | "chasse_aux_sons";
 
 async function creditActivityRoundStars(
   sessionActivityId: string,
@@ -122,5 +125,16 @@ export async function creditSyllableRoundStars(
     sessionActivityId,
     roundIndex,
     "chemin_des_syllabes",
+  );
+}
+
+export async function creditSoundHuntRoundStars(
+  sessionActivityId: string,
+  roundIndex: number,
+): Promise<number> {
+  return creditActivityRoundStars(
+    sessionActivityId,
+    roundIndex,
+    "chasse_aux_sons",
   );
 }

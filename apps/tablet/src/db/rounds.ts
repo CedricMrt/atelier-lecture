@@ -1,12 +1,22 @@
 import { db, type Result } from "./db";
 
-import { saveRhythmResult, saveSyllableResult } from "./results";
+import {
+  saveRhythmResult,
+  saveSyllableResult,
+  saveSoundHuntResult,
+} from "./results";
 
 import {
   creditRhythmRoundStars,
   creditSyllableRoundStars,
+  creditSoundHuntRoundStars,
   getStarBalance,
 } from "./stars";
+
+import {
+  encodeSoundHuntContent,
+  type SoundHuntAnswer,
+} from "../data/soundHuntAnswers";
 
 type CommonRoundParams = {
   sessionId: string;
@@ -28,6 +38,8 @@ export type SyllableRoundParams = CommonRoundParams & {
   expectedSyllables: number;
   studentSyllables: number;
 };
+
+export type SoundHuntRoundParams = CommonRoundParams & SoundHuntAnswer;
 
 export type SavedRound = {
   result: Result;
@@ -190,5 +202,30 @@ export async function saveSyllableRound(
 
     creditStars: () =>
       creditSyllableRoundStars(params.sessionActivityId, params.roundIndex),
+  });
+}
+
+export async function saveSoundHuntRound(
+  params: SoundHuntRoundParams,
+): Promise<SavedRound> {
+  const contentLabel = encodeSoundHuntContent(params);
+
+  const correct = params.selectedSyllableIndex === params.targetSyllableIndex;
+
+  if (correct !== params.correct) {
+    throw new Error(
+      "La validation de la syllabe sélectionnée est incohérente.",
+    );
+  }
+
+  return saveRound({
+    params,
+    activityCode: "chasse_aux_sons",
+    contentLabel,
+
+    saveResult: () => saveSoundHuntResult(params),
+
+    creditStars: () =>
+      creditSoundHuntRoundStars(params.sessionActivityId, params.roundIndex),
   });
 }
