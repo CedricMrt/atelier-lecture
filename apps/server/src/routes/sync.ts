@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { requireDeviceToken } from "../middleware/deviceAuth.js";
 import {
   saveResults,
   saveStudentProfile,
   type StoredResult,
 } from "../data/resultRepository.js";
+import { requireStudentSync } from "../middleware/requireStudentSync.js";
 
 const router = Router();
 
-router.use(requireDeviceToken);
+router.use(requireStudentSync);
 
 router.post("/results", (req, res) => {
   const student = req.body?.student;

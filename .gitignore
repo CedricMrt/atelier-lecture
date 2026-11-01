@@ -1,8 +1,12 @@
 node_modules/
 dist/
+build/
 .env
-*.db
-*.sqlite
+.env.local
+
 data/
 backups/
 logs/
+*.db
+*.sqlite
+*.sqlite-journal

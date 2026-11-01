@@ -8,6 +8,10 @@ declare global {
         username: string;
         displayName: string;
       };
+      student?: {
+        studentId: string;
+        classId: string;
+      };
     }
   }
 }

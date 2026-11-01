@@ -1,5 +1,3 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-
 export type ServerStudent = {
   id: string;
   firstName: string;
@@ -20,7 +18,7 @@ export async function fetchStudentByQrToken(
   qrToken: string,
 ): Promise<ServerStudent | null> {
   const response = await fetch(
-    `${API_BASE_URL}/api/students/qr/${encodeURIComponent(qrToken)}`,
+    `/api/students/qr/${encodeURIComponent(qrToken)}`,
   );
 
   if (!response.ok) {

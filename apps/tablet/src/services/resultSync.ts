@@ -1,10 +1,5 @@
 import { db } from "../db/db";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-
-const DEVICE_SYNC_TOKEN =
-  import.meta.env.VITE_DEVICE_SYNC_TOKEN ?? "prototype-device-token";
-
 const BATCH_SIZE = 25;
 
 export async function syncPendingResults(): Promise<void> {
@@ -41,12 +36,12 @@ export async function syncPendingResults(): Promise<void> {
       const batch = items.slice(index, index + BATCH_SIZE);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/sync/results`, {
+        const response = await fetch("/api/sync/results", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${DEVICE_SYNC_TOKEN}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             student: {
               studentId: student.id,

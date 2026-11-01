@@ -2,9 +2,6 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./TeacherPages.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
-
 export default function TeacherLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,7 +19,7 @@ export default function TeacherLoginPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/enseignant/connexion`, {
+      const response = await fetch("/api/enseignant/connexion", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

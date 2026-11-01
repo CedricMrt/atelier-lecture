@@ -1,5 +1,3 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-
 export type Student = {
   studentId: string;
   displayName: string;
@@ -66,7 +64,7 @@ export type TeacherProfile = {
 };
 
 export async function fetchCurrentTeacher(): Promise<TeacherProfile | null> {
-  const response = await fetch(`${API_BASE_URL}/api/enseignant/session`, {
+  const response = await fetch("/api/enseignant/session", {
     credentials: "include",
   });
 
@@ -95,7 +93,7 @@ export function decodeSoundHuntContentLabel(
 }
 
 export async function fetchStudents(): Promise<Student[]> {
-  const response = await fetch(`${API_BASE_URL}/api/enseignant/eleves`, {
+  const response = await fetch("/api/enseignant/eleves", {
     headers: {
       credentials: "include",
     },
@@ -112,14 +110,11 @@ export async function fetchStudents(): Promise<Student[]> {
 export async function fetchStudentDetail(
   studentId: string,
 ): Promise<StudentDetail> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/enseignant/eleves/${studentId}`,
-    {
-      headers: {
-        credentials: "include",
-      },
+  const response = await fetch(`/api/enseignant/eleves/${studentId}`, {
+    headers: {
+      credentials: "include",
     },
-  );
+  });
 
   if (!response.ok) {
     throw new Error("Impossible de charger la fiche de cet élève.");
@@ -133,7 +128,7 @@ export async function fetchSessionDetail(
   sessionId: string,
 ): Promise<SessionDetail> {
   const response = await fetch(
-    `${API_BASE_URL}/api/enseignant/eleves/${studentId}/seances/${sessionId}`,
+    `/api/enseignant/eleves/${studentId}/seances/${sessionId}`,
     {
       headers: {
         credentials: "include",
@@ -149,7 +144,7 @@ export async function fetchSessionDetail(
 }
 
 export async function logoutTeacher(): Promise<void> {
-  await fetch(`${API_BASE_URL}/api/enseignant/deconnexion`, {
+  await fetch("/api/enseignant/deconnexion", {
     method: "POST",
     credentials: "include",
   });
