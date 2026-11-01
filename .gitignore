@@ -1,12 +1,25 @@
+# Dépendances et builds
 node_modules/
 dist/
 build/
+
+# Configuration locale
 .env
 .env.local
+.env.*.local
 
-data/
+# Base de données et données locales du serveur
+apps/server/data/
+apps/server/backups/
+apps/server/logs/
+apps/server/certs/
 backups/
-logs/
+
+# Fichiers de base de données
 *.db
 *.sqlite
 *.sqlite-journal
+
+# Releases
+release/
+*.zip

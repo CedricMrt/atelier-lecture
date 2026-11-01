@@ -9,9 +9,9 @@ set DATESTAMP=%DATESTAMP: =0%
 
 if exist "data\atelier-lecture.db" (
   copy "data\atelier-lecture.db" "backups\atelier-lecture-%DATESTAMP%.db" >nul
-  echo Sauvegarde creee dans le dossier "backups".
+  echo Sauvegarde créée dans le dossier "backups".
 ) else (
-  echo Aucune base de donnees trouvee dans le dossier "data".
+  echo Aucune base de donnees trouvée dans le dossier "data".
 )
 
 echo.

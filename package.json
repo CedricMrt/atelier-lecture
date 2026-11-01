@@ -11,9 +11,11 @@
     "build:server": "npm run build --workspace apps/server",
     "build:all": "npm run build:tablet && npm run build:server",
     "start": "npm run start --workspace apps/server",
-    "seed:students": "npm run seed:students --workspace apps/server"
+    "seed:students": "npm run seed:students --workspace apps/server",
+    "cert": "node scripts/generate-certificate.mjs"
   },
   "devDependencies": {
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "selfsigned": "^5.5.0"
   }
 }

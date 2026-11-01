@@ -6,20 +6,14 @@ echo ==========================================
 echo   ATELIER LECTURE
 echo ==========================================
 echo.
-echo Recherche de l'adresse du PC...
+echo Ne ferme pas cette fenetre pendant la classe.
 echo.
 
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
-  set IP=%%a
-)
+if not exist apps\server\data mkdir apps\server\data
+if not exist apps\server\logs mkdir apps\server\logs
+if not exist backups mkdir backups
 
-set IP=%IP: =%
-
-echo Adresse a utiliser sur les tablettes :
-echo http://%IP%:3000
-echo.
-
-start "" "http://localhost:3000/adulte/connexion"
+start "" "https://localhost:3000/adulte/connexion"
 
 call npm run start
 

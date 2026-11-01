@@ -22,9 +22,9 @@ if errorlevel 1 (
 echo Node.js detecte.
 echo.
 
-if not exist data mkdir data
+if not exist apps\server\data mkdir apps\server\data
+if not exist apps\server\logs mkdir apps\server\logs
 if not exist backups mkdir backups
-if not exist logs mkdir logs
 
 echo Installation des dependances...
 echo Cela peut prendre quelques minutes.
@@ -34,6 +34,16 @@ call npm install
 if errorlevel 1 (
   echo.
   echo Erreur pendant l'installation.
+  pause
+  exit /b
+)
+
+echo.
+echo Creation du certificat HTTPS...
+call npm run cert
+if errorlevel 1 (
+  echo.
+  echo Erreur pendant la creation du certificat.
   pause
   exit /b
 )
