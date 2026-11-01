@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { requireTeacherToken } from "../middleware/teacherAuth.js";
+import { requireTeacherSession } from "../middleware/teacherSession.js";
 import {
   getResultsByStudent,
   getStudent,
   getStudents,
-} from "../data/syncStore.js";
+} from "../data/resultRepository.js";
 
 const router = Router();
 
-router.use(requireTeacherToken);
+router.use(requireTeacherSession);
 
 router.get("/eleves", async (_req, res) => {
   const students = await getStudents();

@@ -1,7 +1,6 @@
 import { db } from "../db/db";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const DEVICE_SYNC_TOKEN =
   import.meta.env.VITE_DEVICE_SYNC_TOKEN ?? "prototype-device-token";
@@ -51,7 +50,12 @@ export async function syncPendingResults(): Promise<void> {
           body: JSON.stringify({
             student: {
               studentId: student.id,
-              displayName: student.fullName,
+              firstName: student.firstName,
+              fullName: student.fullName,
+              avatarKey: student.avatarKey,
+              avatarVariant: student.avatarVariant,
+              qrToken: student.qrToken,
+              classId: student.classId,
             },
             results: batch.map((item) => item.payload),
           }),

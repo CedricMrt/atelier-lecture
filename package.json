@@ -1,4 +1,12 @@
 {
   "private": true,
-  "name": "atelier-lecture-root"
+  "name": "atelier-lecture-root",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cookie-parser": "^1.4.10"
+  }
 }

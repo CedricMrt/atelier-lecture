@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jsQR from "jsqr";
+import { fetchStudentByQrToken } from "../services/studentApi";
 import { db } from "../db/db";
 import "./ScanCardPage.css";
 
@@ -70,23 +71,26 @@ export default function ScanCardPage() {
     }
 
     try {
-      const student = await db.students
-        .where("qrToken")
-        .equals(token.trim())
-        .first();
+      const serverStudent = await fetchStudentByQrToken(token.trim());
 
       if (!mountedRef.current || requestId !== requestIdRef.current) {
         return;
       }
 
-      if (!student) {
+      if (!serverStudent) {
         setError(
           "Cette carte n’est pas reconnue. Réessaie ou choisis ton prénom.",
         );
         return;
       }
 
-      navigate(`/confirm/${encodeURIComponent(student.id)}`);
+      await db.students.put(serverStudent);
+
+      if (!mountedRef.current || requestId !== requestIdRef.current) {
+        return;
+      }
+
+      navigate(`/confirm/${encodeURIComponent(serverStudent.id)}`);
     } catch (err) {
       console.error("Lecture de la carte impossible :", err);
 

@@ -1,8 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
-
-const TEACHER_API_TOKEN =
-  import.meta.env.VITE_TEACHER_API_TOKEN ?? "prototype-token-local";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export type Student = {
   studentId: string;
@@ -63,6 +59,25 @@ export type SoundHuntContent = {
   replayUsed: boolean;
 };
 
+export type TeacherProfile = {
+  teacherId: string;
+  username: string;
+  displayName: string;
+};
+
+export async function fetchCurrentTeacher(): Promise<TeacherProfile | null> {
+  const response = await fetch(`${API_BASE_URL}/api/enseignant/session`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  return data.teacher ?? null;
+}
+
 export function decodeSoundHuntContentLabel(
   contentLabel: string,
 ): SoundHuntContent | null {
@@ -82,7 +97,7 @@ export function decodeSoundHuntContentLabel(
 export async function fetchStudents(): Promise<Student[]> {
   const response = await fetch(`${API_BASE_URL}/api/enseignant/eleves`, {
     headers: {
-      Authorization: `Bearer ${TEACHER_API_TOKEN}`,
+      credentials: "include",
     },
   });
 
@@ -101,7 +116,7 @@ export async function fetchStudentDetail(
     `${API_BASE_URL}/api/enseignant/eleves/${studentId}`,
     {
       headers: {
-        Authorization: `Bearer ${TEACHER_API_TOKEN}`,
+        credentials: "include",
       },
     },
   );
@@ -121,7 +136,7 @@ export async function fetchSessionDetail(
     `${API_BASE_URL}/api/enseignant/eleves/${studentId}/seances/${sessionId}`,
     {
       headers: {
-        Authorization: `Bearer ${TEACHER_API_TOKEN}`,
+        credentials: "include",
       },
     },
   );
@@ -131,4 +146,11 @@ export async function fetchSessionDetail(
   }
 
   return response.json();
+}
+
+export async function logoutTeacher(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/enseignant/deconnexion`, {
+    method: "POST",
+    credentials: "include",
+  });
 }
