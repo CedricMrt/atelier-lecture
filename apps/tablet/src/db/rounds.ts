@@ -18,6 +18,15 @@ import {
   type SoundHuntAnswer,
 } from "../data/soundHuntAnswers";
 
+import { saveRhythmMusicResult } from "./results";
+
+import { creditRhythmMusicRoundStars } from "./stars";
+
+import {
+  encodeRhythmMusicContent,
+  type RhythmMusicAnswer,
+} from "../data/rhythmMusicAnswers";
+
 type CommonRoundParams = {
   sessionId: string;
   sessionActivityId: string;
@@ -227,5 +236,32 @@ export async function saveSoundHuntRound(
 
     creditStars: () =>
       creditSoundHuntRoundStars(params.sessionActivityId, params.roundIndex),
+  });
+}
+
+export type RhythmMusicRoundParams = CommonRoundParams & RhythmMusicAnswer;
+
+export async function saveRhythmMusicRound(
+  params: RhythmMusicRoundParams,
+): Promise<SavedRound> {
+  const correct =
+    params.studentTaps === params.expectedTaps &&
+    params.hits === params.expectedTaps;
+
+  if (correct !== params.correct) {
+    throw new Error("La validation du rythme musical est incohérente.");
+  }
+
+  const contentLabel = encodeRhythmMusicContent(params);
+
+  return saveRound({
+    params,
+    activityCode: "rythme_musical",
+    contentLabel,
+
+    saveResult: () => saveRhythmMusicResult(params),
+
+    creditStars: () =>
+      creditRhythmMusicRoundStars(params.sessionActivityId, params.roundIndex),
   });
 }

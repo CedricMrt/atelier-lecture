@@ -27,6 +27,18 @@ function getActivityPresentation(activityCode: string) {
         symbol: "🪨",
       };
 
+    case "chasse_aux_sons":
+      return {
+        title: "Chasse aux sons",
+        symbol: "🎧",
+      };
+
+    case "rythme_musical":
+      return {
+        title: "Rythme musical",
+        symbol: "🎵",
+      };
+
     default:
       return {
         title: "Mission de l’archipel",

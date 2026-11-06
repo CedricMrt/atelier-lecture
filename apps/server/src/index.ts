@@ -35,95 +35,99 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json());
 app.use(cookieParser());
 
-await ensureDefaultTeacher();
+async function startServer() {
+  await ensureDefaultTeacher();
 
-app.use("/api/enseignant", teacherAuthRouter);
-app.use("/api/enseignant", requireTeacherSession, teacherRouter);
-app.use("/api/sync", requireStudentSync, syncRouter);
-app.use("/api/students", studentsRouter);
+  app.use("/api/enseignant", teacherAuthRouter);
+  app.use("/api/enseignant", requireTeacherSession, teacherRouter);
+  app.use("/api/sync", requireStudentSync, syncRouter);
+  app.use("/api/students", studentsRouter);
 
-const tabletDistPath = path.resolve(process.cwd(), "../tablet/dist");
+  const tabletDistPath = path.resolve(process.cwd(), "../tablet/dist");
 
-app.use(
-  express.static(tabletDistPath, {
-    maxAge: "1h",
-  }),
-);
-
-app.get(/^\/(?!api|adulte).*/, (_req, res) => {
-  res.sendFile(path.join(tabletDistPath, "index.html"));
-});
-
-app.get("/api/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    application: "Atelier Lecture",
-  });
-});
-
-function getLocalIpv4Address(): string {
-  const interfaces = os.networkInterfaces();
-
-  for (const interfaceName of Object.keys(interfaces)) {
-    for (const networkInterface of interfaces[interfaceName] ?? []) {
-      if (networkInterface.family === "IPv4" && !networkInterface.internal) {
-        return networkInterface.address;
-      }
-    }
-  }
-
-  return "127.0.0.1";
-}
-
-const keyPath = path.resolve(process.cwd(), "certs/key.pem");
-const certPath = path.resolve(process.cwd(), "certs/cert.pem");
-
-const canUseHttps = fs.existsSync(keyPath) && fs.existsSync(certPath);
-
-if (canUseHttps) {
-  const httpsServer = https.createServer(
-    {
-      key: fs.readFileSync(keyPath),
-      cert: fs.readFileSync(certPath),
-    },
-    app,
+  app.use(
+    express.static(tabletDistPath, {
+      maxAge: "1h",
+    }),
   );
 
-  httpsServer.listen(PORT, "0.0.0.0", () => {
-    const localIp = getLocalIpv4Address();
-
-    console.log("\n========================================");
-    console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
-    console.log("========================================\n");
-
-    console.log("✅ Serveur HTTPS démarré.");
-    console.log(`💻 Sur ce PC : https://localhost:${PORT}/adulte/connexion`);
-    console.log(`🩺 Test réseau : https://localhost:${PORT}/api/health`);
-    console.log("");
-    console.log("📱 Adresse à ouvrir sur les tablettes :");
-    console.log(`https://${localIp}:${PORT}`);
-    console.log("");
-    console.log("⚠️  Au premier accès, accepte le certificat auto-signé.");
-    console.log("⚠️  Laisse cette fenêtre ouverte pendant la séance.");
-    console.log("");
+  app.get(/^\/(?!api|adulte).*/, (_req, res) => {
+    res.sendFile(path.join(tabletDistPath, "index.html"));
   });
-} else {
-  app.listen(PORT, "0.0.0.0", () => {
-    const localIp = getLocalIpv4Address();
 
-    console.log("\n========================================");
-    console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
-    console.log("========================================\n");
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      application: "Atelier Lecture",
+    });
+  });
 
-    console.log("⚠️  Serveur HTTP démarré.");
-    console.log(
-      "⚠️  La caméra et le scan QR peuvent être bloqués sur tablette.",
+  function getLocalIpv4Address(): string {
+    const interfaces = os.networkInterfaces();
+
+    for (const interfaceName of Object.keys(interfaces)) {
+      for (const networkInterface of interfaces[interfaceName] ?? []) {
+        if (networkInterface.family === "IPv4" && !networkInterface.internal) {
+          return networkInterface.address;
+        }
+      }
+    }
+
+    return "127.0.0.1";
+  }
+
+  const keyPath = path.resolve(process.cwd(), "certs/key.pem");
+  const certPath = path.resolve(process.cwd(), "certs/cert.pem");
+
+  const canUseHttps = fs.existsSync(keyPath) && fs.existsSync(certPath);
+
+  if (canUseHttps) {
+    const httpsServer = https.createServer(
+      {
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath),
+      },
+      app,
     );
-    console.log("");
-    console.log("Exécute d’abord : pnpm cert");
-    console.log("");
-    console.log(`💻 http://localhost:${PORT}/adulte/connexion`);
-    console.log(`📱 http://${localIp}:${PORT}`);
-    console.log("");
-  });
+
+    httpsServer.listen(PORT, "0.0.0.0", () => {
+      const localIp = getLocalIpv4Address();
+
+      console.log("\n========================================");
+      console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
+      console.log("========================================\n");
+
+      console.log("✅ Serveur HTTPS démarré.");
+      console.log(`💻 Sur ce PC : https://localhost:${PORT}/adulte/connexion`);
+      console.log(`🩺 Test réseau : https://localhost:${PORT}/api/health`);
+      console.log("");
+      console.log("📱 Adresse à ouvrir sur les tablettes :");
+      console.log(`https://${localIp}:${PORT}`);
+      console.log("");
+      console.log("⚠️  Au premier accès, accepte le certificat auto-signé.");
+      console.log("⚠️  Laisse cette fenêtre ouverte pendant la séance.");
+      console.log("");
+    });
+  } else {
+    app.listen(PORT, "0.0.0.0", () => {
+      const localIp = getLocalIpv4Address();
+
+      console.log("\n========================================");
+      console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
+      console.log("========================================\n");
+
+      console.log("⚠️  Serveur HTTP démarré.");
+      console.log(
+        "⚠️  La caméra et le scan QR peuvent être bloqués sur tablette.",
+      );
+      console.log("");
+      console.log("Exécute d’abord : pnpm cert");
+      console.log("");
+      console.log(`💻 http://localhost:${PORT}/adulte/connexion`);
+      console.log(`📱 http://${localIp}:${PORT}`);
+      console.log("");
+    });
+  }
 }
+
+void startServer();

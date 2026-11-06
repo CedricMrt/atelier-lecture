@@ -78,12 +78,16 @@ export default function ManualLoginPage() {
   const filteredStudents = useMemo(() => {
     const query = normalize(search);
 
-    if (!query) return students;
+    if (query.length < 3) {
+      return [];
+    }
 
     return students.filter((student) =>
-      normalize(student.firstName).includes(query),
+      normalize(student.firstName).startsWith(query),
     );
   }, [students, search]);
+
+  const shouldShowSearchPrompt = normalize(search).length < 3;
 
   return (
     <main className='manual-adventure'>
@@ -112,7 +116,7 @@ export default function ManualLoginPage() {
         <div className='manual-adventure__toolbar'>
           <div className='manual-adventure__intro'>
             <h2>Quel est ton prénom ?</h2>
-            <p>Touche ta carte pour rejoindre l’aventure.</p>
+            <p>Écris au moins 3 lettres pour trouver ta carte.</p>
           </div>
 
           <div className='manual-adventure__search'>
@@ -178,6 +182,15 @@ export default function ManualLoginPage() {
               <h2>Aucun profil sur cette tablette</h2>
               <p>Demande à ton enseignant de préparer les élèves.</p>
             </div>
+          ) : shouldShowSearchPrompt ? (
+            <div className='manual-adventure__message' role='status'>
+              <span aria-hidden='true'>⌕</span>
+              <h2>Écris ton prénom</h2>
+              <p>
+                Écris au moins 3 lettres pour voir les explorateurs
+                correspondants.
+              </p>
+            </div>
           ) : filteredStudents.length === 0 ? (
             <div className='manual-adventure__message' role='status'>
               <span aria-hidden='true'>⌕</span>
@@ -189,7 +202,7 @@ export default function ManualLoginPage() {
                 className='manual-adventure__retry'
                 onClick={() => setSearch("")}
               >
-                Voir tous les explorateurs
+                Effacer la recherche
               </button>
             </div>
           ) : (
@@ -247,6 +260,7 @@ export default function ManualLoginPage() {
           <span role='status'>
             {!loading &&
               !error &&
+              !shouldShowSearchPrompt &&
               `${filteredStudents.length} explorateur${
                 filteredStudents.length > 1 ? "s" : ""
               }`}

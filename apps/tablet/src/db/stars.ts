@@ -9,7 +9,8 @@ export async function getStarBalance(studentId: string): Promise<number> {
 type RewardActivityCode =
   | "tambour_des_sons"
   | "chemin_des_syllabes"
-  | "chasse_aux_sons";
+  | "chasse_aux_sons"
+  | "rythme_musical";
 
 async function creditActivityRoundStars(
   sessionActivityId: string,
@@ -136,5 +137,16 @@ export async function creditSoundHuntRoundStars(
     sessionActivityId,
     roundIndex,
     "chasse_aux_sons",
+  );
+}
+
+export async function creditRhythmMusicRoundStars(
+  sessionActivityId: string,
+  roundIndex: number,
+): Promise<number> {
+  return creditActivityRoundStars(
+    sessionActivityId,
+    roundIndex,
+    "rythme_musical",
   );
 }

@@ -13,8 +13,32 @@ import TeacherStudentPage from "./pages/TeacherStudentPage";
 import TeacherSessionPage from "./pages/TeacherSessionPage";
 import TeacherLoginPage from "./pages/TeacherLoginPage";
 import RequireTeacherSession from "./components/RequireTeacherSession";
+import { useEffect, useState } from "react";
+import { fetchStudentsFromServer } from "./services/studentApi";
+import { replaceServerStudents } from "./db/students";
 
 function App() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    async function loadStudents() {
+      try {
+        const students = await fetchStudentsFromServer();
+        await replaceServerStudents(students);
+      } catch (error) {
+        console.error("Chargement des élèves impossible :", error);
+      } finally {
+        setIsReady(true);
+      }
+    }
+
+    loadStudents();
+  }, []);
+
+  if (!isReady) {
+    return <div>Chargement des élèves...</div>;
+  }
+
   return (
     <BrowserRouter>
       <Routes>

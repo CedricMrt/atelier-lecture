@@ -68,8 +68,6 @@ export class SyllablePathScene extends Phaser.Scene {
       key: "syllable-decor",
       url: "/chemin-des-syllabes/images/syllable-decor.png",
 
-      // Positions relatives dans l’image :
-      // u = proportion horizontale, v = proportion verticale.
       stones: [
         { u: 0.2, v: 0.66 },
         { u: 0.31, v: 0.64 },
@@ -77,6 +75,48 @@ export class SyllablePathScene extends Phaser.Scene {
         { u: 0.52, v: 0.6 },
         { u: 0.61, v: 0.56 },
         { u: 0.68, v: 0.5 },
+      ],
+    },
+
+    {
+      key: "syllable-cascade",
+      url: "/chemin-des-syllabes/images/chemin-syllabes-cascade.png",
+
+      stones: [
+        { u: 0.18, v: 0.76 },
+        { u: 0.28, v: 0.72 },
+        { u: 0.39, v: 0.68 },
+        { u: 0.5, v: 0.63 },
+        { u: 0.61, v: 0.58 },
+        { u: 0.71, v: 0.52 },
+      ],
+    },
+
+    {
+      key: "syllable-lagune",
+      url: "/chemin-des-syllabes/images/chemin-syllabes-lagune.png",
+
+      stones: [
+        { u: 0.18, v: 0.76 },
+        { u: 0.29, v: 0.72 },
+        { u: 0.4, v: 0.68 },
+        { u: 0.51, v: 0.63 },
+        { u: 0.62, v: 0.58 },
+        { u: 0.72, v: 0.52 },
+      ],
+    },
+
+    {
+      key: "syllable-grotte",
+      url: "/chemin-des-syllabes/images/chemin-syllabes-grotte.png",
+
+      stones: [
+        { u: 0.18, v: 0.77 },
+        { u: 0.29, v: 0.73 },
+        { u: 0.4, v: 0.69 },
+        { u: 0.51, v: 0.64 },
+        { u: 0.62, v: 0.59 },
+        { u: 0.73, v: 0.53 },
       ],
     },
   ];

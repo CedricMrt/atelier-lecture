@@ -40,7 +40,7 @@ function getActivityPresentation(activity: SessionActivity) {
   switch (activity.activityCode) {
     case "tambour_des_sons":
       return {
-        title: "Île du Rythme",
+        title: "Île du son",
         description: "Écoute les tambours et rejoue les sons.",
         symbol: "🥁",
       };
@@ -50,6 +50,40 @@ function getActivityPresentation(activity: SessionActivity) {
         title: "Île des Syllabes",
         description: "Écoute les mots et avance sur le chemin.",
         symbol: "🪨",
+      };
+    case "chasse_aux_sons":
+      return {
+        title: "Île de la Chasse aux Sons",
+        description: "Trouve les sons dans le mot écrit.",
+        symbol: "🎧",
+      };
+
+    case "rythme_musical":
+      return {
+        title: "Île du Rythme",
+        description: "Écoute le mot et tape au rythme des syllabes.",
+        symbol: "🎵",
+      };
+
+    case "chasseur_fantomes":
+      return {
+        title: "Île des Fantômes",
+        description: "Attrape la bonne syllabe avant qu’elle disparaisse.",
+        symbol: "👻",
+      };
+
+    case "grenouille_sauteuse":
+      return {
+        title: "Île de la Grenouille",
+        description: "Fais sauter la grenouille pour construire le mot.",
+        symbol: "🐸",
+      };
+
+    case "scanner_spatial":
+      return {
+        title: "Île de l’Espace",
+        description: "Observe vite et retrouve les lettres.",
+        symbol: "🚀",
       };
 
     default:

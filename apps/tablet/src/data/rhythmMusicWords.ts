@@ -1,0 +1,208 @@
+export type RhythmMusicWord = {
+  contentId: string;
+  contentVersion: number;
+  word: string;
+  displaySyllables: string[];
+  spokenSyllables: string[];
+  bpm: number;
+};
+
+export const RHYTHM_MUSIC_WORDS: RhythmMusicWord[] = [
+  // Mots simples à 1 syllabe
+  {
+    contentId: "rythme-musical-chat",
+    contentVersion: 1,
+    word: "chat",
+    displaySyllables: ["chat"],
+    spokenSyllables: ["cha"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-loup",
+    contentVersion: 1,
+    word: "loup",
+    displaySyllables: ["loup"],
+    spokenSyllables: ["lou"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-rat",
+    contentVersion: 1,
+    word: "rat",
+    displaySyllables: ["rat"],
+    spokenSyllables: ["ra"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-pain",
+    contentVersion: 1,
+    word: "pain",
+    displaySyllables: ["pain"],
+    spokenSyllables: ["pin"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-veau",
+    contentVersion: 1,
+    word: "veau",
+    displaySyllables: ["veau"],
+    spokenSyllables: ["vo"],
+    bpm: 80,
+  },
+
+  // Mots à 2 syllabes
+  {
+    contentId: "rythme-musical-bateau",
+    contentVersion: 1,
+    word: "bateau",
+    displaySyllables: ["ba", "teau"],
+    spokenSyllables: ["bat", "to"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-maison",
+    contentVersion: 1,
+    word: "maison",
+    displaySyllables: ["mai", "son"],
+    spokenSyllables: ["mai", "son"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-lune",
+    contentVersion: 1,
+    word: "lune",
+    displaySyllables: ["lu", "ne"],
+    spokenSyllables: ["lu", "ne"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-pomme",
+    contentVersion: 1,
+    word: "pomme",
+    displaySyllables: ["po", "mme"],
+    spokenSyllables: ["pot", "meu"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-cheval",
+    contentVersion: 1,
+    word: "cheval",
+    displaySyllables: ["che", "val"],
+    spokenSyllables: ["cheu", "val"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-soleil",
+    contentVersion: 1,
+    word: "soleil",
+    displaySyllables: ["so", "leil"],
+    spokenSyllables: ["so", "leille"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-fleur",
+    contentVersion: 1,
+    word: "fleur",
+    displaySyllables: ["fleur"],
+    spokenSyllables: ["fleure"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-bateau-2",
+    contentVersion: 1,
+    word: "château",
+    displaySyllables: ["châ", "teau"],
+    spokenSyllables: ["chat", "to"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-oiseau",
+    contentVersion: 1,
+    word: "oiseau",
+    displaySyllables: ["oi", "seau"],
+    spokenSyllables: ["oua", "zo"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-zebre",
+    contentVersion: 1,
+    word: "zèbre",
+    displaySyllables: ["zè", "bre"],
+    spokenSyllables: ["zè", "bre"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-table",
+    contentVersion: 1,
+    word: "table",
+    displaySyllables: ["ta", "ble"],
+    spokenSyllables: ["tas", "ble"],
+    bpm: 80,
+  },
+
+  // Mots à 3 syllabes
+  {
+    contentId: "rythme-musical-papillon",
+    contentVersion: 1,
+    word: "papillon",
+    displaySyllables: ["pa", "pi", "llon"],
+    spokenSyllables: ["pas", "pi", "yon"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-elephant",
+    contentVersion: 1,
+    word: "éléphant",
+    displaySyllables: ["é", "lé", "phant"],
+    spokenSyllables: ["é", "lé", "fan"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-coccinelle",
+    contentVersion: 1,
+    word: "coccinelle",
+    displaySyllables: ["coc", "ci", "nelle"],
+    spokenSyllables: ["kok", "si", "nelle"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-cameleon",
+    contentVersion: 1,
+    word: "caméléon",
+    displaySyllables: ["ca", "mé", "léon"],
+    spokenSyllables: ["ka", "mé", "léon"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-dinosaure",
+    contentVersion: 1,
+    word: "dinosaure",
+    displaySyllables: ["di", "no", "saure"],
+    spokenSyllables: ["di", "no", "zore"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-tortue",
+    contentVersion: 1,
+    word: "tortue",
+    displaySyllables: ["tor", "tue"],
+    spokenSyllables: ["tor", "tü"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-citrouille",
+    contentVersion: 1,
+    word: "citrouille",
+    displaySyllables: ["ci", "trouille"],
+    spokenSyllables: ["si", "trouille"],
+    bpm: 80,
+  },
+  {
+    contentId: "rythme-musical-ordinateur",
+    contentVersion: 1,
+    word: "ordinateur",
+    displaySyllables: ["or", "di", "na", "teur"],
+    spokenSyllables: ["or", "di", "na", "teur"],
+    bpm: 80,
+  },
+];

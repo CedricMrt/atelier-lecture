@@ -7,6 +7,7 @@ export const TRAINING_RULES = {
   rhythmBudgetSeconds: 30, //5 * 60,
   syllablesBudgetSeconds: 30, //3 * 60,
   soundHuntBudgetSeconds: 30, //3 * 60,
+  rhythmMusicBudgetSeconds: 30, // 5 * 60
 
   // Fréquence cible des points de sauvegarde du compteur.
   checkpointIntervalMs: 1000,

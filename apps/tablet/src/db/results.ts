@@ -1,6 +1,7 @@
 import { db, type Result } from "./db";
 import type { SoundHuntRoundParams } from "./rounds";
 import { encodeSoundHuntContent } from "../data/soundHuntAnswers";
+import { encodeRhythmMusicContent } from "../data/rhythmMusicAnswers";
 
 type CommonResultParams = {
   sessionId: string;
@@ -246,5 +247,42 @@ export async function saveSoundHuntResult(
     contentLabel,
 
     errorType: correct ? undefined : "syllabe_incorrecte",
+  });
+}
+
+export type RhythmMusicResultParams = CommonResultParams & {
+  contentId: string;
+  contentVersion: number;
+  word: string;
+  displaySyllables: string[];
+  spokenSyllables: string[];
+  expectedTaps: number;
+  studentTaps: number;
+  excellentHits: number;
+  goodHits: number;
+  hits: number;
+  replayUsed: boolean;
+};
+
+export async function saveRhythmMusicResult(
+  params: RhythmMusicResultParams,
+): Promise<Result> {
+  const contentLabel = encodeRhythmMusicContent(params);
+
+  return saveActivityResult({
+    ...params,
+
+    activityCode: "rythme_musical",
+    skillCode: "rythme_syllabique",
+
+    contentId: params.contentId,
+    contentVersion: params.contentVersion,
+    contentLabel,
+
+    errorType: params.correct
+      ? undefined
+      : params.studentTaps !== params.expectedTaps
+        ? "nombre_syllabes_incorrect"
+        : "rythme_incomplet",
   });
 }

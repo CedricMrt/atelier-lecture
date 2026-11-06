@@ -16,7 +16,7 @@
 2. Connecte le PC au Wi-Fi de l’école.
 3. Double-clique sur `DEMARRER.bat`.
 4. Laisse la fenêtre noire ouverte.
-5. Note l’adresse affichée, par exemple : `http://192.168.1.50:3000`.
+5. Note l’adresse affichée, par exemple : `https://192.168.1.50:3000`.
 6. Connecte les tablettes au même Wi-Fi.
 7. Ouvre cette adresse dans Chrome sur chaque tablette.
 

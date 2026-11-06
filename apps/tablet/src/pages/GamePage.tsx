@@ -20,14 +20,18 @@ import {
   saveRhythmRound,
   saveSyllableRound,
   saveSoundHuntRound,
+  saveRhythmMusicRound,
 } from "../db/rounds";
-
 import { getActivityResume } from "../db/activityResume";
 import { getAvatarImageUrl } from "../data/avatars";
 import { beginTrainingClock } from "../db/trainingTime";
 import { TrainingClock, type ClockDisplay } from "../games/TrainingClock";
 import { formatRemainingTime } from "../games/trainingRules";
 import RaftTransitionScene from "../games/RaftTransitionScene";
+import {
+  RhythmMusicScene,
+  type RhythmMusicResult,
+} from "../games/RhythmMusicScene";
 
 export default function GamePage() {
   const { sessionId } = useParams();
@@ -218,9 +222,9 @@ function GameSession({ sessionId }: GameSessionProps) {
           ? "SyllablePathScene"
           : currentActivity.type === "rhythm"
             ? "RhythmDrumScene"
-            : currentActivity.type === "sound_hunt"
-              ? "SoundHuntScene"
-              : null;
+            : currentActivity.type === "rhythm_music"
+              ? "RhythmMusicScene"
+              : "SoundHuntScene";
 
       if (!sceneKey) {
         throw new Error("Type d’activité non pris en charge.");
@@ -229,12 +233,15 @@ function GameSession({ sessionId }: GameSessionProps) {
       const activityScene:
         | RhythmDrumScene
         | SyllablePathScene
-        | SoundHuntScene =
+        | SoundHuntScene
+        | RhythmMusicScene =
         currentActivity.type === "syllables"
           ? new SyllablePathScene()
           : currentActivity.type === "rhythm"
             ? new RhythmDrumScene()
-            : new SoundHuntScene();
+            : currentActivity.type === "rhythm_music"
+              ? new RhythmMusicScene()
+              : new SoundHuntScene();
 
       let trainingClock: TrainingClock | undefined;
 
@@ -282,7 +289,11 @@ function GameSession({ sessionId }: GameSessionProps) {
       }
 
       const handleActivityFinish = async (
-        result: SyllableResult | RhythmResult | SoundHuntResult,
+        result:
+          | SyllableResult
+          | RhythmResult
+          | SoundHuntResult
+          | RhythmMusicResult,
       ) => {
         try {
           await trainingClock?.close();
@@ -406,6 +417,34 @@ function GameSession({ sessionId }: GameSessionProps) {
         };
 
         activityConfig.onFinish = async (result: SoundHuntResult) => {
+          await handleActivityFinish(result);
+        };
+      } else if (currentActivity.type === "rhythm_music") {
+        activityConfig.initialAnswers = resume.rhythmMusicAnswers;
+        activityConfig.initialHintsUsed = resume.hintsUsed;
+
+        activityConfig.onRoundValidated = async (
+          roundIndex: number,
+          answer: RhythmMusicResult["answers"][number],
+          totalHints: number,
+        ) => {
+          const saved = await saveRhythmMusicRound({
+            sessionId,
+            sessionActivityId: currentActivity.id,
+            studentId: session.studentId,
+            roundIndex,
+
+            ...answer,
+
+            hintsUsed: getNewHints(totalHints),
+          });
+
+          persistedHints = totalHints;
+
+          return saved.starBalance;
+        };
+
+        activityConfig.onFinish = async (result: RhythmMusicResult) => {
           await handleActivityFinish(result);
         };
       } else {

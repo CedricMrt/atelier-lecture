@@ -462,8 +462,6 @@ export class SoundHuntScene extends Phaser.Scene {
     graphics.lineStyle(thickness, color, 1);
     graphics.beginPath();
 
-    // Une courbe quadratique dessine le creux du U.
-    // Le point de contrôle est plus bas que le creux visible.
     const curve = new Phaser.Curves.QuadraticBezier(
       new Phaser.Math.Vector2(x, offsetY),
       new Phaser.Math.Vector2(x + width / 2, 140 + offsetY),
@@ -618,6 +616,37 @@ export class SoundHuntScene extends Phaser.Scene {
   }
 
   private speakRound() {
+    const DICTIONNAIRE_PHONETIQUE: Record<string, string> = {
+      an: "en",
+      am: "en",
+      en: "en",
+      em: "en",
+      in: "hein",
+      im: "hein",
+      on: "on",
+      om: "on",
+      oi: "wa",
+      oin: "ouhein",
+      ch: "cheu",
+      b: "beu",
+      d: "deu",
+      p: "peu",
+      t: "teu",
+      c: "keu",
+      k: "keu",
+      q: "keu",
+      g: "gueu",
+      f: "ffe",
+      l: "lle",
+      m: "mme",
+      n: "nne",
+      r: "rre",
+      s: "sse",
+      v: "vve",
+      z: "zze",
+      j: "jeu",
+    };
+
     if (this.phase !== "ready" || this.stoppingForLimit || this.finishing) {
       return;
     }
@@ -657,6 +686,11 @@ export class SoundHuntScene extends Phaser.Scene {
       voices.find((item) => item.lang.toLowerCase() === "fr-fr") ??
       voices.find((item) => item.lang.toLowerCase().startsWith("fr"));
 
+    const target = this.currentWord.targetSound;
+
+    const sonPourSynthese =
+      DICTIONNAIRE_PHONETIQUE[target.toLowerCase()] ?? target;
+
     const parts = [
       {
         text: "Trouve le son.",
@@ -664,9 +698,9 @@ export class SoundHuntScene extends Phaser.Scene {
         pauseAfterMs: 400,
       },
       {
-        text: this.currentWord.targetSound,
-        rate: 0.65,
-        pauseAfterMs: 600,
+        text: sonPourSynthese,
+        rate: 0.7,
+        pauseAfterMs: 700,
       },
       {
         text: "Dans le mot.",

@@ -86,6 +86,24 @@ export async function createDemoSession(
       activeDurationMs: 0,
       answeredRounds: 0,
     },
+    {
+      id: `${sessionId}-activity-4`,
+      sessionId,
+      activityCode: "rythme_musical",
+      position: 4,
+      level: 1,
+      status: "pending",
+      maxScore: 5,
+      type: "rhythm_music",
+      timingMode,
+      timeBudgetSeconds:
+        timingMode === "active_time"
+          ? TRAINING_RULES.rhythmMusicBudgetSeconds
+          : undefined,
+
+      activeDurationMs: 0,
+      answeredRounds: 0,
+    },
   ];
 
   await db.transaction(

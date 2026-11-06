@@ -3,7 +3,9 @@ import { db } from "./db";
 import type { RhythmResult } from "../games/RhythmDrumScene";
 import type { SyllableResult } from "../games/SyllablePathScene";
 import type { SoundHuntResult } from "../games/SoundHuntScene";
+import type { RhythmMusicResult } from "../games/RhythmMusicScene";
 import { decodeSoundHuntContent } from "../data/soundHuntAnswers";
+import { decodeRhythmMusicContent } from "../data/rhythmMusicAnswers";
 
 export async function getActivityResume(
   sessionActivityId: string,
@@ -71,6 +73,7 @@ export async function getActivityResume(
   const rhythmAnswers: RhythmResult["answers"] = [];
   const syllableAnswers: SyllableResult["answers"] = [];
   const soundHuntAnswers: SoundHuntResult["answers"] = [];
+  const rhythmMusicAnswers: RhythmMusicResult["answers"] = [];
 
   let hintsUsed = 0;
 
@@ -138,6 +141,14 @@ export async function getActivityResume(
         correct,
         responseTimeMs: result.responseTimeMs,
       });
+    } else if (activityCode === "rythme_musical") {
+      const content = decodeRhythmMusicContent(result.contentLabel);
+
+      rhythmMusicAnswers.push({
+        ...content,
+        correct: result.correct === 1,
+        responseTimeMs: result.responseTimeMs,
+      });
     } else {
       throw new Error("Cette activité ne possède pas encore de reprise.");
     }
@@ -147,6 +158,7 @@ export async function getActivityResume(
     rhythmAnswers,
     syllableAnswers,
     soundHuntAnswers,
+    rhythmMusicAnswers,
     hintsUsed,
   };
 }
