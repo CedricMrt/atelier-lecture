@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { fetchStarBalanceFromServer } from "../services/studentApi";
 
 export async function getStarBalance(studentId: string): Promise<number> {
   const wallet = await db.starWallets.get(studentId);
@@ -149,4 +150,56 @@ export async function creditRhythmMusicRoundStars(
     roundIndex,
     "rythme_musical",
   );
+}
+
+async function getPendingStars(studentId: string): Promise<number> {
+  const transactions = await db.starTransactions
+    .where("studentId")
+    .equals(studentId)
+    .toArray();
+
+  let pendingStars = 0;
+
+  for (const transaction of transactions) {
+    const resultId = transaction.id.replace(":stars", ":result");
+    const syncItemId = `${resultId}:sync`;
+
+    const syncItem = await db.syncQueue.get(syncItemId);
+
+    if (
+      !syncItem ||
+      syncItem.status === "pending" ||
+      syncItem.status === "failed"
+    ) {
+      pendingStars += Math.max(0, transaction.amount);
+    }
+  }
+
+  return pendingStars;
+}
+
+export async function refreshStarWalletFromServer(
+  studentId: string,
+): Promise<number | null> {
+  const serverBalance = await fetchStarBalanceFromServer(studentId);
+
+  if (serverBalance === null) {
+    return null;
+  }
+
+  const pendingStars = await getPendingStars(studentId);
+
+  const balance = serverBalance.balance + pendingStars;
+  const totalEarned = serverBalance.totalEarned + pendingStars;
+
+  const now = Date.now();
+
+  await db.starWallets.put({
+    studentId,
+    balance,
+    totalEarned,
+    updatedAt: now,
+  });
+
+  return balance;
 }

@@ -23,3 +23,5 @@ backups/
 # Releases
 release/
 *.zip
+scratch.txt
+*.tsbuildinfo

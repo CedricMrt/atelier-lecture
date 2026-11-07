@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/db";
 import { createDemoSession } from "../db/sessions";
-import { getStarBalance } from "../db/stars";
+import { getStarBalance, refreshStarWalletFromServer } from "../db/stars";
 import "./ConfirmStudentPage.css";
 import { getAvatarImageUrl } from "../data/avatars";
 
@@ -81,9 +81,18 @@ export default function ConfirmStudentPage() {
         });
 
         try {
-          const balance = await getStarBalance(foundStudent.id);
+          const balance = await refreshStarWalletFromServer(foundStudent.id);
 
-          if (active) {
+          if (balance === null) {
+            const localBalance = await getStarBalance(foundStudent.id);
+
+            if (active) {
+              setStarBalance(localBalance);
+              setBalanceWarning(
+                "Ta réserve d’étoiles n’a pas pu être mise à jour depuis le PC.",
+              );
+            }
+          } else if (active) {
             setStarBalance(balance);
           }
         } catch (error) {

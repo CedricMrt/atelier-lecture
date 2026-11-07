@@ -60,4 +60,45 @@ router.get("/", (_req, res) => {
   res.json({ students });
 });
 
+router.get("/:studentId/stars", (req, res) => {
+  const { studentId } = req.params;
+
+  const student = sqlite
+    .prepare(
+      `SELECT student_id
+       FROM students
+       WHERE student_id = ?`,
+    )
+    .get(studentId);
+
+  if (!student) {
+    res.status(404).json({
+      error: "Élève inconnu.",
+    });
+    return;
+  }
+
+  const row = sqlite
+    .prepare(
+      `SELECT COUNT(*) AS correctCount
+       FROM results
+       WHERE student_id = ?
+         AND correct = 1
+         AND activity_code IN (
+           'tambour_des_sons',
+           'chemin_des_syllabes',
+           'chasse_aux_sons',
+           'rythme_musical'
+         )`,
+    )
+    .get(studentId) as { correctCount: number };
+
+  const balance = row.correctCount * 5;
+
+  res.json({
+    balance,
+    totalEarned: balance,
+  });
+});
+
 export default router;

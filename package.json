@@ -1,21 +1,17 @@
 {
   "private": true,
   "name": "atelier-lecture",
-  "workspaces": [
-    "apps/*"
-  ],
   "scripts": {
-    "dev:tablet": "npm run dev --workspace apps/tablet",
-    "dev:server": "npm run dev --workspace apps/server",
-    "build:tablet": "npm run build --workspace apps/tablet",
-    "build:server": "npm run build --workspace apps/server",
-    "build:all": "npm run build:tablet && npm run build:server",
-    "start": "npm run start --workspace apps/server",
+    "dev:tablet": "pnpm --filter tablet run dev",
+    "dev:server": "pnpm --filter server run dev",
+    "build:tablet": "pnpm --filter tablet run build",
+    "build:server": "pnpm --filter server run build",
+    "build:all": "pnpm run build:tablet && pnpm run build:server",
+    "start": "pnpm --filter server run start",
     "cert": "node scripts/generate-certificate.mjs"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^9.6.0",
-    "npm-run-all": "^4.1.5",
     "selfsigned": "^5.5.0"
-  }
+  },
+  "packageManager": "pnpm@12.15.0"
 }

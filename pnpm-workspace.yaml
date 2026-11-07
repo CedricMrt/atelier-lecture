@@ -4,6 +4,8 @@ packages:
 allowBuilds:
   bcrypt: true
 permissions:
+  better-sqlite3:
+    build: true
   esbuild:
     build: true
   phaser:

@@ -5,8 +5,6 @@ import IslandPage from "./pages/IslandPage";
 import GamePage from "./pages/GamePage";
 import ActivityEndPage from "./pages/ActivityEndPage";
 import SessionEndPage from "./pages/SessionEndPage";
-import DexieTestPage from "./pages/DexieTestPage";
-import PhaserTestPage from "./pages/PhaserTestPage";
 import ManualLoginPage from "./pages/ManualLoginPage";
 import TeacherStudentsPage from "./pages/TeacherStudentsPage.tsx";
 import TeacherStudentPage from "./pages/TeacherStudentPage";
@@ -52,8 +50,6 @@ function App() {
           element={<ActivityEndPage />}
         />
         <Route path='/session-end/:sessionId' element={<SessionEndPage />} />
-        <Route path='/test/dexie' element={<DexieTestPage />} />
-        <Route path='/test/phaser' element={<PhaserTestPage />} />
         <Route path='/manual-login' element={<ManualLoginPage />} />
         <Route element={<RequireTeacherSession />}>
           <Route path='/adulte/eleves' element={<TeacherStudentsPage />} />

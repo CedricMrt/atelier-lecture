@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db, type SessionActivity } from "../db/db";
-import { getStarBalance } from "../db/stars";
+import { getStarBalance, refreshStarWalletFromServer } from "../db/stars";
 import { endSession } from "../db/sessions";
 import "./IslandPage.css";
 
@@ -148,7 +148,11 @@ export default function IslandPage() {
         let balance: number | null = null;
 
         try {
-          balance = await getStarBalance(foundStudent.id);
+          balance = await refreshStarWalletFromServer(foundStudent.id);
+
+          if (balance === null) {
+            balance = await getStarBalance(foundStudent.id);
+          }
         } catch (walletError) {
           console.error("Lecture de la réserve impossible :", walletError);
         }
