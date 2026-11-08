@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "atelier-lecture",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "dev:tablet": "pnpm --filter tablet run dev",
     "dev:server": "pnpm --filter server run dev",
