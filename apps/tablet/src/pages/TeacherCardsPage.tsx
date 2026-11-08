@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import QRCode from "qrcode";
 import { getAvatarImageUrl } from "../data/avatars";
 import { fetchStudentCards, type StudentCard } from "../services/teacherApi";
@@ -11,12 +11,19 @@ export default function TeacherCardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // /adulte/cartes?eleve=ID : une seule carte ; sans paramètre : toutes les cartes.
+  const [searchParams] = useSearchParams();
+  const onlyStudentId = searchParams.get("eleve");
+
   useEffect(() => {
     let isActive = true;
 
     async function load() {
       try {
-        const loadedCards = await fetchStudentCards();
+        const allCards = await fetchStudentCards();
+        const loadedCards = onlyStudentId
+          ? allCards.filter((card) => card.studentId === onlyStudentId)
+          : allCards;
 
         const entries = await Promise.all(
           loadedCards.map(async (card) => {
@@ -54,7 +61,7 @@ export default function TeacherCardsPage() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [onlyStudentId]);
 
   return (
     <main className='teacher-app'>
@@ -64,13 +71,19 @@ export default function TeacherCardsPage() {
             ← Retour aux élèves
           </Link>
 
+          {onlyStudentId && (
+            <Link className='teacher-back' to='/adulte/cartes'>
+              Voir toutes les cartes
+            </Link>
+          )}
+
           <button
             className='teacher-button teacher-button--primary'
             type='button'
             onClick={() => window.print()}
             disabled={cards.length === 0}
           >
-            Imprimer les cartes
+            {onlyStudentId ? "Imprimer la carte" : "Imprimer les cartes"}
           </button>
         </div>
 

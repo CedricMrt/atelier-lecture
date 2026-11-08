@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { requireTeacherSession } from "../middleware/teacherSession.js";
 import {
+  changeTeacherPassword,
   createSession,
   deleteSession,
   getSession,
@@ -88,6 +90,35 @@ router.get("/session", async (req, res) => {
       displayName: teacher.displayName,
     },
   });
+});
+
+router.post("/mot-de-passe", requireTeacherSession, async (req, res) => {
+  const { currentPassword, newPassword } = req.body ?? {};
+
+  if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+    res.status(400).json({ error: "Les deux mots de passe sont requis." });
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    res.status(400).json({
+      error: "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+    });
+    return;
+  }
+
+  const changed = await changeTeacherPassword(
+    req.teacher!.teacherId,
+    currentPassword,
+    newPassword,
+  );
+
+  if (!changed) {
+    res.status(403).json({ error: "Le mot de passe actuel est incorrect." });
+    return;
+  }
+
+  res.json({ status: "modifie" });
 });
 
 export default router;

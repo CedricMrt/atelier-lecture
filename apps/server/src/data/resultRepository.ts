@@ -316,3 +316,66 @@ export function deleteStudentWithoutResults(
 
   return "deleted";
 }
+
+export function updateStudent(
+  studentId: string,
+  input: {
+    firstName: string;
+    fullName: string;
+    avatarKey: string;
+    avatarVariant: string;
+  },
+): StudentCard | null {
+  const result = sqlite
+    .prepare(
+      `UPDATE students
+       SET first_name = @firstName,
+           full_name = @fullName,
+           avatar_key = @avatarKey,
+           avatar_variant = @avatarVariant,
+           updated_at = @updatedAt
+       WHERE student_id = @studentId`,
+    )
+    .run({ studentId, ...input, updatedAt: Date.now() });
+
+  if (result.changes === 0) return null;
+
+  return getStudentCard(studentId);
+}
+
+/** Nouveau QR code : l'ancienne carte ne fonctionne plus (carte perdue). */
+export function regenerateStudentCard(studentId: string): StudentCard | null {
+  const result = sqlite
+    .prepare(
+      `UPDATE students
+       SET qr_token = @qrToken, updated_at = @updatedAt
+       WHERE student_id = @studentId`,
+    )
+    .run({
+      studentId,
+      qrToken: randomBytes(18).toString("base64url"),
+      updatedAt: Date.now(),
+    });
+
+  if (result.changes === 0) return null;
+
+  return getStudentCard(studentId);
+}
+
+export function getStudentCard(studentId: string): StudentCard | null {
+  return (
+    (sqlite
+      .prepare(
+        `SELECT
+          student_id AS studentId,
+          first_name AS firstName,
+          full_name AS fullName,
+          avatar_key AS avatarKey,
+          avatar_variant AS avatarVariant,
+          qr_token AS qrToken
+        FROM students
+        WHERE student_id = ?`,
+      )
+      .get(studentId) as StudentCard | undefined) ?? null
+  );
+}

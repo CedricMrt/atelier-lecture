@@ -21,6 +21,13 @@ Aucune installation : tout est dans le ZIP (l'application, Node.js et les module
 
 Un élève sans aucun résultat peut être supprimé avec le bouton **Supprimer** de la liste. Un élève qui a déjà joué ne peut pas l'être, pour ne jamais perdre son historique.
 
+### Modifier un élève, réimprimer ou remplacer une carte
+
+- Ouvre la fiche de l'élève, puis **Gérer l'élève** : tu peux corriger son nom, son prénom affiché et son avatar.
+- **Carte** (dans la liste) ou **Imprimer sa carte** (dans la fiche) imprime la carte d'un seul élève.
+- Si une carte est perdue : **Carte perdue : en créer une nouvelle**. L'ancienne carte ne fonctionne plus. Sur les tablettes, recharge la page pour que la modification soit prise en compte.
+- **Mot de passe** (en haut de la liste) permet de changer le mot de passe enseignant.
+
 ## Chaque séance
 
 1. Allume le PC et connecte-le au Wi-Fi de l'école.

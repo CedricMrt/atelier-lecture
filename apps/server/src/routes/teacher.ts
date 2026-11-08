@@ -7,6 +7,8 @@ import {
   getStudent,
   getStudentCards,
   getStudents,
+  regenerateStudentCard,
+  updateStudent,
 } from "../data/resultRepository.js";
 
 const router = Router();
@@ -46,27 +48,63 @@ function cleanAvatarPart(value: unknown): string | null {
     : null;
 }
 
-router.post("/eleves", (req, res) => {
-  const firstName = cleanName(req.body?.firstName);
-  const fullName = cleanName(req.body?.fullName);
-  const avatarKey = cleanAvatarPart(req.body?.avatarKey);
-  const avatarVariant = cleanAvatarPart(req.body?.avatarVariant);
+function readStudentInput(body: unknown) {
+  const data = (body ?? {}) as Record<string, unknown>;
+
+  const firstName = cleanName(data.firstName);
+  const fullName = cleanName(data.fullName);
+  const avatarKey = cleanAvatarPart(data.avatarKey);
+  const avatarVariant = cleanAvatarPart(data.avatarVariant);
 
   if (!firstName || !fullName || !avatarKey || !avatarVariant) {
+    return null;
+  }
+
+  return { firstName, fullName, avatarKey, avatarVariant };
+}
+
+router.post("/eleves", (req, res) => {
+  const input = readStudentInput(req.body);
+
+  if (!input) {
     res.status(400).json({
       error: "Prénom, nom complet et avatar sont obligatoires.",
     });
     return;
   }
 
-  const card = createStudent({
-    firstName,
-    fullName,
-    avatarKey,
-    avatarVariant,
-  });
+  res.status(201).json({ student: createStudent(input) });
+});
 
-  res.status(201).json({ student: card });
+router.patch("/eleves/:studentId", (req, res) => {
+  const input = readStudentInput(req.body);
+
+  if (!input) {
+    res.status(400).json({
+      error: "Prénom, nom complet et avatar sont obligatoires.",
+    });
+    return;
+  }
+
+  const card = updateStudent(req.params.studentId, input);
+
+  if (!card) {
+    res.status(404).json({ error: "Élève introuvable" });
+    return;
+  }
+
+  res.json({ student: card });
+});
+
+router.post("/eleves/:studentId/regenerer-carte", (req, res) => {
+  const card = regenerateStudentCard(req.params.studentId);
+
+  if (!card) {
+    res.status(404).json({ error: "Élève introuvable" });
+    return;
+  }
+
+  res.json({ student: card });
 });
 
 router.delete("/eleves/:studentId", (req, res) => {
@@ -155,6 +193,9 @@ router.get("/eleves/:studentId", async (req, res) => {
     student: {
       studentId: student.studentId,
       displayName: student.displayName,
+      firstName: student.firstName,
+      avatarKey: student.avatarKey,
+      avatarVariant: student.avatarVariant,
     },
     sessions,
   });

@@ -620,3 +620,40 @@
     margin: 10mm;
   }
 }
+
+/* ---- Gestion d'un élève ---- */
+
+.teacher-success {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e5f1e8;
+  color: #14532d;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.teacher-manage {
+  margin-bottom: 28px;
+}
+
+.teacher-manage__summary {
+  display: inline-block;
+  padding: 10px 16px;
+  border: 1px solid #d7dcd3;
+  border-radius: 12px;
+  background: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.teacher-manage[open] > .teacher-manage__summary {
+  margin-bottom: 16px;
+}
+
+.teacher-manage__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}

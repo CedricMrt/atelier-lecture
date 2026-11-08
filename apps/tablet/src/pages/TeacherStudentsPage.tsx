@@ -113,6 +113,13 @@ export default function TeacherStudentsPage() {
               Connectée : {teacher.displayName}
             </p>
 
+            <Link
+              className='teacher-button teacher-button--secondary'
+              to='/adulte/compte'
+            >
+              Mot de passe
+            </Link>
+
             <button
               className='teacher-button teacher-button--danger'
               type='button'
@@ -179,6 +186,13 @@ export default function TeacherStudentsPage() {
                     to={`/adulte/eleves/${student.studentId}`}
                   >
                     Voir le suivi
+                  </Link>
+
+                  <Link
+                    className='teacher-button teacher-button--secondary'
+                    to={`/adulte/cartes?eleve=${encodeURIComponent(student.studentId)}`}
+                  >
+                    Carte
                   </Link>
 
                   <button

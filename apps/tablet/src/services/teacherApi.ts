@@ -232,3 +232,71 @@ export async function fetchStudentCards(): Promise<StudentCard[]> {
 
   return data.cards;
 }
+
+export async function updateStudent(
+  studentId: string,
+  input: NewStudentInput,
+): Promise<StudentCard> {
+  const response = await fetch(
+    `/api/enseignant/eleves/${encodeURIComponent(studentId)}`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, "Impossible de modifier l’élève."),
+    );
+  }
+
+  const data = await response.json();
+
+  return data.student;
+}
+
+export async function regenerateStudentCard(
+  studentId: string,
+): Promise<StudentCard> {
+  const response = await fetch(
+    `/api/enseignant/eleves/${encodeURIComponent(studentId)}/regenerer-carte`,
+    {
+      method: "POST",
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, "Impossible de régénérer la carte."),
+    );
+  }
+
+  const data = await response.json();
+
+  return data.student;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const response = await fetch("/api/enseignant/mot-de-passe", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        "Impossible de changer le mot de passe.",
+      ),
+    );
+  }
+}

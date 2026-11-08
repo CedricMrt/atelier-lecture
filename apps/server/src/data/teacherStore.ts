@@ -146,3 +146,34 @@ export async function getTeacherById(
   const store = await readStore();
   return store.teachers[teacherId] ?? null;
 }
+
+export async function changeTeacherPassword(
+  teacherId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<boolean> {
+  const store = await readStore();
+  const teacher = store.teachers[teacherId];
+
+  if (!teacher) return false;
+
+  const currentHash = hashPassword(currentPassword, teacher.passwordSalt);
+
+  const isValid =
+    currentHash.length === teacher.passwordHash.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(currentHash, "hex"),
+      Buffer.from(teacher.passwordHash, "hex"),
+    );
+
+  if (!isValid) return false;
+
+  const salt = crypto.randomBytes(16).toString("hex");
+
+  teacher.passwordSalt = salt;
+  teacher.passwordHash = hashPassword(newPassword, salt);
+
+  await writeStore(store);
+
+  return true;
+}

@@ -1,9 +1,5 @@
 import { Router } from "express";
-import {
-  saveResults,
-  saveStudentProfile,
-  type StoredResult,
-} from "../data/resultRepository.js";
+import { saveResults, type StoredResult } from "../data/resultRepository.js";
 import { requireStudentSync } from "../middleware/requireStudentSync.js";
 
 const router = Router();
@@ -32,16 +28,6 @@ router.post("/results", (req, res) => {
   }
 
   try {
-    saveStudentProfile({
-      studentId: student.studentId,
-      firstName: student.firstName,
-      fullName: student.fullName,
-      avatarKey: student.avatarKey,
-      avatarVariant: student.avatarVariant,
-      qrToken: student.qrToken,
-      classId: student.classId,
-    });
-
     const validResults: StoredResult[] = [];
 
     for (const result of results) {

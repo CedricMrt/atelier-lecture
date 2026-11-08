@@ -11,6 +11,7 @@ import TeacherStudentPage from "./pages/TeacherStudentPage";
 import TeacherSessionPage from "./pages/TeacherSessionPage";
 import TeacherLoginPage from "./pages/TeacherLoginPage";
 import TeacherCardsPage from "./pages/TeacherCardsPage";
+import TeacherAccountPage from "./pages/TeacherAccountPage";
 import RequireTeacherSession from "./components/RequireTeacherSession";
 import { useEffect, useState } from "react";
 import { fetchStudentsFromServer } from "./services/studentApi";
@@ -55,6 +56,7 @@ function App() {
         <Route element={<RequireTeacherSession />}>
           <Route path='/adulte/eleves' element={<TeacherStudentsPage />} />
           <Route path='/adulte/cartes' element={<TeacherCardsPage />} />
+          <Route path='/adulte/compte' element={<TeacherAccountPage />} />
           <Route
             path='/adulte/eleves/:studentId'
             element={<TeacherStudentPage />}

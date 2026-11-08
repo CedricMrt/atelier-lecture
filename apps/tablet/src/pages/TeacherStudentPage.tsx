@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { fetchStudentDetail, type StudentDetail } from "../services/teacherApi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import StudentForm from "../components/StudentForm";
+import {
+  fetchStudentDetail,
+  regenerateStudentCard,
+  updateStudent,
+  type StudentDetail,
+} from "../services/teacherApi";
 import "./TeacherPages.css";
 
 function formatDate(value: string): string {
@@ -16,6 +22,27 @@ export default function TeacherStudentPage() {
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cardError, setCardError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  async function handleRegenerateCard() {
+    const confirmed = window.confirm(
+      "Créer une nouvelle carte pour cet élève ? L’ancienne carte ne fonctionnera plus.",
+    );
+
+    if (!confirmed || !studentId) return;
+
+    setCardError(null);
+
+    try {
+      await regenerateStudentCard(studentId);
+      navigate(`/adulte/cartes?eleve=${encodeURIComponent(studentId)}`);
+    } catch (err) {
+      setCardError(
+        err instanceof Error ? err.message : "Régénération impossible.",
+      );
+    }
+  }
 
   useEffect(() => {
     if (!studentId) {
@@ -133,6 +160,60 @@ export default function TeacherStudentPage() {
         <p className='teacher-page-subtitle'>
           Suivi des séances, réussites et difficultés.
         </p>
+
+        <details className='teacher-manage'>
+          <summary className='teacher-manage__summary'>
+            Gérer l’élève (nom, avatar, carte)
+          </summary>
+
+          <StudentForm
+            title='Modifier l’élève'
+            submitLabel='Enregistrer'
+            initial={{
+              fullName: student.student.displayName,
+              firstName: student.student.firstName ?? "",
+              avatarKey: student.student.avatarKey ?? "",
+              avatarVariant: student.student.avatarVariant ?? "",
+            }}
+            onSubmit={async (input) => {
+              const card = await updateStudent(studentId, input);
+
+              setStudent((current) =>
+                current
+                  ? {
+                      ...current,
+                      student: {
+                        ...current.student,
+                        displayName: card.fullName,
+                        firstName: card.firstName,
+                        avatarKey: card.avatarKey,
+                        avatarVariant: card.avatarVariant,
+                      },
+                    }
+                  : current,
+              );
+            }}
+          />
+
+          <div className='teacher-manage__cards'>
+            <Link
+              className='teacher-button teacher-button--secondary'
+              to={`/adulte/cartes?eleve=${encodeURIComponent(studentId)}`}
+            >
+              Imprimer sa carte
+            </Link>
+
+            <button
+              className='teacher-button teacher-button--danger'
+              type='button'
+              onClick={() => void handleRegenerateCard()}
+            >
+              Carte perdue : en créer une nouvelle
+            </button>
+          </div>
+
+          {cardError && <p className='teacher-alert'>{cardError}</p>}
+        </details>
 
         <div className='teacher-summary'>
           <article className='teacher-stat'>
