@@ -1,9 +1,22 @@
+import { randomBytes, randomUUID } from "node:crypto";
 import { sqlite } from "./sqliteDatabase.js";
 
 export type StoredStudent = {
   studentId: string;
   displayName: string;
+  firstName: string;
+  avatarKey: string;
+  avatarVariant: string;
   updatedAt: number;
+};
+
+export type StudentCard = {
+  studentId: string;
+  firstName: string;
+  fullName: string;
+  avatarKey: string;
+  avatarVariant: string;
+  qrToken: string;
 };
 
 export type StoredResult = {
@@ -149,7 +162,10 @@ export function getStudents(): StoredStudent[] {
       `SELECT
         student_id AS studentId,
         full_name AS displayName,
-        updated_at
+        first_name AS firstName,
+        avatar_key AS avatarKey,
+        avatar_variant AS avatarVariant,
+        updated_at AS updatedAt
       FROM students
       ORDER BY full_name COLLATE NOCASE`,
     )
@@ -163,7 +179,10 @@ export function getStudent(studentId: string): StoredStudent | null {
         `SELECT
           student_id AS studentId,
           full_name AS displayName,
-          updated_at
+          first_name AS firstName,
+          avatar_key AS avatarKey,
+          avatar_variant AS avatarVariant,
+          updated_at AS updatedAt
         FROM students
         WHERE student_id = ?`,
       )
@@ -226,4 +245,74 @@ export function getStudentByQrToken(qrToken: string) {
         }
       | undefined) ?? null
   );
+}
+
+export function createStudent(input: {
+  firstName: string;
+  fullName: string;
+  avatarKey: string;
+  avatarVariant: string;
+  classId?: string;
+}): StudentCard {
+  const student = {
+    studentId: randomUUID(),
+    firstName: input.firstName,
+    fullName: input.fullName,
+    avatarKey: input.avatarKey,
+    avatarVariant: input.avatarVariant,
+    // Valeur imprimée dans le QR code de la carte : impossible à deviner.
+    qrToken: randomBytes(18).toString("base64url"),
+    classId: input.classId ?? "classe-1",
+  };
+
+  saveStudentProfile(student);
+
+  return {
+    studentId: student.studentId,
+    firstName: student.firstName,
+    fullName: student.fullName,
+    avatarKey: student.avatarKey,
+    avatarVariant: student.avatarVariant,
+    qrToken: student.qrToken,
+  };
+}
+
+export function getStudentCards(): StudentCard[] {
+  return sqlite
+    .prepare(
+      `SELECT
+        student_id AS studentId,
+        first_name AS firstName,
+        full_name AS fullName,
+        avatar_key AS avatarKey,
+        avatar_variant AS avatarVariant,
+        qr_token AS qrToken
+      FROM students
+      ORDER BY full_name COLLATE NOCASE`,
+    )
+    .all() as StudentCard[];
+}
+
+/**
+ * Supprime un élève sans résultat. Retourne "has-results" si l'élève a déjà
+ * des résultats (on ne perd jamais un historique par erreur).
+ */
+export function deleteStudentWithoutResults(
+  studentId: string,
+): "deleted" | "not-found" | "has-results" {
+  const exists = sqlite
+    .prepare("SELECT 1 FROM students WHERE student_id = ?")
+    .get(studentId);
+
+  if (!exists) return "not-found";
+
+  const results = sqlite
+    .prepare("SELECT COUNT(*) AS count FROM results WHERE student_id = ?")
+    .get(studentId) as { count: number };
+
+  if (results.count > 0) return "has-results";
+
+  sqlite.prepare("DELETE FROM students WHERE student_id = ?").run(studentId);
+
+  return "deleted";
 }

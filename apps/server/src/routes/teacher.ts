@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { requireTeacherSession } from "../middleware/teacherSession.js";
 import {
+  createStudent,
+  deleteStudentWithoutResults,
   getResultsByStudent,
   getStudent,
+  getStudentCards,
   getStudents,
 } from "../data/resultRepository.js";
 
@@ -17,8 +20,72 @@ router.get("/eleves", async (_req, res) => {
     students: students.map((student) => ({
       studentId: student.studentId,
       displayName: student.displayName,
+      firstName: student.firstName,
+      avatarKey: student.avatarKey,
+      avatarVariant: student.avatarVariant,
     })),
   });
+});
+
+// Données des cartes élèves (avec le QR token) : à déclarer avant /eleves/:studentId.
+router.get("/eleves/cartes", (_req, res) => {
+  res.json({ cards: getStudentCards() });
+});
+
+function cleanName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const cleaned = value.trim().replace(/\s+/g, " ");
+
+  return cleaned.length >= 1 && cleaned.length <= 60 ? cleaned : null;
+}
+
+function cleanAvatarPart(value: unknown): string | null {
+  return typeof value === "string" && /^[a-z]{2,20}$/.test(value)
+    ? value
+    : null;
+}
+
+router.post("/eleves", (req, res) => {
+  const firstName = cleanName(req.body?.firstName);
+  const fullName = cleanName(req.body?.fullName);
+  const avatarKey = cleanAvatarPart(req.body?.avatarKey);
+  const avatarVariant = cleanAvatarPart(req.body?.avatarVariant);
+
+  if (!firstName || !fullName || !avatarKey || !avatarVariant) {
+    res.status(400).json({
+      error: "Prénom, nom complet et avatar sont obligatoires.",
+    });
+    return;
+  }
+
+  const card = createStudent({
+    firstName,
+    fullName,
+    avatarKey,
+    avatarVariant,
+  });
+
+  res.status(201).json({ student: card });
+});
+
+router.delete("/eleves/:studentId", (req, res) => {
+  const result = deleteStudentWithoutResults(req.params.studentId);
+
+  if (result === "not-found") {
+    res.status(404).json({ error: "Élève introuvable" });
+    return;
+  }
+
+  if (result === "has-results") {
+    res.status(409).json({
+      error:
+        "Cet élève a déjà des résultats : il ne peut pas être supprimé pour ne pas perdre son historique.",
+    });
+    return;
+  }
+
+  res.status(204).end();
 });
 
 router.get("/eleves/:studentId", async (req, res) => {

@@ -12,6 +12,15 @@ Aucune installation : tout est dans le ZIP (l'application, Node.js et les module
 5. Windows demande d'autoriser le pare-feu : clique sur **Autoriser l'accès** (réseaux privés **et** publics si la case existe).
    Si la fenêtre n'apparaît pas ou si les tablettes n'arrivent pas à se connecter, clic droit sur `AUTORISER-PARE-FEU.bat` puis **Exécuter en tant qu'administrateur**.
 
+## Ajouter les élèves (une seule fois, puis à chaque nouvel élève)
+
+1. Sur le PC, ouvre l'espace enseignant (il s'ouvre au démarrage) et connecte-toi.
+2. Dans **Ajouter un élève**, écris le nom complet (visible seulement sur le PC), vérifie le prénom affiché sur la tablette, choisis un avatar, puis clique sur **Ajouter l'élève**.
+3. Quand tous les élèves sont créés, clique sur **Imprimer les cartes** : chaque carte porte le prénom, l'avatar et un QR code. Découpe-les et plastifie-les.
+4. Sur la tablette, l'élève présente sa carte devant la caméra pour se connecter. S'il n'a pas sa carte, il peut aussi choisir son prénom dans la liste.
+
+Un élève sans aucun résultat peut être supprimé depuis sa fiche. Un élève qui a déjà joué ne peut pas l'être, pour ne jamais perdre son historique.
+
 ## Chaque séance
 
 1. Allume le PC et connecte-le au Wi-Fi de l'école.
