@@ -121,6 +121,36 @@ Invoke-Step "Installation des modules du serveur" {
   }
 }
 
+# --- Module natif de better-sqlite3 ------------------------------------------
+# Les versions recentes de npm bloquent les scripts d'installation : le fichier
+# better_sqlite3.node n'est alors jamais telecharge. On lance donc nous-memes
+# prebuild-install, avec le Node embarque (meme version que celle du ZIP).
+
+$sqliteDir = Join-Path $serverStage "node_modules\better-sqlite3"
+$prebuildCandidates = @(
+  (Join-Path $serverStage "node_modules\prebuild-install\bin.js"),
+  (Join-Path $sqliteDir "node_modules\prebuild-install\bin.js")
+)
+$prebuildBin = $prebuildCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+
+if (-not $prebuildBin) {
+  throw "prebuild-install est introuvable dans node_modules : impossible de recuperer le module natif de better-sqlite3."
+}
+
+Invoke-Step "Telechargement du module natif de better-sqlite3" {
+  Push-Location $sqliteDir
+  try {
+    & (Join-Path $stage "node\node.exe") $prebuildBin
+  }
+  finally {
+    Pop-Location
+  }
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $sqliteDir "build\Release\better_sqlite3.node"))) {
+  throw "better_sqlite3.node est toujours absent apres prebuild-install."
+}
+
 # --- Test : le Node embarque charge-t-il bien les modules ? ------------------
 
 $smokeSource = Join-Path $PSScriptRoot "release\smoke-test.cjs"
