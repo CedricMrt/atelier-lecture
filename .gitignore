@@ -21,7 +21,7 @@ backups/
 *.sqlite-journal
 
 # Releases
-release/
+/release/
 *.zip
 scratch.txt
 *.tsbuildinfo

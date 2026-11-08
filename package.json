@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "atelier-lecture",
+  "version": "0.1.0",
   "scripts": {
     "dev:tablet": "pnpm --filter tablet run dev",
     "dev:server": "pnpm --filter server run dev",
@@ -8,10 +9,9 @@
     "build:server": "pnpm --filter server run build",
     "build:all": "pnpm run build:tablet && pnpm run build:server",
     "start": "pnpm --filter server run start",
-    "cert": "node scripts/generate-certificate.mjs"
-  },
-  "devDependencies": {
-    "selfsigned": "^5.5.0"
+    "cert": "pnpm --filter server run cert",
+    "backup": "pnpm --filter server run backup",
+    "release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1"
   },
   "packageManager": "pnpm@12.15.0"
 }

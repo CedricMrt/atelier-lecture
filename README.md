@@ -29,7 +29,7 @@ Elle doit être simple à préparer, utilisable hors ligne et consultable depuis
 - better-sqlite3
 - Zod pour valider les requêtes
 - jsonwebtoken ou session cookie pour l’authentification enseignante
-- bcrypt pour les mots de passe
+- scrypt (module crypto de Node) pour les mots de passe
 - PDFKit ou Puppeteer pour les exports PDF
 - helmet et cors pour la sécurité
 

@@ -29,7 +29,9 @@ From the repository root:
 - Build both apps: `pnpm run build:all`
 - Lint the tablet app: `pnpm --filter tablet run lint`
 - Start the production server: `pnpm start`
-- Generate the self-signed certificate used by the class server: `pnpm cert`
+- Force-regenerate the self-signed certificate (the server already creates/renews it at startup when missing, near expiry or when a local IPv4 is missing from it): `pnpm cert`
+- Back up the SQLite database (consistent copy, keeps the last 30): `pnpm backup` (after build) or `pnpm --filter server run backup:dev`
+- Build the Windows release ZIP (run on Windows x64): `pnpm release`
 
 There is no dedicated automated test runner configured in this workspace. The package manifests do not define a `test` script, so build and lint are the project’s current validation commands; if new tests are introduced, prefer the repo’s existing Vite/TypeScript setup rather than introducing a different stack without reason.
 
@@ -74,7 +76,7 @@ When changing cross-app behavior, keep the tablet fetch contracts and server rou
 - React screens live under `apps/tablet/src/pages`, and gameplay logic stays under `apps/tablet/src/games` instead of being mixed into route components.
 - The tablet database schema is centralized in `apps/tablet/src/db/db.ts`; if you add or change a table, update the Dexie schema and any related types together.
 - Teacher authentication is cookie-based and is handled in `apps/server/src/routes/teacherAuth.ts` together with session middleware.
-- The server’s startup logic (`apps/server/src/index.ts`) expects a local self-signed certificate in `apps/server/certs/` for HTTPS; otherwise it falls back to HTTP and prints a warning.
+- The server’s startup logic (`apps/server/src/index.ts`) creates the self-signed certificate in `apps/server/certs/` on its own (`src/tls/certificate.ts`); it only falls back to HTTP, with a warning, if the certificate cannot be created.
 - Runtime data and generated output are separated from source logic: local runtime DBs and built `dist/` output should not be treated as the primary implementation surface unless the task explicitly targets them.
 
 ## Working expectations
@@ -88,4 +90,4 @@ When changing cross-app behavior, keep the tablet fetch contracts and server rou
 
 - The project is for a classroom reading and phonics training tool aimed at CP/CE1 learners, with adaptive activities and teacher-managed sessions.
 - The README describes rhythmic, phonological, graphophonological, and reading-comprehension exercises, so keep pedagogical flows and session logic aligned with those existing game types when editing the student experience.
-- Relevant local class setup is handled by `pnpm cert` and the startup logs in `apps/server/src/index.ts`; do not remove those assumptions unless the task explicitly changes the deployment model.
+- Relevant local class setup is handled by `src/tls/certificate.ts` (`pnpm cert` forces regeneration) and the startup logs in `apps/server/src/index.ts`; do not remove those assumptions unless the task explicitly changes the deployment model.
