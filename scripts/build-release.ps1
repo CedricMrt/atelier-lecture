@@ -55,7 +55,12 @@ if ($env:PROCESSOR_ARCHITECTURE -ne "AMD64") {
 Require-Command "node" "Installe Node.js LTS."
 Require-Command "pnpm" "Installe pnpm (npm install -g pnpm)."
 Require-Command "npm" "npm est fourni avec Node.js."
-Require-Command "tar" "tar est fourni avec Windows 10 et 11."
+
+# Le tar de Windows (bsdtar), pas celui de Git Bash : le tar GNU lit "C:\..." comme "machine:chemin".
+$windowsTar = Join-Path $env:SystemRoot "System32\tar.exe"
+if (-not (Test-Path -LiteralPath $windowsTar)) {
+  throw "tar.exe est introuvable dans System32 : il faut Windows 10 (version 1803 ou plus) ou Windows 11."
+}
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
   $Version = (Get-Content -Raw -LiteralPath (Join-Path $root "package.json") | ConvertFrom-Json).version
@@ -192,7 +197,7 @@ if (Test-Path -LiteralPath $zipPath) {
 
 # tar (et non Compress-Archive) : les noms de fichiers et les chemins longs de node_modules passent mieux.
 Invoke-Step "Creation du ZIP" {
-  tar -a -c -f $zipPath -C $releaseRoot AtelierLecture
+  & $windowsTar -a -c -f $zipPath -C $releaseRoot AtelierLecture
 }
 
 $sizeMb = [math]::Round((Get-Item -LiteralPath $zipPath).Length / 1MB, 1)
