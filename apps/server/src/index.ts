@@ -1,8 +1,6 @@
 import express from "express";
 import path from "node:path";
-import fs from "node:fs";
 import https from "node:https";
-import os from "node:os";
 import type { Request, Response, NextFunction } from "express";
 import teacherRouter from "./routes/teacher.js";
 import syncRouter from "./routes/sync.js";
@@ -12,6 +10,7 @@ import { ensureDefaultTeacher } from "./data/teacherStore.js";
 import { requireTeacherSession } from "./middleware/teacherSession.js";
 import studentsRouter from "./routes/students.js";
 import { requireStudentSync } from "./middleware/requireStudentSync.js";
+import { ensureCertificate, type TlsMaterial } from "./tls/certificate.js";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -62,69 +61,71 @@ async function startServer() {
     });
   });
 
-  function getLocalIpv4Address(): string {
-    const interfaces = os.networkInterfaces();
+  let tls: TlsMaterial | null = null;
 
-    for (const interfaceName of Object.keys(interfaces)) {
-      for (const networkInterface of interfaces[interfaceName] ?? []) {
-        if (networkInterface.family === "IPv4" && !networkInterface.internal) {
-          return networkInterface.address;
-        }
-      }
-    }
-
-    return "127.0.0.1";
+  try {
+    tls = await ensureCertificate();
+  } catch (error) {
+    console.error("Certificat HTTPS impossible à préparer :", error);
   }
 
-  const keyPath = path.resolve(process.cwd(), "certs/key.pem");
-  const certPath = path.resolve(process.cwd(), "certs/cert.pem");
+  const banner = () => {
+    console.log("\n========================================");
+    console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
+    console.log("========================================\n");
+  };
 
-  const canUseHttps = fs.existsSync(keyPath) && fs.existsSync(certPath);
+  if (tls) {
+    const { key, cert, addresses, regenerated } = tls;
 
-  if (canUseHttps) {
-    const httpsServer = https.createServer(
-      {
-        key: fs.readFileSync(keyPath),
-        cert: fs.readFileSync(certPath),
-      },
-      app,
-    );
+    const httpsServer = https.createServer({ key, cert }, app);
 
     httpsServer.listen(PORT, "0.0.0.0", () => {
-      const localIp = getLocalIpv4Address();
-
-      console.log("\n========================================");
-      console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
-      console.log("========================================\n");
+      banner();
 
       console.log("✅ Serveur HTTPS démarré.");
+
+      if (regenerated) {
+        console.log(
+          "🔐 Un nouveau certificat a été créé : les tablettes devront l'accepter à nouveau.",
+        );
+      }
+
       console.log(`💻 Sur ce PC : https://localhost:${PORT}/adulte/connexion`);
-      console.log(`🩺 Test réseau : https://localhost:${PORT}/api/health`);
       console.log("");
       console.log("📱 Adresse à ouvrir sur les tablettes :");
-      console.log(`https://${localIp}:${PORT}`);
+
+      if (addresses.length === 0) {
+        console.log("   Aucune connexion réseau détectée : branche le Wi-Fi.");
+      }
+
+      addresses.forEach((address, index) => {
+        console.log(
+          `   https://${address}:${PORT}${index === 0 ? "   <-- celle-ci en priorité" : ""}`,
+        );
+      });
+
       console.log("");
+
+      if (addresses[0]) {
+        console.log(`🩺 Test réseau : https://${addresses[0]}:${PORT}/api/health`);
+        console.log("");
+      }
+
       console.log("⚠️  Au premier accès, accepte le certificat auto-signé.");
       console.log("⚠️  Laisse cette fenêtre ouverte pendant la séance.");
       console.log("");
     });
   } else {
     app.listen(PORT, "0.0.0.0", () => {
-      const localIp = getLocalIpv4Address();
+      banner();
 
-      console.log("\n========================================");
-      console.log("  ATELIER LECTURE — SERVEUR DE CLASSE");
-      console.log("========================================\n");
-
-      console.log("⚠️  Serveur HTTP démarré.");
+      console.log("⚠️  Serveur HTTP démarré (certificat HTTPS indisponible).");
       console.log(
         "⚠️  La caméra et le scan QR peuvent être bloqués sur tablette.",
       );
       console.log("");
-      console.log("Exécute d’abord : pnpm cert");
-      console.log("");
       console.log(`💻 http://localhost:${PORT}/adulte/connexion`);
-      console.log(`📱 http://${localIp}:${PORT}`);
       console.log("");
     });
   }

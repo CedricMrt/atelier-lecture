@@ -1,0 +1,4 @@
+# Les fichiers Windows doivent rester en fins de ligne CRLF, sinon cmd.exe plante.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
