@@ -50,7 +50,9 @@ async function startServer() {
     }),
   );
 
-  app.get(/^\/(?!api|adulte).*/, (_req, res) => {
+  // Toutes les pages de l'application (y compris /adulte/...) renvoient index.html ;
+  // seules les routes /api/... restent gérées par le serveur.
+  app.get(/^\/(?!api(\/|$)).*/, (_req, res) => {
     res.sendFile(path.join(tabletDistPath, "index.html"));
   });
 
