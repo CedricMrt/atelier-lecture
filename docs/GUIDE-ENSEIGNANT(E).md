@@ -19,7 +19,7 @@ Aucune installation : tout est dans le ZIP (l'application, Node.js et les module
 3. Quand tous les élèves sont créés, clique sur **Imprimer les cartes** : chaque carte porte le prénom, l'avatar et un QR code. Découpe-les et plastifie-les.
 4. Sur la tablette, l'élève présente sa carte devant la caméra pour se connecter. S'il n'a pas sa carte, il peut aussi choisir son prénom dans la liste.
 
-Un élève sans aucun résultat peut être supprimé depuis sa fiche. Un élève qui a déjà joué ne peut pas l'être, pour ne jamais perdre son historique.
+Un élève sans aucun résultat peut être supprimé avec le bouton **Supprimer** de la liste. Un élève qui a déjà joué ne peut pas l'être, pour ne jamais perdre son historique.
 
 ## Chaque séance
 
