@@ -3,9 +3,6 @@
 Application pour enfants de 5 à 8 ans : six mini-jeux de lecture, sans compte ni serveur.
 Tout reste sur l'appareil. Indépendante de l'appli de classe (`apps/`).
 
-Le projet a été porté de Phaser/React vers **Godot 4** (GDScript). L'ancien code Phaser/React
-n'est plus dans le dossier : il reste dans l'historique Git (commit `07d0816`).
-
 ## État actuel
 
 - Écran « Qui joue ? » : profils locaux (prénom + avatar), « Gérer » protégé par une question d'adulte.

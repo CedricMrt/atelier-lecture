@@ -1,6 +1,6 @@
 extends Control
 ## Affiche un personnage : portrait 3D (modèle du pack d'assets) ou, à défaut,
-## le dessin de secours fait par code (anciens avatars ou modèle introuvable).
+## le dessin de secours fait par code (modèle introuvable).
 
 const Avatars = preload("res://scripts/data/avatars.gd")
 

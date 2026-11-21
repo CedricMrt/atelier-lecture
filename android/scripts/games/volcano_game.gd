@@ -7,7 +7,7 @@ extends Control
 ## (rig « medium ») reçoivent les animations du pack KayKit_Character_Animations : attente, saut, joie.
 ## Si un modèle est introuvable, une forme simple le remplace (et un avertissement
 ## « Modèle introuvable ou non importé » s'affiche dans la Sortie de Godot).
-## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
+## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd.
 
 signal finished(result: Dictionary)
 
@@ -681,7 +681,7 @@ func _build_hero() -> void:
 	_hero = Node3D.new()
 	_world.add_child(_hero)
 
-	# Personnage choisi par le joueur ; le Mage si le profil est ancien ou le modèle absent.
+	# Personnage choisi par le joueur ; le Mage si l'avatar est inconnu ou le modèle absent.
 	var avatar: Dictionary = Avatars.get_avatar(avatar_id)
 	var model_path: String = avatar.get("model", HERO_MODEL)
 	var model := _load_model(model_path, HERO_HEIGHT, true)
