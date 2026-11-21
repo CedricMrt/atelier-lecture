@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bctb7w1cma8yx"
+path="res://.godot/imported/Prop_Coins.obj-0b29bdc9e8e5ff4f36c2e2177b5fcf01.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Prop_Coins.obj-0b29bdc9e8e5ff4f36c2e2177b5fcf01.mesh"]
+
+source_file="res://assets/Pirate Kit - Nov 2023/OBJ/Prop_Coins.obj"
+dest_files=["res://.godot/imported/Prop_Coins.obj-0b29bdc9e8e5ff4f36c2e2177b5fcf01.mesh", "res://.godot/imported/Prop_Coins.obj-0b29bdc9e8e5ff4f36c2e2177b5fcf01.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

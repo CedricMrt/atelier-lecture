@@ -42,7 +42,7 @@ static func flat(
 	return style
 
 
-static func style_button(button: Button, color: Color, radius: int = 24) -> void:
+static func style_button(target: Button, color: Color, radius: int = 24) -> void:
 	var normal := flat(color, radius)
 	var hover := flat(color.lightened(0.12), radius)
 	var pressed := flat(color.darkened(0.2), radius, 0, Color.WHITE, false)
@@ -54,11 +54,11 @@ static func style_button(button: Button, color: Color, radius: int = 24) -> void
 		style.content_margin_top = 12
 		style.content_margin_bottom = 12
 
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	target.add_theme_stylebox_override("normal", normal)
+	target.add_theme_stylebox_override("hover", hover)
+	target.add_theme_stylebox_override("pressed", pressed)
+	target.add_theme_stylebox_override("disabled", disabled)
+	target.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
 static func button(

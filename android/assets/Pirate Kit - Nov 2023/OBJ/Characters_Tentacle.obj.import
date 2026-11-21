@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ydd3cruhql3x"
+path="res://.godot/imported/Characters_Tentacle.obj-2696558acf4b7ce866a3ba6ab1d1c74b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Characters_Tentacle.obj-2696558acf4b7ce866a3ba6ab1d1c74b.mesh"]
+
+source_file="res://assets/Pirate Kit - Nov 2023/OBJ/Characters_Tentacle.obj"
+dest_files=["res://.godot/imported/Characters_Tentacle.obj-2696558acf4b7ce866a3ba6ab1d1c74b.mesh", "res://.godot/imported/Characters_Tentacle.obj-2696558acf4b7ce866a3ba6ab1d1c74b.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
