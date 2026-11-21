@@ -14,5 +14,6 @@ Règles :
 | `assets/KayKit_Adventurers_2.0_FREE/` (personnages) | Kay Lousberg (KayKit) | CC0 d'après la page itch.io ; voir `License.txt` du pack | https://kaylousberg.itch.io | à compléter |
 | `assets/KayKit_Skeletons_1.1_FREE/` (personnages squelettes) | Kay Lousberg (KayKit) | CC0 d'après la page itch.io ; voir `License.txt` du pack | https://kaylousberg.itch.io | à compléter |
 | `assets/KayKit_Character_Animations_1.1/` (animations Rig_Medium) | Kay Lousberg (KayKit) | CC0 (indiqué sur la page du pack) | https://kaylousberg.itch.io | à compléter |
-| `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` (montagnes, rochers, caisses) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io | 26/04/2024 (création du pack) |
+| `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` (montagnes, rochers) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io | 26/04/2024 (création du pack) |
+| `assets/KayKit_Dungeon_Pack_1.1_FREE/` (coffres) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io/kaykit-dungeon-pack | 16/07/2026 (création du pack) |
 | `assets/stylized_Nature_kit/` (dalles de pierre) | à compléter | À VÉRIFIER : voir `License_Standard.txt` (republication dans un dépôt public ?) | | |
