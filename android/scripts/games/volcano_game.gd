@@ -12,6 +12,7 @@ extends Control
 signal finished(result: Dictionary)
 
 const Ui = preload("res://scripts/ui/ui.gd")
+const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
 const Avatars = preload("res://scripts/data/avatars.gd")
 
@@ -58,6 +59,7 @@ const TAP_RADIUS := 1.35
 const TINT_CORRECT := Color(0.25, 0.85, 0.45)
 const TINT_WRONG := Color(0.95, 0.25, 0.25)
 const GOLD := Color(1.0, 0.85, 0.3)
+const OUTLINE := Color(0.17, 0.06, 0.04)
 
 const LAVA_SHADER := """
 shader_type spatial;
@@ -93,6 +95,7 @@ var _position := 0
 var _errors_here := 0
 var _total_letters := 0
 var _total_errors := 0
+var _combo := 0
 var _locked := true
 var _alive := true
 
@@ -125,6 +128,25 @@ var _finish_top := 0.3
 var _counter: Label
 var _message: Label
 var _clue: TextureRect
+var _score_label: Label
+var _combo_label: Label
+
+
+## Icône de haut-parleur dessinée par code (pas de police ni d'image à charger).
+class SpeakerIcon extends Control:
+	func _draw() -> void:
+		var c: Vector2 = size / 2.0
+		var body := PackedVector2Array([
+			c + Vector2(-26.0, -10.0),
+			c + Vector2(-14.0, -10.0),
+			c + Vector2(4.0, -24.0),
+			c + Vector2(4.0, 24.0),
+			c + Vector2(-14.0, 10.0),
+			c + Vector2(-26.0, 10.0),
+		])
+		draw_colored_polygon(body, Color.WHITE)
+		draw_arc(c + Vector2(4.0, 0.0), 14.0, -0.9, 0.9, 12, Color.WHITE, 4.0)
+		draw_arc(c + Vector2(4.0, 0.0), 26.0, -0.9, 0.9, 16, Color.WHITE, 4.0)
 
 
 func setup(p_level: int, p_rounds: int, p_avatar_id: String) -> void:
@@ -702,16 +724,12 @@ func _build_hero() -> void:
 
 # ---------- Interface 2D ----------
 
-func _build_hud() -> void:
-	var speaker := Ui.button("Écouter", 30, Ui.ORANGE)
-	speaker.position = Vector2(1040, 24)
-	speaker.custom_minimum_size = Vector2(170, 80)
-	speaker.pressed.connect(func() -> void:
-		if _round_index < _words.size():
-			_say_current_word()
-	)
-	_stage.add_child(speaker)
+func _outline(label: Label, outline_size: int = 8) -> void:
+	label.add_theme_color_override("font_outline_color", OUTLINE)
+	label.add_theme_constant_override("outline_size", outline_size)
 
+
+func _build_hud() -> void:
 	_clue = TextureRect.new()
 	_clue.position = Vector2(1060, 132)
 	_clue.size = Vector2(130, 130)
@@ -725,12 +743,40 @@ func _build_hud() -> void:
 	_counter.size = Vector2(240, 36)
 	_stage.add_child(_counter)
 
+	# Score et combo en haut à droite, comme dans « Dedans ou pas ? ».
+	var score_star := StarView.new()
+	score_star.position = Vector2(1090.0, 16.0)
+	score_star.size = Vector2(48.0, 48.0)
+	score_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(score_star)
+
+	_score_label = Ui.label("0", 44, Ui.CREAM, HORIZONTAL_ALIGNMENT_LEFT)
+	_score_label.position = Vector2(1146.0, 10.0)
+	_score_label.size = Vector2(100.0, 60.0)
+	_outline(_score_label, 8)
+	_stage.add_child(_score_label)
+
+	_combo_label = Ui.label("", 32, GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
+	_combo_label.position = Vector2(950.0, 68.0)
+	_combo_label.size = Vector2(296.0, 44.0)
+	_outline(_combo_label, 8)
+	_stage.add_child(_combo_label)
+
 	_message = Ui.label("", 34, Color.WHITE)
 	_message.position = Vector2(0, 662)
 	_message.size = Vector2(W, 50)
 	_message.add_theme_color_override("font_outline_color", Color.html("2b0f0a"))
 	_message.add_theme_constant_override("outline_size", 8)
 	_stage.add_child(_message)
+
+
+func _update_score() -> void:
+	_score_label.text = str(_total_letters)
+
+	if _combo >= 2:
+		_combo_label.text = "Combo x%d" % _combo
+	else:
+		_combo_label.text = ""
 
 
 # ---------- Déroulement d'une manche ----------
@@ -791,6 +837,7 @@ func _say_current_word() -> void:
 	await Speech.speak(spoken)
 
 
+## Les cases vides du mot, avec le haut-parleur juste à droite pour réécouter le mot.
 func _build_slots() -> void:
 	var count := _letters.size()
 	var gap := 78.0
@@ -812,6 +859,25 @@ func _build_slots() -> void:
 
 		_slot_labels.append(letter)
 		_round_nodes.append(slot)
+
+	var last_edge: float = first_x + (count - 1) * gap + 32.0
+
+	var speaker := Ui.button("", 30, Ui.ORANGE)
+	speaker.custom_minimum_size = Vector2(84.0, 76.0)
+	speaker.size = Vector2(84.0, 76.0)
+	speaker.position = Vector2(last_edge + 24.0, 22.0)
+
+	var icon := SpeakerIcon.new()
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speaker.add_child(icon)
+
+	speaker.pressed.connect(func() -> void:
+		if _round_index < _words.size():
+			_say_current_word()
+	)
+	_stage.add_child(speaker)
+	_round_nodes.append(speaker)
 
 
 ## Parcours 3D : plateforme de départ, une rangée de dalles par lettre, puis le coffre.
@@ -983,8 +1049,10 @@ func _hop_to(target: Vector3) -> void:
 func _on_correct(tile: Dictionary) -> void:
 	_locked = true
 	_total_letters += 1
+	_combo += 1
 	_errors_here = 0
 	tile["done"] = true
+	_update_score()
 
 	_tint(tile["visual"], TINT_CORRECT)
 	_slot_labels[_position].text = tile["letter"]
@@ -1009,7 +1077,9 @@ func _on_correct(tile: Dictionary) -> void:
 func _on_wrong(tile: Dictionary) -> void:
 	_total_errors += 1
 	_errors_here += 1
+	_combo = 0
 	tile["done"] = true
+	_update_score()
 
 	_tint(tile["visual"], TINT_WRONG)
 	_shake()
