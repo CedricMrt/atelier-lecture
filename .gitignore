@@ -25,3 +25,11 @@ backups/
 *.zip
 scratch.txt
 *.tsbuildinfo
+
+# Godot (android/)
+android/.godot/
+android/.import/
+android/export_presets.cfg
+android/android/build/
+*.keystore
+*.jks

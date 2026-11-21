@@ -1,62 +1,77 @@
-# Jeux de lecture — application Android
+# Jeux de lecture : application Android (Godot 4)
 
 Application pour enfants de 5 à 8 ans : six mini-jeux de lecture, sans compte ni serveur.
 Tout reste sur l'appareil. Indépendante de l'appli de classe (`apps/`).
 
+Le projet a été porté de Phaser/React vers **Godot 4** (GDScript). L'ancien code est
+conservé dans `_archive-phaser/` (ignoré par Godot) et dans l'historique Git.
+
 ## État actuel
 
-- Écran « Qui joue ? » : profils locaux (prénom + avatar), protégés par une question pour les adultes.
-- Progression par jeu et par joueur, niveaux qui s'adaptent (1 à 3), étoiles.
-- Voix : synthèse vocale du téléphone (Web Speech API de la WebView).
-- Pub : **simulation** avant un jeu (jamais au lancement, un jeu sur quatre au plus, au moins 3 minutes d'écart). Le vrai SDK sera branché plus tard.
-- Jeu 1 **Pont du volcan** jouable, avec des formes provisoires. Les cinq autres jeux sont annoncés « Bientôt ».
+- Écran « Qui joue ? » : profils locaux (prénom + avatar), « Gérer » protégé par une question d'adulte.
+- Progression par jeu et par joueur, niveaux adaptatifs (1 à 3), étoiles. Fichier : `user://profiles.json`.
+- Voix : synthèse vocale du système (`DisplayServer.tts_*`), voix française cherchée au démarrage.
+- Pub : **simulation** avant un jeu (jamais au lancement, un jeu sur quatre au plus, 3 minutes d'écart minimum).
+- Jeu 1 **Pont du volcan** jouable, décor et personnage provisoires (dessinés par code, en 2D).
+- Les cinq autres jeux sont annoncés « Bientôt ».
+- Paysage uniquement, rendu « GL Compatibility » (fonctionne sur les tablettes d'entrée de gamme).
 
-## Lancer sur ton PC (dans le navigateur)
+## Ouvrir et lancer sur le PC
 
-```bash
-pnpm install
-pnpm dev:android
-```
+1. Installer **Godot 4.3 ou plus récent** (version standard, pas « .NET ») : https://godotengine.org
+2. Godot → *Importer* → choisir `android/project.godot`.
+3. Touche F5 pour lancer. Si Godot propose de convertir le projet vers sa version, accepter.
 
-Ouvre l'adresse affichée (port 5174). Pour entendre la voix, utilise Chrome.
+Sur PC, la voix française dépend des voix Windows installées.
 
 ## Vérifier la logique
 
+Depuis le dossier `android/` :
+
 ```bash
-pnpm --filter lecture-android run test:logic
+godot --headless --path . --script tests/run_tests.gd
 ```
 
-## Fabriquer l'appli Android (une seule fois : ajouter Capacitor)
+Code de sortie 0 si tout passe. (Remplacer `godot` par le chemin de l'exécutable si besoin.)
 
-Prérequis : Android Studio installé, un téléphone Android en mode développeur.
+## Fabriquer l'APK pour ton téléphone
 
-```bash
-cd android
-pnpm add @capacitor/core @capacitor/android
-pnpm add -D @capacitor/cli
-pnpm build
-npx cap add android
+Prérequis : **JDK 17**, **Android Studio** (pour le SDK Android), et un téléphone en mode développeur.
+
+1. Godot → *Éditeur → Paramètres de l'éditeur → Export → Android* : indiquer le dossier du SDK et celui du JDK.
+2. *Projet → Installer le modèle d'exportation* (une seule fois).
+3. *Projet → Exporter… → Ajouter… → Android*. Cocher **Use Gradle Build** n'est pas nécessaire pour un premier essai.
+4. Brancher le téléphone, activer le débogage USB, puis bouton « Déploiement en un clic » en haut à droite.
+
+**Avant de publier**, dans le préréglage d'export : changer l'identifiant du paquet
+(`com.tonnom.jeuxdelecture`, il ne pourra plus changer après publication) et créer une clé de
+signature (à sauvegarder précieusement). `export_presets.cfg` est ignoré par Git parce qu'il peut
+contenir les mots de passe de la clé.
+
+## Organisation
+
 ```
-
-Puis, **avant de publier**, change `appId` dans `capacitor.config.json` : l'identifiant
-(du type `com.tonnom.jeuxdelecture`) ne pourra plus être modifié une fois l'appli publiée.
-
-Ouvre `android/android/app/src/main/AndroidManifest.xml` et, dans la balise `<activity …>`,
-ajoute `android:screenOrientation="sensorLandscape"` pour forcer le mode paysage.
-
-À chaque modification du code :
-
-```bash
-pnpm build
-npx cap sync android
-npx cap open android      # ouvre Android Studio, puis « Run » sur ton téléphone
+android/
+  project.godot
+  scenes/main.tscn          scène de départ (le reste est construit par code)
+  scripts/
+    main.gd                 passe d'un écran à l'autre, bouton « retour » d'Android
+    autoload/               profiles.gd (sauvegarde), speech.gd (voix), ads.gd (moment des pubs)
+    data/                   games.gd (catalogue), avatars.gd
+    logic/                  règles pures, testées : progression, pubs, Pont du volcan
+    screens/                who_plays.gd, home.gd, game_host.gd
+    games/                  un fichier par jeu (volcano_game.gd)
+    ui/                     boutons, boîtes de dialogue, avatars, étoiles
+  tests/run_tests.gd
+  assets/                   modèles, images, sons (voir CREDITS.md)
+  _archive-phaser/          ancienne version, ignorée par Godot
 ```
 
 ## À prévoir ensuite
 
-- Vrais graphismes (voir `CREDITS.md`) : personnages, décors, avatars, étoiles.
+- Vrais graphismes en 3D (voir `CREDITS.md`) : personnages, décors, avatars, écran des mondes.
+- Image-indice des mots : déposer `assets/images/words/<mot>.png`, elle s'affichera toute seule.
 - Sons et musique libres de droits.
 - Les cinq autres jeux.
-- Vrai SDK publicitaire certifié « Familles » (pubs de test pendant le développement).
-- Police arrondie embarquée dans l'appli (l'appli doit marcher hors connexion).
-- Bouton « retour » d'Android et mode plein écran.
+- Vrai plugin publicitaire certifié « Familles » (pubs de test pendant le développement).
+- Vérifier la sauvegarde automatique d'Android (restauration des profils sur un nouveau téléphone).

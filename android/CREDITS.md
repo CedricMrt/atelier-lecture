@@ -11,4 +11,4 @@ Règles :
 
 | Fichier | Auteur / source | Licence | Lien | Date |
 |---|---|---|---|---|
-| *(vide pour l'instant : les visuels actuels sont des formes dessinées en code et des emoji)* | | | | |
+| *(vide pour l'instant : les visuels actuels sont des formes dessinées en code)* | | | | |

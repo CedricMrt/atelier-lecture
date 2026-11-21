@@ -1,7 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "android"
 allowBuilds:
   bcrypt: true
 permissions:
