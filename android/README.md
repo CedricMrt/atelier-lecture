@@ -5,6 +5,9 @@ Tout reste sur l'appareil. Indépendante de l'appli de classe (`apps/`).
 
 ## État actuel
 
+- **Démarrage** : image de lancement Android, puis titre animé en tuiles de lettres pendant que les modèles 3D se chargent en tâche de fond, personnages, « Touche pour jouer » (`scripts/screens/splash.gd`).
+- **Bienvenue** pour les adultes, au tout premier lancement seulement (`welcome.gd`, mémorisé dans `user://settings.json`).
+- Aucun compte, y compris Google : les joueurs et les réglages sont propres à chaque appareil. Plusieurs tablettes avec le même compte Google ne partagent donc rien.
 - Écran « Qui joue ? » : profils locaux (prénom + avatar), « Gérer » protégé par une question d'adulte.
 - Progression par jeu et par joueur, niveaux adaptatifs (1 à 3), étoiles. Fichier : `user://profiles.json`.
 - Voix : synthèse vocale du système (`DisplayServer.tts_*`), voix française cherchée au démarrage.

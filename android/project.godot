@@ -20,9 +20,14 @@ run/main_scene="res://scenes/main.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.169, 0.059, 0.039, 1)
+boot_splash/image="res://assets/images/boot_splash.png"
+boot_splash/fullsize=false
+boot_splash/use_filter=true
 
 [autoload]
 
+Settings="*res://scripts/autoload/settings.gd"
 Profiles="*res://scripts/autoload/profiles.gd"
 Speech="*res://scripts/autoload/speech.gd"
 Ads="*res://scripts/autoload/ads.gd"
