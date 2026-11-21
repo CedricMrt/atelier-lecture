@@ -1,29 +1,64 @@
 extends Control
-## « Pont du volcan » : écoute le mot, puis touche les bonnes lettres pour traverser la lave.
-## Version provisoire : décor et personnage dessinés par code (2D). Les vrais modèles
-## 3D remplaceront _build_background() et _build_hero() sans changer le déroulement.
+## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
+## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
+## Décor : Pirate Kit (falaises, rochers, coffre, personnage) et Stylized Nature Kit (dalles).
+## Si un modèle est introuvable, une forme simple le remplace : le jeu reste jouable.
+## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
 
 signal finished(result: Dictionary)
 
 const Ui = preload("res://scripts/ui/ui.gd")
-const AvatarView = preload("res://scripts/ui/avatar_view.gd")
-const Dot = preload("res://scripts/ui/dot.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
 
-# Le jeu est dessiné dans une scène de 1280 x 720, mise à l'échelle de l'écran.
+# Interface 2D dessinée dans une scène de 1280 x 720, mise à l'échelle de l'écran.
 const W := 1280.0
 const H := 720.0
-const TILE_W := 120.0
-const TILE_H := 100.0
-const START_X := 130.0
-const START_Y := 470.0
-const HERO_OFFSET_Y := -145.0
 
-const TILE_COLORS := {
-	"normal": Color(0.80, 0.72, 0.64),
-	"correct": Color(0.25, 0.75, 0.42),
-	"wrong": Color(0.90, 0.28, 0.30),
+const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
+const NATURE := "res://assets/stylized_Nature_kit/glTF/"
+const HERO_MODEL := PIRATE + "Characters_Anne.gltf"
+const CHEST_MODEL := PIRATE + "Prop_Chest_Gold.gltf"
+const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
+const CLIFFS := ["Environment_Cliff1.gltf", "Environment_Cliff2.gltf", "Environment_Cliff3.gltf", "Environment_Cliff4.gltf"]
+const ROCKS := ["Environment_Rock_1.gltf", "Environment_Rock_2.gltf", "Environment_Rock_3.gltf", "Environment_Rock_4.gltf", "Environment_Rock_5.gltf"]
+
+const ROW_GAP := 2.4
+const TILE_SPACING := 2.2
+const TILE_SIZE := 1.8
+const TILE_TOP := 0.35
+const START_Z := 2.6
+const HERO_HEIGHT := 1.6
+const HERO_YAW := PI
+const HOP_TIME := 0.5
+const CAM_OFFSET := Vector3(0.0, 8.5, 6.5)
+const CAM_PITCH := -52.0
+const TAP_RADIUS := 1.25
+
+const TINT_CORRECT := Color(0.25, 0.85, 0.45)
+const TINT_WRONG := Color(0.95, 0.25, 0.25)
+
+const LAVA_SHADER := """
+shader_type spatial;
+render_mode unshaded;
+varying vec3 wp;
+void vertex() {
+	wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
+float wave(vec2 p) {
+	return sin(p.x * 1.3 + TIME * 0.6) + sin(p.y * 1.7 - TIME * 0.5) + sin((p.x + p.y) * 0.8 + TIME * 0.4);
+}
+void fragment() {
+	vec2 p = wp.xz;
+	float v = wave(p) + 0.6 * wave(p * 2.3 + 7.0);
+	v = clamp(v / 5.0 + 0.5, 0.0, 1.0);
+	vec3 dark = vec3(0.45, 0.07, 0.02);
+	vec3 mid = vec3(0.95, 0.35, 0.05);
+	vec3 hot = vec3(1.0, 0.85, 0.25);
+	vec3 col = mix(dark, mid, smoothstep(0.15, 0.55, v));
+	col = mix(col, hot, smoothstep(0.55, 0.9, v));
+	ALBEDO = col;
+}
+"""
 
 var level: int = 1
 var rounds_count: int = 5
@@ -40,13 +75,20 @@ var _locked := true
 var _alive := true
 
 var _stage: Control
+var _container: SubViewportContainer
+var _viewport: SubViewport
+var _world: Node3D
+var _round_root: Node3D
+var _camera: Camera3D
+var _hero: Node3D
+var _hero_player: AnimationPlayer
 var _stage_base := Vector2.ZERO
-var _tiles: Array = []         # Array (par colonne) d'Array de {letter, x, y, button}
+var _tiles: Array = []
 var _slot_labels: Array = []
 var _round_nodes: Array = []
+var _finish_z := 0.0
+var _finish_top := 0.3
 
-var _hero: Control
-var _hero_body: Control
 var _counter: Label
 var _message: Label
 var _clue: TextureRect
@@ -62,15 +104,28 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	clip_contents = true
 
+	_container = SubViewportContainer.new()
+	_container.stretch = true
+	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_container)
+
+	_viewport = SubViewport.new()
+	_container.add_child(_viewport)
+
+	_world = Node3D.new()
+	_viewport.add_child(_world)
+
 	_stage = Control.new()
 	_stage.size = Vector2(W, H)
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stage)
 	resized.connect(_fit_stage)
 	_fit_stage()
 
 	_words = Logic.pick_words(level, rounds_count)
 
-	_build_background()
+	_build_world()
 	_build_hud()
 	_build_hero()
 	_start_round()
@@ -92,62 +147,294 @@ func _fit_stage() -> void:
 	_stage.position = _stage_base
 
 
-# ---------- Décor provisoire (à remplacer par les vrais modèles) ----------
+func _process(delta: float) -> void:
+	if _camera != null and _hero != null:
+		var target := _hero.position + CAM_OFFSET
+		_camera.position = _camera.position.lerp(target, clampf(delta * 4.0, 0.0, 1.0))
 
-func _build_background() -> void:
-	var sky := ColorRect.new()
-	sky.color = Color.html("2b0f0a")
-	sky.size = Vector2(W, H)
-	_stage.add_child(sky)
 
-	# Parois de la grotte
-	var wall_color := Color.html("170705")
-	for points in [
-		PackedVector2Array([Vector2(0, 0), Vector2(260, 0), Vector2(0, 380)]),
-		PackedVector2Array([Vector2(W, 0), Vector2(W - 300, 0), Vector2(W, 330)]),
-		PackedVector2Array([Vector2(0, H), Vector2(0, 560), Vector2(200, H)]),
-	]:
-		var wall := Polygon2D.new()
-		wall.polygon = points
-		wall.color = wall_color
-		_stage.add_child(wall)
+# ---------- Chargement des modèles ----------
 
-	# Lave : bandes de couleurs qui respirent
-	var base := ColorRect.new()
-	base.color = Color.html("7d1d0b")
-	base.position = Vector2(0, 275)
-	base.size = Vector2(W, H - 275)
-	_stage.add_child(base)
+## Charge un modèle, le met à la taille voulue, pose ses pieds à y = 0 et le centre.
+## Renvoie null si le fichier est absent. La hauteur finale est dans meta « height ».
+func _load_model(path: String, target: float, by_height: bool) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
 
-	var bands := ["7d1d0b", "b3360d", "e0561a", "f58a2b"]
+	var res := load(path)
 
-	for i in bands.size():
-		var band := ColorRect.new()
-		band.color = Color.html(bands[i])
-		band.color.a = 0.9
-		band.position = Vector2(0, 330 + i * 95 - 55)
-		band.size = Vector2(W, 110)
-		_stage.add_child(band)
+	if not (res is PackedScene):
+		return null
 
-		var tween := band.create_tween().set_loops()
-		tween.tween_property(band, "modulate:a", 0.7, 1.2 + i * 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tween.tween_property(band, "modulate:a", 1.0, 1.2 + i * 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var inst: Node = res.instantiate()
 
-	# Bulles de lave
+	if not (inst is Node3D):
+		inst.queue_free()
+		return null
+
+	var acc: Array = []
+	_accumulate_aabb(inst, Transform3D.IDENTITY, acc)
+
+	if acc.is_empty():
+		inst.queue_free()
+		return null
+
+	var box: AABB = acc[0]
+	var extent := box.size.y if by_height else maxf(box.size.x, box.size.z)
+
+	if extent <= 0.0001:
+		inst.queue_free()
+		return null
+
+	var s := target / extent
+	var model := inst as Node3D
+	model.scale = Vector3.ONE * s
+	model.position = Vector3(
+		-(box.position.x + box.size.x / 2.0) * s,
+		-box.position.y * s,
+		-(box.position.z + box.size.z / 2.0) * s,
+	)
+
+	var holder := Node3D.new()
+	holder.add_child(model)
+	holder.set_meta("height", box.size.y * s)
+	return holder
+
+
+func _accumulate_aabb(node: Node, xf: Transform3D, acc: Array) -> void:
+	if node is MeshInstance3D and node.mesh != null:
+		var box: AABB = xf * node.mesh.get_aabb()
+
+		if acc.is_empty():
+			acc.append(box)
+		else:
+			acc[0] = (acc[0] as AABB).merge(box)
+
+	for child in node.get_children():
+		if child is Node3D:
+			_accumulate_aabb(child, xf * child.transform, acc)
+
+
+func _find_player(node: Node) -> AnimationPlayer:
+	if node is AnimationPlayer:
+		return node
+
+	for child in node.get_children():
+		var found := _find_player(child)
+
+		if found != null:
+			return found
+
+	return null
+
+
+## Joue la première animation dont le nom contient l'un des mots donnés (si elle existe).
+func _play(keywords: Array, loop: bool) -> void:
+	if _hero_player == null:
+		return
+
+	for anim_name in _hero_player.get_animation_list():
+		for keyword in keywords:
+			if String(anim_name).to_lower().contains(keyword):
+				_hero_player.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+				_hero_player.play(anim_name)
+				return
+
+
+func _tile_visual(size_value: float) -> Node3D:
+	var model := _load_model(TILE_MODEL, size_value, false)
+
+	if model != null:
+		return model
+
+	var box := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(size_value, TILE_TOP, size_value)
+	box.mesh = mesh
+	box.position.y = TILE_TOP / 2.0
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.62, 0.55, 0.50)
+	box.material_override = mat
+
+	var holder := Node3D.new()
+	holder.add_child(box)
+	holder.set_meta("height", TILE_TOP)
+	return holder
+
+
+func _tint(node: Node, color: Variant) -> void:
+	var overlay: Material = null
+
+	if color is Color:
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(color, 0.55)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		overlay = mat
+
+	_apply_overlay(node, overlay)
+
+
+func _apply_overlay(node: Node, overlay: Material) -> void:
+	if node is MeshInstance3D:
+		node.material_overlay = overlay
+
+	for child in node.get_children():
+		_apply_overlay(child, overlay)
+
+
+# ---------- Décor 3D ----------
+
+func _build_world() -> void:
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color.html("2b0f0a")
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(1.0, 0.85, 0.75)
+	env.ambient_light_energy = 0.9
+
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	_world.add_child(world_env)
+
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-55.0, -25.0, 0.0)
+	sun.light_color = Color(1.0, 0.82, 0.65)
+	sun.light_energy = 1.1
+	_world.add_child(sun)
+
+	_camera = Camera3D.new()
+	_camera.fov = 55.0
+	_camera.rotation_degrees = Vector3(CAM_PITCH, 0.0, 0.0)
+	_camera.position = Vector3(0.0, 0.0, START_Z) + CAM_OFFSET
+	_world.add_child(_camera)
+	_camera.current = true
+
+	_build_lava()
+	_build_cliffs()
+	_build_bubbles()
+
+
+func _build_lava() -> void:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(140.0, 140.0)
+
+	var shader := Shader.new()
+	shader.code = LAVA_SHADER
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+
+	var lava := MeshInstance3D.new()
+	lava.mesh = plane
+	lava.material_override = mat
+	lava.position = Vector3(0.0, -0.5, -25.0)
+	_world.add_child(lava)
+
+
+func _build_cliffs() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261121
+
+	for side in [-1, 1]:
+		var z := 10.0
+
+		while z > -45.0:
+			var file: String = CLIFFS[rng.randi() % CLIFFS.size()]
+			var cliff := _load_model(PIRATE + file, rng.randf_range(5.5, 7.5), true)
+
+			if cliff == null:
+				cliff = _fallback_rock(rng.randf_range(5.5, 7.5))
+
+			cliff.position = Vector3(side * rng.randf_range(8.0, 9.5), -0.5, z)
+			cliff.rotation.y = (PI / 2.0 if side < 0 else -PI / 2.0) + rng.randf_range(-0.3, 0.3)
+			_world.add_child(cliff)
+			z -= 5.0
+
+		# Quelques rochers qui sortent de la lave, loin des dalles.
+		for i in 8:
+			var rock_file: String = ROCKS[rng.randi() % ROCKS.size()]
+			var rock := _load_model(PIRATE + rock_file, rng.randf_range(1.2, 2.2), true)
+
+			if rock == null:
+				rock = _fallback_rock(rng.randf_range(1.2, 2.2))
+
+			rock.position = Vector3(side * rng.randf_range(5.0, 7.0), -0.5, rng.randf_range(8.0, -40.0))
+			rock.rotation.y = rng.randf_range(0.0, TAU)
+			_world.add_child(rock)
+
+
+func _fallback_rock(height: float) -> Node3D:
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(height * 0.8, height, height * 0.8)
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.25, 0.13, 0.10)
+
+	var box := MeshInstance3D.new()
+	box.mesh = mesh
+	box.material_override = mat
+	box.position.y = height / 2.0
+
+	var holder := Node3D.new()
+	holder.add_child(box)
+	return holder
+
+
+func _build_bubbles() -> void:
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.14
+	sphere.height = 0.28
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.75, 0.2)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
 	for i in 16:
-		var bubble := Dot.new()
-		bubble.radius = randf_range(5.0, 14.0)
-		var start_y := randf_range(380.0, H - 30.0)
-		bubble.position = Vector2(randf_range(40.0, W - 40.0), start_y)
-		_stage.add_child(bubble)
+		var bubble := MeshInstance3D.new()
+		bubble.mesh = sphere
+		bubble.material_override = mat
+		bubble.position = Vector3(randf_range(-6.0, 6.0), -0.6, randf_range(6.0, -30.0))
+		_world.add_child(bubble)
 
-		var duration := randf_range(1.4, 2.6)
-		var rise := randf_range(30.0, 70.0)
-		var tween := bubble.create_tween().set_loops().set_parallel(true)
-		tween.tween_property(bubble, "position:y", start_y - rise, duration).from(start_y).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(bubble, "modulate:a", 0.0, duration).from(1.0)
-		tween.tween_property(bubble, "scale", Vector2(1.6, 1.6), duration).from(Vector2.ONE)
+		var duration := randf_range(1.2, 2.4)
+		var tween := bubble.create_tween().set_loops()
+		tween.tween_interval(randf_range(0.0, 2.0))
+		tween.tween_property(bubble, "position:y", 0.1, duration).from(-0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.tween_property(bubble, "scale", Vector3.ZERO, 0.25)
+		tween.tween_callback(func() -> void: bubble.scale = Vector3.ONE)
 
+
+func _build_hero() -> void:
+	_hero = Node3D.new()
+	_world.add_child(_hero)
+
+	var model := _load_model(HERO_MODEL, HERO_HEIGHT, true)
+
+	if model == null:
+		var capsule := CapsuleMesh.new()
+		capsule.radius = 0.4
+		capsule.height = HERO_HEIGHT
+
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(1.0, 0.48, 0.10)
+
+		var body := MeshInstance3D.new()
+		body.mesh = capsule
+		body.material_override = mat
+		body.position.y = HERO_HEIGHT / 2.0
+
+		model = Node3D.new()
+		model.add_child(body)
+
+	model.rotation.y = HERO_YAW
+	_hero.add_child(model)
+
+	_hero_player = _find_player(model)
+	_play(["idle"], true)
+
+
+# ---------- Interface 2D ----------
 
 func _build_hud() -> void:
 	var speaker := Ui.button("Écouter", 30, Ui.ORANGE)
@@ -159,10 +446,10 @@ func _build_hud() -> void:
 	)
 	_stage.add_child(speaker)
 
-	# Image-indice : affichée seulement si le fichier du mot existe.
 	_clue = TextureRect.new()
 	_clue.position = Vector2(1060, 120)
 	_clue.size = Vector2(130, 130)
+	_clue.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_clue.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_clue.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_stage.add_child(_clue)
@@ -180,26 +467,15 @@ func _build_hud() -> void:
 	_stage.add_child(_message)
 
 
-func _build_hero() -> void:
-	_hero = Control.new()
-	_hero.position = Vector2(START_X, START_Y)
-	_hero.z_index = 10
-
-	_hero_body = AvatarView.new()
-	_hero_body.avatar_id = avatar_id
-	_hero_body.size = Vector2(100, 100)
-	_hero_body.position = Vector2(-50, HERO_OFFSET_Y)
-	_hero.add_child(_hero_body)
-
-	_stage.add_child(_hero)
-
-
 # ---------- Déroulement d'une manche ----------
 
 func _start_round() -> void:
 	for node in _round_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
+
+	if is_instance_valid(_round_root):
+		_round_root.queue_free()
 
 	_round_nodes.clear()
 	_tiles.clear()
@@ -215,14 +491,14 @@ func _start_round() -> void:
 	_load_clue(word)
 	_counter.text = "Mot %d sur %d" % [_round_index + 1, _words.size()]
 	_message.text = "Écoute le mot…"
-	_hero.position = Vector2(START_X, START_Y)
 
 	_build_slots()
-	_build_tiles(word)
+	_build_course(word)
+	_play(["idle"], true)
 
 	_locked = true
 
-	await get_tree().create_timer(0.35).timeout
+	await get_tree().create_timer(0.6).timeout
 	if not _alive:
 		return
 
@@ -258,6 +534,7 @@ func _build_slots() -> void:
 		var x := first_x + i * gap
 
 		var slot := Panel.new()
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.position = Vector2(x - 32, 34)
 		slot.size = Vector2(64, 76)
 		slot.add_theme_stylebox_override("panel", Ui.flat(Color(0, 0, 0, 0.4), 14, 4, Color(1.0, 0.89, 0.76, 0.9), false))
@@ -271,137 +548,196 @@ func _build_slots() -> void:
 		_round_nodes.append(slot)
 
 
-func _build_tiles(word: String) -> void:
+## Parcours 3D : plateforme de départ, une rangée de dalles par lettre, puis le coffre.
+func _build_course(word: String) -> void:
+	_round_root = Node3D.new()
+	_world.add_child(_round_root)
+
+	var start := _tile_visual(2.8)
+	start.position = Vector3(0.0, 0.0, START_Z)
+	_round_root.add_child(start)
+	var start_top: float = start.get_meta("height")
+
 	var columns: Array = Logic.build_columns(word, level)
-	var count := columns.size()
-	var column_gap := minf(170.0, 880.0 / maxf(1.0, count - 1.0))
-	var total_width := (count - 1) * column_gap
-	var first_x := 300.0 + (880.0 - total_width) / 2.0
 
-	for column_index in count:
+	for column_index in columns.size():
 		var column: Array = columns[column_index]
-		var x := first_x + column_index * column_gap
-		var rows := column.size()
-		var tiles_in_column: Array = []
+		var tiles_in_row: Array = []
 
-		for row in rows:
-			var y := 440.0 if rows == 1 else 270.0 + row * 330.0 / (rows - 1)
-			tiles_in_column.append(_create_tile(column[row], x, y, column_index))
+		for row in column.size():
+			var x := (row - (column.size() - 1) / 2.0) * TILE_SPACING
+			var z := -column_index * ROW_GAP
+			tiles_in_row.append(_create_tile(column[row], Vector3(x, 0.0, z), column_index * 0.12 + row * 0.05))
 
-		_tiles.append(tiles_in_column)
+		_tiles.append(tiles_in_row)
 
+	_finish_z = -columns.size() * ROW_GAP
+	var finish := _tile_visual(3.2)
+	finish.position = Vector3(0.0, 0.0, _finish_z)
+	_round_root.add_child(finish)
+	_finish_top = finish.get_meta("height")
 
-func _create_tile(letter: String, x: float, y: float, column: int) -> Dictionary:
-	var button := Button.new()
-	button.text = letter
-	button.focus_mode = Control.FOCUS_NONE
-	button.size = Vector2(TILE_W, TILE_H)
-	button.position = Vector2(x - TILE_W / 2.0, y - TILE_H / 2.0)
-	button.pivot_offset = button.size / 2.0
-	button.add_theme_font_override("font", Ui.bold_font())
-	button.add_theme_font_size_override("font_size", 68)
+	var chest := _load_model(CHEST_MODEL, 1.0, true)
 
-	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:
-		button.add_theme_color_override(color_name, Ui.DARK_TEXT)
+	if chest != null:
+		chest.position = Vector3(0.0, _finish_top, _finish_z - 0.6)
+		_round_root.add_child(chest)
 
-	var tile := {"letter": letter, "x": x, "y": y, "button": button}
-	_set_tile_state(tile, "normal")
-
-	button.pressed.connect(_on_tile_pressed.bind(tile, column))
-	_stage.add_child(button)
-	_round_nodes.append(button)
-
-	return tile
+	_hero.position = Vector3(0.0, start_top, START_Z)
+	_camera.position = _hero.position + CAM_OFFSET
 
 
-func _set_tile_state(tile: Dictionary, state: String) -> void:
-	var button: Button = tile["button"]
-	var color: Color = TILE_COLORS[state]
+func _create_tile(letter: String, pos: Vector3, delay: float) -> Dictionary:
+	var root := Node3D.new()
+	root.position = pos
 
-	for style_name in ["normal", "hover", "pressed", "disabled"]:
-		var style := Ui.flat(color, 22)
-		style.content_margin_left = 0
-		style.content_margin_right = 0
-		button.add_theme_stylebox_override(style_name, style)
+	var visual := _tile_visual(TILE_SIZE)
+	root.add_child(visual)
+	var top: float = visual.get_meta("height")
 
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var label := Label3D.new()
+	label.text = letter
+	label.font = Ui.bold_font()
+	label.font_size = 220
+	label.pixel_size = 0.0065
+	label.outline_size = 24
+	label.outline_modulate = Color(1.0, 0.95, 0.88)
+	label.modulate = Ui.DARK_TEXT
+	label.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
+	label.position = Vector3(0.0, top + 0.03, 0.0)
+	root.add_child(label)
+
+	root.scale = Vector3.ZERO
+	_round_root.add_child(root)
+
+	var pop := create_tween()
+	pop.tween_interval(delay)
+	pop.tween_property(root, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+	return {"letter": letter, "node": root, "visual": visual, "pos": pos, "top": top, "done": false}
 
 
-# ---------- Réponses ----------
+# ---------- Touches ----------
 
-func _on_tile_pressed(tile: Dictionary, column: int) -> void:
-	if _locked or column != _position:
+func _unhandled_input(event: InputEvent) -> void:
+	if _locked or _camera == null or _position >= _tiles.size():
 		return
 
-	if tile["letter"] == _letters[column]:
-		_on_correct(tile, column)
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+
+	var point: Vector2 = event.position - _container.global_position
+	var origin := _camera.project_ray_origin(point)
+	var direction := _camera.project_ray_normal(point)
+
+	if absf(direction.y) < 0.001:
+		return
+
+	var ray_length := (TILE_TOP - origin.y) / direction.y
+
+	if ray_length < 0.0:
+		return
+
+	var hit := origin + direction * ray_length
+	var best: Dictionary = {}
+	var best_distance := TAP_RADIUS
+
+	for tile in _tiles[_position]:
+		if tile["done"]:
+			continue
+
+		var pos: Vector3 = tile["pos"]
+		var distance := Vector2(hit.x - pos.x, hit.z - pos.z).length()
+
+		if distance < best_distance:
+			best_distance = distance
+			best = tile
+
+	if not best.is_empty():
+		_on_tile_pressed(best)
+
+
+func _on_tile_pressed(tile: Dictionary) -> void:
+	if tile["letter"] == _letters[_position]:
+		_on_correct(tile)
 	else:
-		_on_wrong(tile, column)
+		_on_wrong(tile)
 
 
-func _on_correct(tile: Dictionary, column: int) -> void:
+func _hop_to(target: Vector3) -> void:
+	var from := _hero.position
+	_play(["jump"], false)
+
+	var tween := create_tween()
+	tween.tween_method(func(t: float) -> void:
+		_hero.position = from.lerp(target, t) + Vector3(0.0, sin(t * PI) * 1.5, 0.0),
+		0.0, 1.0, HOP_TIME)
+	await tween.finished
+
+	if _alive:
+		_play(["idle"], true)
+
+
+func _on_correct(tile: Dictionary) -> void:
 	_locked = true
 	_total_letters += 1
 	_errors_here = 0
+	tile["done"] = true
 
-	_set_tile_state(tile, "correct")
-	_slot_labels[column].text = tile["letter"]
+	_tint(tile["visual"], TINT_CORRECT)
+	_slot_labels[_position].text = tile["letter"]
 	_message.text = "Bien !"
 
-	# Saut vers la dalle : déplacement horizontal + arc vertical.
-	var move := create_tween()
-	move.tween_property(_hero, "position", Vector2(tile["x"], tile["y"]), 0.46).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	var jump := create_tween()
-	jump.tween_property(_hero_body, "position:y", HERO_OFFSET_Y - 90.0, 0.23).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	jump.tween_property(_hero_body, "position:y", HERO_OFFSET_Y, 0.23).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
-	await get_tree().create_timer(0.52).timeout
+	var pos: Vector3 = tile["pos"]
+	await _hop_to(Vector3(pos.x, tile["top"], pos.z))
 	if not _alive:
 		return
 
 	_position += 1
 
 	if _position >= _letters.size():
+		await _hop_to(Vector3(0.0, _finish_top, _finish_z))
+		if not _alive:
+			return
 		_finish_word()
 	else:
 		_locked = false
 
 
-func _on_wrong(tile: Dictionary, column: int) -> void:
+func _on_wrong(tile: Dictionary) -> void:
 	_total_errors += 1
 	_errors_here += 1
+	tile["done"] = true
 
-	var button: Button = tile["button"]
-	_set_tile_state(tile, "wrong")
-	button.disabled = true
+	_tint(tile["visual"], TINT_WRONG)
 	_shake()
 	_message.text = "Oups, essaie encore !"
 
-	# La dalle fausse tombe dans la lave.
+	# La dalle fausse s'enfonce dans la lave.
+	var node: Node3D = tile["node"]
 	var fall := create_tween().set_parallel(true)
-	fall.tween_property(button, "position:y", button.position.y + 160.0, 0.52).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fall.tween_property(button, "modulate:a", 0.0, 0.52)
+	fall.tween_property(node, "position:y", -1.4, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fall.tween_property(node, "rotation:z", 0.35, 0.6)
 
 	if _errors_here >= 2:
-		# Aide : on redit le mot et on fait briller la bonne dalle.
+		# Aide : on redit le mot et la bonne dalle se met à briller.
 		_say_current_word()
 
-		for candidate in _tiles[column]:
-			if candidate["letter"] == _letters[column]:
-				var right: Button = candidate["button"]
+		for candidate in _tiles[_position]:
+			if candidate["letter"] == _letters[_position] and not candidate["done"]:
+				var right: Node3D = candidate["node"]
 				var pulse := create_tween().set_loops(4)
-				pulse.tween_property(right, "scale", Vector2(1.15, 1.15), 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				pulse.tween_property(right, "scale", Vector2.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+				pulse.tween_property(right, "scale", Vector3.ONE * 1.15, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+				pulse.tween_property(right, "scale", Vector3.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _shake() -> void:
 	var shake := create_tween()
 
 	for i in 3:
-		shake.tween_property(_stage, "position", _stage_base + Vector2(8 if i % 2 == 0 else -8, 0), 0.03)
+		shake.tween_property(_camera, "h_offset", 0.12 if i % 2 == 0 else -0.12, 0.04)
 
-	shake.tween_property(_stage, "position", _stage_base, 0.03)
+	shake.tween_property(_camera, "h_offset", 0.0, 0.04)
 
 
 func _finish_word() -> void:
@@ -431,6 +767,7 @@ func _confetti() -> void:
 
 	for i in 36:
 		var piece := ColorRect.new()
+		piece.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		piece.color = colors.pick_random()
 		piece.size = Vector2(randf_range(10.0, 18.0), randf_range(16.0, 26.0))
 		piece.position = Vector2(randf_range(300.0, 1180.0), randf_range(-30.0, 80.0))

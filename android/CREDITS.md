@@ -11,4 +11,6 @@ Règles :
 
 | Fichier | Auteur / source | Licence | Lien | Date |
 |---|---|---|---|---|
-| *(vide pour l'instant : les visuels actuels sont des formes dessinées en code)* | | | | |
+| `assets/Pirate Kit - Nov 2023/` (personnage, falaises, rochers, coffre) | À compléter (voir le fichier de licence du kit) | À VÉRIFIER avant publication | | |
+| `assets/stylized_Nature_kit/` (dalles de pierre) | À compléter | À VÉRIFIER : voir `License_Standard.txt` (republication dans un dépôt public ?) | | |
+| `assets/KayKit_Adventurers_2.0_FREE/`, `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` | KayKit | À VÉRIFIER (voir `License.txt` de chaque pack) | | |
