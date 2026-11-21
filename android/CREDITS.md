@@ -11,6 +11,8 @@ Règles :
 
 | Fichier | Auteur / source | Licence | Lien | Date |
 |---|---|---|---|---|
-| `assets/Pirate Kit - Nov 2023/` (personnage, falaises, rochers, coffre) | À compléter (voir le fichier de licence du kit) | À VÉRIFIER avant publication | | |
-| `assets/stylized_Nature_kit/` (dalles de pierre) | À compléter | À VÉRIFIER : voir `License_Standard.txt` (republication dans un dépôt public ?) | | |
-| `assets/KayKit_Adventurers_2.0_FREE/`, `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` | KayKit | À VÉRIFIER (voir `License.txt` de chaque pack) | | |
+| `assets/KayKit_Adventurers_2.0_FREE/` (personnages) | Kay Lousberg (KayKit) | CC0 d'après la page itch.io ; voir `License.txt` du pack | https://kaylousberg.itch.io | à compléter |
+| `assets/KayKit_Skeletons_1.1_FREE/` (personnages squelettes) | Kay Lousberg (KayKit) | CC0 d'après la page itch.io ; voir `License.txt` du pack | https://kaylousberg.itch.io | à compléter |
+| `assets/KayKit_Character_Animations_1.1/` (animations Rig_Medium) | Kay Lousberg (KayKit) | CC0 (indiqué sur la page du pack) | https://kaylousberg.itch.io | à compléter |
+| `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` (montagnes, rochers, caisses) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io | 26/04/2024 (création du pack) |
+| `assets/stylized_Nature_kit/` (dalles de pierre) | à compléter | À VÉRIFIER : voir `License_Standard.txt` (republication dans un dépôt public ?) | | |

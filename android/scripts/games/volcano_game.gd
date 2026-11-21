@@ -1,10 +1,9 @@
 extends Control
 ## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
 ## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
-## Décor : Pirate Kit (falaises, rochers, coffre, personnage) et Stylized Nature Kit (dalles).
+## Décor : KayKit Medieval Hexagon (montagnes, rochers, caisse) et Stylized Nature Kit (dalles).
 ## Le personnage est celui choisi par le joueur (voir data/avatars.gd). Les personnages KayKit
 ## (rig « medium ») reçoivent les animations du pack KayKit_Character_Animations : attente, saut, joie.
-## Les autres gardent un mouvement fait par code (étirement, écrasement, respiration).
 ## Si un modèle est introuvable, une forme simple le remplace (et un avertissement
 ## « Modèle introuvable ou non importé » s'affiche dans la Sortie de Godot).
 ## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
@@ -21,7 +20,8 @@ const H := 720.0
 # Bandeau du haut (boutons, cases du mot) : la vue 3D commence juste en dessous.
 const HUD_H := 120.0
 
-const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
+const HEX_NATURE := "res://assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/nature/"
+const HEX_PROPS := "res://assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/props/"
 const NATURE := "res://assets/stylized_Nature_kit/glTF/"
 const RIG_ANIMS := "res://assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/"
 const RIG_ANIMATION_FILES := [
@@ -29,12 +29,12 @@ const RIG_ANIMATION_FILES := [
 	RIG_ANIMS + "Rig_Medium_MovementBasic.glb",
 	RIG_ANIMS + "Rig_Medium_Simulation.glb",
 ]
-const HERO_MODEL := PIRATE + "Characters_Anne.gltf"
-const CHEST_CLOSED := PIRATE + "Prop_Chest_Closed.gltf"
-const CHEST_MODEL := PIRATE + "Prop_Chest_Gold.gltf"
+const HERO_MODEL := "res://assets/KayKit_Adventurers_2.0_FREE/Characters/gltf/Mage.glb"
+const CHEST_CLOSED := HEX_PROPS + "crate_A_big.gltf"
+const CHEST_MODEL := HEX_PROPS + "crate_open.gltf"
 const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
-const CLIFFS := ["Environment_Cliff1.gltf", "Environment_Cliff2.gltf", "Environment_Cliff3.gltf", "Environment_Cliff4.gltf"]
-const ROCKS := ["Environment_Rock_1.gltf", "Environment_Rock_2.gltf", "Environment_Rock_3.gltf", "Environment_Rock_4.gltf", "Environment_Rock_5.gltf"]
+const CLIFFS := ["mountain_A.gltf", "mountain_B.gltf", "mountain_C.gltf"]
+const ROCKS := ["rock_single_A.gltf", "rock_single_B.gltf", "rock_single_C.gltf", "rock_single_D.gltf", "rock_single_E.gltf"]
 
 # Mots cherchés dans le nom des animations (le premier mot trouvé gagne).
 const ANIM_IDLE := ["idle_a", "idle"]
@@ -83,7 +83,7 @@ void fragment() {
 
 var level: int = 1
 var rounds_count: int = 5
-var avatar_id: String = "anne"
+var avatar_id: String = "mage"
 
 var _words: Array = []
 var _round_index := 0
@@ -111,6 +111,7 @@ var _chest: Node3D
 var _chest_pos := Vector3.ZERO
 var _hopping := false
 var _time := 0.0
+var _plane_y := TILE_TOP
 var _cam_base := Vector3.ZERO
 var _cam_offset := CAM_OFFSET
 var _stage_base := Vector2.ZERO
@@ -295,7 +296,7 @@ func _find_player(node: Node) -> AnimationPlayer:
 
 ## Copie les animations du pack KayKit_Character_Animations (Rig_Medium) dans le personnage.
 ## Les pistes d'animation visent « Rig_Medium/Skeleton3D » : ça ne marche que si le personnage
-## a la même structure (c'est le cas des personnages KayKit Adventurers 2.0).
+## a la même structure (c'est le cas des personnages KayKit Adventurers 2.0 et Skeletons).
 func _load_rig_animations(root: Node3D) -> void:
 	if root.find_child("Skeleton3D", true, false) == null:
 		push_warning("Pas de squelette dans le personnage : animations KayKit ignorées.")
@@ -545,6 +546,7 @@ func _build_lava() -> void:
 	_world.add_child(lava)
 
 
+## Montagnes de chaque côté du chemin, et quelques rochers qui sortent de la lave.
 func _build_cliffs() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20261121
@@ -554,20 +556,19 @@ func _build_cliffs() -> void:
 
 		while z > -45.0:
 			var file: String = CLIFFS[rng.randi() % CLIFFS.size()]
-			var cliff := _load_model(PIRATE + file, rng.randf_range(5.5, 7.5), true)
+			var cliff := _load_model(HEX_NATURE + file, rng.randf_range(5.0, 6.5), true)
 
 			if cliff == null:
-				cliff = _fallback_rock(rng.randf_range(5.5, 7.5))
+				cliff = _fallback_rock(rng.randf_range(5.0, 6.5))
 
-			cliff.position = Vector3(side * rng.randf_range(8.0, 9.5), -0.5, z)
-			cliff.rotation.y = (PI / 2.0 if side < 0 else -PI / 2.0) + rng.randf_range(-0.3, 0.3)
+			cliff.position = Vector3(side * rng.randf_range(10.0, 11.5), -0.5, z)
+			cliff.rotation.y = rng.randf_range(0.0, TAU)
 			_world.add_child(cliff)
 			z -= 5.0
 
-		# Quelques rochers qui sortent de la lave, loin des dalles.
 		for i in 8:
 			var rock_file: String = ROCKS[rng.randi() % ROCKS.size()]
-			var rock := _load_model(PIRATE + rock_file, rng.randf_range(1.2, 2.2), true)
+			var rock := _load_model(HEX_NATURE + rock_file, rng.randf_range(1.2, 2.2), true)
 
 			if rock == null:
 				rock = _fallback_rock(rng.randf_range(1.2, 2.2))
@@ -657,14 +658,17 @@ func _build_hero() -> void:
 	_hero = Node3D.new()
 	_world.add_child(_hero)
 
-	# Personnage choisi par le joueur ; Anne (Pirate Kit) si le profil est ancien ou le modèle absent.
+	# Personnage choisi par le joueur ; le Mage si le profil est ancien ou le modèle absent.
 	var avatar: Dictionary = Avatars.get_avatar(avatar_id)
 	var model_path: String = avatar.get("model", HERO_MODEL)
 	var model := _load_model(model_path, HERO_HEIGHT, true)
-	var is_avatar_model := model != null
 
 	if model == null and model_path != HERO_MODEL:
 		model = _load_model(HERO_MODEL, HERO_HEIGHT, true)
+
+	# Tous les personnages KayKit utilisent le rig « medium » : on leur ajoute les animations du pack.
+	if model != null and avatar.get("rig", "medium") == "medium" and model.get_child_count() > 0:
+		_load_rig_animations(model.get_child(0) as Node3D)
 
 	if model == null:
 		var capsule := CapsuleMesh.new()
@@ -681,10 +685,6 @@ func _build_hero() -> void:
 
 		model = Node3D.new()
 		model.add_child(body)
-
-	# Personnage KayKit : on lui ajoute les animations du pack Rig_Medium.
-	if is_avatar_model and avatar.get("rig", "") == "medium" and model.get_child_count() > 0:
-		_load_rig_animations(model.get_child(0) as Node3D)
 
 	model.rotation.y = HERO_YAW
 	_hero.add_child(model)
@@ -842,7 +842,7 @@ func _build_course(word: String) -> void:
 	_round_root.add_child(finish)
 	_finish_top = finish.get_meta("height")
 
-	# Coffre fermé : il s'ouvre (version dorée) quand le mot est trouvé.
+	# Caisse fermée : elle s'ouvre quand le mot est trouvé.
 	_chest = _load_model(CHEST_CLOSED, 1.0, true)
 
 	if _chest == null:
@@ -869,6 +869,7 @@ func _create_tile(letter: String, pos: Vector3, delay: float) -> Dictionary:
 	var visual := _tile_visual(TILE_SIZE)
 	root.add_child(visual)
 	var top: float = visual.get_meta("height")
+	_plane_y = top
 
 	var label := Label3D.new()
 	label.text = letter
@@ -910,7 +911,7 @@ func _input(event: InputEvent) -> void:
 	if absf(direction.y) < 0.001:
 		return
 
-	var ray_length := (TILE_TOP - origin.y) / direction.y
+	var ray_length := (_plane_y - origin.y) / direction.y
 
 	if ray_length < 0.0:
 		return
