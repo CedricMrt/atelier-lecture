@@ -20,6 +20,7 @@ const HUD_H := 120.0
 const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
 const NATURE := "res://assets/stylized_Nature_kit/glTF/"
 const HERO_MODEL := PIRATE + "Characters_Anne.gltf"
+const CHEST_CLOSED := PIRATE + "Prop_Chest_Closed.gltf"
 const CHEST_MODEL := PIRATE + "Prop_Chest_Gold.gltf"
 const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
 const CLIFFS := ["Environment_Cliff1.gltf", "Environment_Cliff2.gltf", "Environment_Cliff3.gltf", "Environment_Cliff4.gltf"]
@@ -34,11 +35,13 @@ const HERO_HEIGHT := 1.6
 const HERO_YAW := PI
 const HOP_TIME := 0.5
 const CAM_OFFSET := Vector3(0.0, 9.0, 7.5)
+const CAM_ZOOM := Vector3(0.0, 7.2, 5.5)
 const CAM_PITCH := -47.0
-const TAP_RADIUS := 1.25
+const TAP_RADIUS := 1.35
 
 const TINT_CORRECT := Color(0.25, 0.85, 0.45)
 const TINT_WRONG := Color(0.95, 0.25, 0.25)
+const GOLD := Color(1.0, 0.85, 0.3)
 
 const LAVA_SHADER := """
 shader_type spatial;
@@ -85,7 +88,15 @@ var _world: Node3D
 var _round_root: Node3D
 var _camera: Camera3D
 var _hero: Node3D
+var _hero_model: Node3D
 var _hero_player: AnimationPlayer
+var _embers: CPUParticles3D
+var _chest: Node3D
+var _chest_pos := Vector3.ZERO
+var _hopping := false
+var _time := 0.0
+var _cam_base := Vector3.ZERO
+var _cam_offset := CAM_OFFSET
 var _stage_base := Vector2.ZERO
 var _tiles: Array = []
 var _slot_labels: Array = []
@@ -172,9 +183,20 @@ func _fit_stage() -> void:
 
 
 func _process(delta: float) -> void:
+	_time += delta
+
 	if _camera != null and _hero != null:
-		var target := _hero.position + CAM_OFFSET
-		_camera.position = _camera.position.lerp(target, clampf(delta * 4.0, 0.0, 1.0))
+		var target := _hero.position + _cam_offset
+		_cam_base = _cam_base.lerp(target, clampf(delta * 4.0, 0.0, 1.0))
+		# Léger balancement : la caméra reste vivante même quand l'enfant réfléchit.
+		_camera.position = _cam_base + Vector3(sin(_time * 0.6) * 0.15, sin(_time * 0.9) * 0.08, 0.0)
+
+	if _embers != null and _hero != null:
+		_embers.position = Vector3(0.0, -0.4, _hero.position.z - 3.0)
+
+	# Petit mouvement de respiration quand le personnage attend.
+	if _hero_model != null and not _hopping:
+		_hero_model.position.y = sin(_time * 3.0) * 0.03
 
 
 # ---------- Chargement des modèles ----------
@@ -311,6 +333,88 @@ func _apply_overlay(node: Node, overlay: Material) -> void:
 		_apply_overlay(child, overlay)
 
 
+# ---------- Effets ----------
+
+## Gerbe d'étincelles dorées (particules CPU : légères et compatibles avec toutes les tablettes).
+func _sparks(pos: Vector3, count: int, size_value: float) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = size_value
+	mesh.height = size_value * 2.0
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = GOLD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mesh.material = mat
+
+	var particles := CPUParticles3D.new()
+	particles.mesh = mesh
+	particles.amount = count
+	particles.lifetime = 0.7
+	particles.one_shot = true
+	particles.explosiveness = 1.0
+	particles.direction = Vector3.UP
+	particles.spread = 70.0
+	particles.initial_velocity_min = 2.0
+	particles.initial_velocity_max = 4.5
+	particles.gravity = Vector3(0.0, -9.0, 0.0)
+	particles.position = pos + Vector3(0.0, 0.2, 0.0)
+	_world.add_child(particles)
+	particles.emitting = true
+
+	get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
+
+
+## Anneau lumineux qui grandit et s'efface (réussite, erreur, aide).
+func _ring(pos: Vector3, color: Color) -> void:
+	var disc := CylinderMesh.new()
+	disc.top_radius = 1.0
+	disc.bottom_radius = 1.0
+	disc.height = 0.03
+	disc.radial_segments = 24
+	disc.rings = 1
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(color, 0.6)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
+	var ring := MeshInstance3D.new()
+	ring.mesh = disc
+	ring.material_override = mat
+	ring.position = pos + Vector3(0.0, 0.05, 0.0)
+	ring.scale = Vector3(0.5, 1.0, 0.5)
+	_world.add_child(ring)
+
+	var tween := ring.create_tween().set_parallel(true)
+	tween.tween_property(ring, "scale", Vector3(1.6, 1.0, 1.6), 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.5)
+	tween.finished.connect(ring.queue_free)
+
+
+func _land_effects(pos: Vector3) -> void:
+	_sparks(pos, 14, 0.06)
+	_ring(pos, GOLD)
+
+
+func _open_chest() -> void:
+	var gold := _load_model(CHEST_MODEL, 1.15, true)
+
+	if gold != null:
+		if is_instance_valid(_chest):
+			_chest.queue_free()
+
+		gold.position = _chest_pos
+		gold.scale = Vector3.ONE * 0.7
+		_round_root.add_child(gold)
+		_chest = gold
+
+		var pop := create_tween()
+		pop.tween_property(gold, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+	_sparks(_chest_pos + Vector3(0.0, 0.6, 0.0), 40, 0.09)
+	_ring(Vector3(0.0, _finish_top, _finish_z), GOLD)
+
+
 # ---------- Décor 3D ----------
 
 func _build_world() -> void:
@@ -334,13 +438,15 @@ func _build_world() -> void:
 	_camera = Camera3D.new()
 	_camera.fov = 55.0
 	_camera.rotation_degrees = Vector3(CAM_PITCH, 0.0, 0.0)
-	_camera.position = Vector3(0.0, 0.0, START_Z) + CAM_OFFSET
+	_cam_base = Vector3(0.0, 0.0, START_Z) + CAM_OFFSET
+	_camera.position = _cam_base
 	_world.add_child(_camera)
 	_camera.current = true
 
 	_build_lava()
 	_build_cliffs()
 	_build_bubbles()
+	_build_embers()
 
 
 func _build_lava() -> void:
@@ -432,6 +538,41 @@ func _build_bubbles() -> void:
 		tween.tween_callback(func() -> void: bubble.scale = Vector3.ONE)
 
 
+## Braises qui montent de la lave autour du personnage (36 particules seulement).
+func _build_embers() -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.05
+	mesh.height = 0.1
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mesh.material = mat
+
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1.0, 0.7, 0.2, 1.0))
+	gradient.set_color(1, Color(1.0, 0.3, 0.05, 0.0))
+
+	_embers = CPUParticles3D.new()
+	_embers.mesh = mesh
+	_embers.amount = 36
+	_embers.lifetime = 4.0
+	_embers.preprocess = 4.0
+	_embers.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	_embers.emission_box_extents = Vector3(7.0, 0.05, 9.0)
+	_embers.direction = Vector3.UP
+	_embers.spread = 15.0
+	_embers.initial_velocity_min = 0.5
+	_embers.initial_velocity_max = 1.4
+	_embers.gravity = Vector3.ZERO
+	_embers.scale_amount_min = 0.5
+	_embers.scale_amount_max = 1.4
+	_embers.color_ramp = gradient
+	_embers.position = Vector3(0.0, -0.4, START_Z - 3.0)
+	_world.add_child(_embers)
+
+
 func _build_hero() -> void:
 	_hero = Node3D.new()
 	_world.add_child(_hero)
@@ -456,6 +597,7 @@ func _build_hero() -> void:
 
 	model.rotation.y = HERO_YAW
 	_hero.add_child(model)
+	_hero_model = model
 
 	_hero_player = _find_player(model)
 	_play(["idle"], true)
@@ -604,14 +746,24 @@ func _build_course(word: String) -> void:
 	_round_root.add_child(finish)
 	_finish_top = finish.get_meta("height")
 
-	var chest := _load_model(CHEST_MODEL, 1.0, true)
+	# Coffre fermé : il s'ouvre (version dorée) quand le mot est trouvé.
+	_chest = _load_model(CHEST_CLOSED, 1.0, true)
 
-	if chest != null:
-		chest.position = Vector3(0.0, _finish_top, _finish_z - 0.6)
-		_round_root.add_child(chest)
+	if _chest == null:
+		_chest = _load_model(CHEST_MODEL, 1.0, true)
+
+	_chest_pos = Vector3(0.0, _finish_top, _finish_z - 0.6)
+
+	if _chest != null:
+		_chest.position = _chest_pos
+		_round_root.add_child(_chest)
 
 	_hero.position = Vector3(0.0, start_top, START_Z)
-	_camera.position = _hero.position + CAM_OFFSET
+	_hero_model.rotation.y = HERO_YAW
+	_hero_model.scale = Vector3.ONE
+	_cam_offset = CAM_OFFSET
+	_cam_base = _hero.position + _cam_offset
+	_camera.position = _cam_base
 
 
 func _create_tile(letter: String, pos: Vector3, delay: float) -> Dictionary:
@@ -693,18 +845,41 @@ func _on_tile_pressed(tile: Dictionary) -> void:
 		_on_wrong(tile)
 
 
+func _hop_step(t: float, from: Vector3, target: Vector3) -> void:
+	var s := sin(t * PI)
+	_hero.position = from.lerp(target, t) + Vector3(0.0, s * 1.5, 0.0)
+	_hero_model.scale = Vector3(1.0 - 0.10 * s, 1.0 + 0.18 * s, 1.0 - 0.10 * s)
+
+
+## Saut vers une dalle : le personnage se tourne, s'étire en l'air, s'écrase à l'atterrissage.
 func _hop_to(target: Vector3) -> void:
 	var from := _hero.position
+	var flat := Vector2(target.x - from.x, target.z - from.z)
+
+	if flat.length() > 0.1:
+		var yaw := atan2(flat.x, flat.y)
+		var turn := create_tween()
+		turn.tween_property(_hero_model, "rotation:y", lerp_angle(_hero_model.rotation.y, yaw, 1.0), 0.12)
+
+	_hopping = true
+	_hero_model.position.y = 0.0
 	_play(["jump"], false)
 
 	var tween := create_tween()
-	tween.tween_method(func(t: float) -> void:
-		_hero.position = from.lerp(target, t) + Vector3(0.0, sin(t * PI) * 1.5, 0.0),
-		0.0, 1.0, HOP_TIME)
+	tween.tween_method(_hop_step.bind(from, target), 0.0, 1.0, HOP_TIME)
 	await tween.finished
 
-	if _alive:
-		_play(["idle"], true)
+	_hopping = false
+
+	if not _alive:
+		return
+
+	_land_effects(target)
+	_hero_model.scale = Vector3(1.15, 0.82, 1.15)
+
+	var squash := create_tween()
+	squash.tween_property(_hero_model, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_play(["idle"], true)
 
 
 func _on_correct(tile: Dictionary) -> void:
@@ -742,6 +917,9 @@ func _on_wrong(tile: Dictionary) -> void:
 	_shake()
 	_message.text = "Oups, essaie encore !"
 
+	var wrong_pos: Vector3 = tile["pos"]
+	_ring(Vector3(wrong_pos.x, tile["top"], wrong_pos.z), TINT_WRONG)
+
 	# La dalle fausse s'enfonce dans la lave.
 	var node: Node3D = tile["node"]
 	var fall := create_tween().set_parallel(true)
@@ -755,6 +933,9 @@ func _on_wrong(tile: Dictionary) -> void:
 		for candidate in _tiles[_position]:
 			if candidate["letter"] == _letters[_position] and not candidate["done"]:
 				var right: Node3D = candidate["node"]
+				var right_pos: Vector3 = candidate["pos"]
+				_ring(Vector3(right_pos.x, candidate["top"], right_pos.z), Color(1.0, 0.9, 0.4))
+
 				var pulse := create_tween().set_loops(4)
 				pulse.tween_property(right, "scale", Vector3.ONE * 1.15, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 				pulse.tween_property(right, "scale", Vector3.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -772,6 +953,17 @@ func _shake() -> void:
 func _finish_word() -> void:
 	_message.text = "Bravo !"
 	_confetti()
+	_open_chest()
+
+	# Le personnage se tourne vers l'enfant et fait un petit saut de joie ; zoom de la caméra.
+	var turn := create_tween()
+	turn.tween_property(_hero_model, "rotation:y", lerp_angle(_hero_model.rotation.y, 0.0, 1.0), 0.25)
+
+	var zoom := create_tween()
+	zoom.tween_property(self, "_cam_offset", CAM_ZOOM, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	_hop_to(Vector3(0.0, _finish_top, _finish_z))
+	_play(["wave", "cheer", "victory", "dance"], false)
 
 	await get_tree().create_timer(0.3).timeout
 	if not _alive:
