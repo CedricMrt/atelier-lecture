@@ -14,6 +14,8 @@ const Logic = preload("res://scripts/logic/volcano_logic.gd")
 # Interface 2D dessinée dans une scène de 1280 x 720, mise à l'échelle de l'écran.
 const W := 1280.0
 const H := 720.0
+# Bandeau du haut (boutons, cases du mot) : la vue 3D commence juste en dessous.
+const HUD_H := 120.0
 
 const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
 const NATURE := "res://assets/stylized_Nature_kit/glTF/"
@@ -76,6 +78,7 @@ var _locked := true
 var _alive := true
 
 var _stage: Control
+var _hud_band: ColorRect
 var _container: SubViewportContainer
 var _viewport: SubViewport
 var _world: Node3D
@@ -118,6 +121,19 @@ func _ready() -> void:
 	_world = Node3D.new()
 	_viewport.add_child(_world)
 
+	_hud_band = ColorRect.new()
+	_hud_band.color = Color.html("2b0f0a")
+	_hud_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_hud_band)
+
+	var edge := ColorRect.new()
+	edge.color = Color(0.55, 0.18, 0.06)
+	edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	edge.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	edge.offset_top = -5.0
+	edge.offset_bottom = 0.0
+	_hud_band.add_child(edge)
+
 	_stage = Control.new()
 	_stage.size = Vector2(W, H)
 	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -147,6 +163,12 @@ func _fit_stage() -> void:
 	_stage.scale = Vector2(factor, factor)
 	_stage_base = (size - Vector2(W, H) * factor) / 2.0
 	_stage.position = _stage_base
+
+	# Le bandeau du haut couvre toute la largeur ; la 3D est affichée en dessous.
+	var band_height := _stage_base.y + HUD_H * factor
+	_hud_band.position = Vector2.ZERO
+	_hud_band.size = Vector2(size.x, band_height)
+	_container.offset_top = band_height
 
 
 func _process(delta: float) -> void:
@@ -452,7 +474,7 @@ func _build_hud() -> void:
 	_stage.add_child(speaker)
 
 	_clue = TextureRect.new()
-	_clue.position = Vector2(1060, 120)
+	_clue.position = Vector2(1060, 132)
 	_clue.size = Vector2(130, 130)
 	_clue.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_clue.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -540,7 +562,7 @@ func _build_slots() -> void:
 
 		var slot := Panel.new()
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.position = Vector2(x - 32, 34)
+		slot.position = Vector2(x - 32, 22)
 		slot.size = Vector2(64, 76)
 		slot.add_theme_stylebox_override("panel", Ui.flat(Color(0.10, 0.03, 0.02, 0.8), 14, 4, Color(1.0, 0.89, 0.76, 0.9), false))
 		_stage.add_child(slot)
