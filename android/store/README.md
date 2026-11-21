@@ -1,6 +1,6 @@
 # Publier « Lettres en Quête » sur le Google Play Store
 
-Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Les textes marqués
+Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store.
 Toutes les informations de l'éditeur sont renseignées ; il manque les captures d'écran et la mise en ligne de la page de confidentialité.
 
 | Fichier | Contenu |
