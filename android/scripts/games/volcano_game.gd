@@ -2,7 +2,9 @@ extends Control
 ## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
 ## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
 ## Décor : Pirate Kit (falaises, rochers, coffre, personnage) et Stylized Nature Kit (dalles).
-## Le personnage est celui choisi par le joueur (voir data/avatars.gd).
+## Le personnage est celui choisi par le joueur (voir data/avatars.gd). Les personnages KayKit
+## (rig « medium ») reçoivent les animations du pack KayKit_Character_Animations : attente, saut, joie.
+## Les autres gardent un mouvement fait par code (étirement, écrasement, respiration).
 ## Si un modèle est introuvable, une forme simple le remplace (et un avertissement
 ## « Modèle introuvable ou non importé » s'affiche dans la Sortie de Godot).
 ## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
@@ -21,12 +23,23 @@ const HUD_H := 120.0
 
 const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
 const NATURE := "res://assets/stylized_Nature_kit/glTF/"
+const RIG_ANIMS := "res://assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/"
+const RIG_ANIMATION_FILES := [
+	RIG_ANIMS + "Rig_Medium_General.glb",
+	RIG_ANIMS + "Rig_Medium_MovementBasic.glb",
+	RIG_ANIMS + "Rig_Medium_Simulation.glb",
+]
 const HERO_MODEL := PIRATE + "Characters_Anne.gltf"
 const CHEST_CLOSED := PIRATE + "Prop_Chest_Closed.gltf"
 const CHEST_MODEL := PIRATE + "Prop_Chest_Gold.gltf"
 const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
 const CLIFFS := ["Environment_Cliff1.gltf", "Environment_Cliff2.gltf", "Environment_Cliff3.gltf", "Environment_Cliff4.gltf"]
 const ROCKS := ["Environment_Rock_1.gltf", "Environment_Rock_2.gltf", "Environment_Rock_3.gltf", "Environment_Rock_4.gltf", "Environment_Rock_5.gltf"]
+
+# Mots cherchés dans le nom des animations (le premier mot trouvé gagne).
+const ANIM_IDLE := ["idle_a", "idle"]
+const ANIM_JUMP := ["jump_full_short", "jump_full_long", "jump_start", "jump"]
+const ANIM_CHEER := ["cheer", "wave"]
 
 const ROW_GAP := 2.4
 const TILE_SPACING := 2.2
@@ -92,6 +105,7 @@ var _camera: Camera3D
 var _hero: Node3D
 var _hero_model: Node3D
 var _hero_player: AnimationPlayer
+var _hero_has_emotes := false
 var _embers: CPUParticles3D
 var _chest: Node3D
 var _chest_pos := Vector3.ZERO
@@ -279,17 +293,81 @@ func _find_player(node: Node) -> AnimationPlayer:
 	return null
 
 
-## Joue la première animation dont le nom contient l'un des mots donnés (si elle existe).
-func _play(keywords: Array, loop: bool) -> void:
+## Copie les animations du pack KayKit_Character_Animations (Rig_Medium) dans le personnage.
+## Les pistes d'animation visent « Rig_Medium/Skeleton3D » : ça ne marche que si le personnage
+## a la même structure (c'est le cas des personnages KayKit Adventurers 2.0).
+func _load_rig_animations(root: Node3D) -> void:
+	if root.find_child("Skeleton3D", true, false) == null:
+		push_warning("Pas de squelette dans le personnage : animations KayKit ignorées.")
+		return
+
+	var target := _find_player(root)
+
+	if target == null:
+		target = AnimationPlayer.new()
+		target.name = "RigAnimations"
+		root.add_child(target)
+
+	var library: AnimationLibrary
+
+	if target.has_animation_library(&""):
+		library = target.get_animation_library(&"")
+	else:
+		library = AnimationLibrary.new()
+		target.add_animation_library(&"", library)
+
+	for path in RIG_ANIMATION_FILES:
+		if not ResourceLoader.exists(path):
+			push_warning("Fichier d'animations introuvable ou non importé : " + path)
+			continue
+
+		var scene := load(path)
+
+		if not (scene is PackedScene):
+			continue
+
+		var inst: Node = scene.instantiate()
+		var source := _find_player(inst)
+
+		if source != null:
+			for anim_name in source.get_animation_list():
+				if not library.has_animation(anim_name):
+					library.add_animation(anim_name, source.get_animation(anim_name))
+
+		inst.queue_free()
+
+
+## Joue la première animation dont le nom contient l'un des mots (dans l'ordre des mots).
+## `fit_time` : si > 0, l'animation est accélérée ou ralentie pour durer ce temps.
+func _play(keywords: Array, loop: bool, fit_time: float = 0.0) -> void:
 	if _hero_player == null:
 		return
+
+	for keyword in keywords:
+		for anim_name in _hero_player.get_animation_list():
+			if String(anim_name).to_lower().contains(keyword):
+				var animation := _hero_player.get_animation(anim_name)
+				animation.loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+
+				var speed := 1.0
+
+				if fit_time > 0.0 and animation.length > 0.01:
+					speed = animation.length / fit_time
+
+				_hero_player.play(anim_name, 0.1, speed)
+				return
+
+
+func _has_anim(keywords: Array) -> bool:
+	if _hero_player == null:
+		return false
 
 	for anim_name in _hero_player.get_animation_list():
 		for keyword in keywords:
 			if String(anim_name).to_lower().contains(keyword):
-				_hero_player.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
-				_hero_player.play(anim_name)
-				return
+				return true
+
+	return false
 
 
 func _tile_visual(size_value: float) -> Node3D:
@@ -583,6 +661,7 @@ func _build_hero() -> void:
 	var avatar: Dictionary = Avatars.get_avatar(avatar_id)
 	var model_path: String = avatar.get("model", HERO_MODEL)
 	var model := _load_model(model_path, HERO_HEIGHT, true)
+	var is_avatar_model := model != null
 
 	if model == null and model_path != HERO_MODEL:
 		model = _load_model(HERO_MODEL, HERO_HEIGHT, true)
@@ -603,12 +682,21 @@ func _build_hero() -> void:
 		model = Node3D.new()
 		model.add_child(body)
 
+	# Personnage KayKit : on lui ajoute les animations du pack Rig_Medium.
+	if is_avatar_model and avatar.get("rig", "") == "medium" and model.get_child_count() > 0:
+		_load_rig_animations(model.get_child(0) as Node3D)
+
 	model.rotation.y = HERO_YAW
 	_hero.add_child(model)
 	_hero_model = model
 
 	_hero_player = _find_player(model)
-	_play(["idle"], true)
+	_hero_has_emotes = _has_anim(ANIM_CHEER)
+
+	if _hero_player != null:
+		print("Animations de %s : %s" % [avatar_id, ", ".join(_hero_player.get_animation_list())])
+
+	_play(ANIM_IDLE, true)
 
 
 # ---------- Interface 2D ----------
@@ -671,7 +759,7 @@ func _start_round() -> void:
 
 	_build_slots()
 	_build_course(word)
-	_play(["idle"], true)
+	_play(ANIM_IDLE, true)
 
 	_locked = true
 
@@ -871,7 +959,7 @@ func _hop_to(target: Vector3) -> void:
 
 	_hopping = true
 	_hero_model.position.y = 0.0
-	_play(["jump"], false)
+	_play(ANIM_JUMP, false, HOP_TIME)
 
 	var tween := create_tween()
 	tween.tween_method(_hop_step.bind(from, target), 0.0, 1.0, HOP_TIME)
@@ -887,7 +975,7 @@ func _hop_to(target: Vector3) -> void:
 
 	var squash := create_tween()
 	squash.tween_property(_hero_model, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	_play(["idle"], true)
+	_play(ANIM_IDLE, true)
 
 
 func _on_correct(tile: Dictionary) -> void:
@@ -963,15 +1051,18 @@ func _finish_word() -> void:
 	_confetti()
 	_open_chest()
 
-	# Le personnage se tourne vers l'enfant et fait un petit saut de joie ; zoom de la caméra.
+	# Le personnage se tourne vers l'enfant ; zoom de la caméra.
 	var turn := create_tween()
 	turn.tween_property(_hero_model, "rotation:y", lerp_angle(_hero_model.rotation.y, 0.0, 1.0), 0.25)
 
 	var zoom := create_tween()
 	zoom.tween_property(self, "_cam_offset", CAM_ZOOM, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	_hop_to(Vector3(0.0, _finish_top, _finish_z))
-	_play(["wave", "cheer", "victory", "dance"], false)
+	# Vraie animation de joie si le personnage en a une ; sinon un petit saut de joie.
+	if _hero_has_emotes:
+		_play(ANIM_CHEER, false)
+	else:
+		_hop_to(Vector3(0.0, _finish_top, _finish_z))
 
 	await get_tree().create_timer(0.3).timeout
 	if not _alive:
