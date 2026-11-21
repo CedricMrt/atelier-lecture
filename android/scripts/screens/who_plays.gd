@@ -179,8 +179,9 @@ func _open_create_dialog() -> void:
 	field.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(field)
 
+	# Les personnages sont rangés sur 2 rangées, quel que soit leur nombre (10 personnages : 5 colonnes).
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = ceili(Avatars.LIST.size() / 2.0)
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
 	box.add_child(grid)
