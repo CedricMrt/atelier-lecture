@@ -22,9 +22,16 @@ const LOGO_SLIDE := 0.75
 const TITLE_LINES := ["LETTRES", "EN QUÊTE"]
 const SUBTITLE := "Joue, écoute, lis !"
 
-## Dégradé du fond : mêmes couleurs que les bords du logo.
-const SKY_TOP := Color(0.0, 0.27, 0.46)
-const SKY_BOTTOM := Color(0.0, 0.46, 0.64)
+const EDGE_FADE_SHADER := """
+shader_type canvas_item;
+
+void fragment() {
+	vec4 c = texture(TEXTURE, UV);
+	vec2 d = min(UV, vec2(1.0) - UV);
+	float edge = smoothstep(0.0, 0.07, min(d.x, d.y));
+	COLOR = vec4(c.rgb, c.a * edge);
+}
+"""
 
 const TILE_COLORS := [
 	Color(0.95, 0.45, 0.10),
@@ -80,22 +87,6 @@ func on_back() -> void:
 func _build_ui() -> void:
 	var view := get_viewport_rect().size
 
-	# Fond en dégradé.
-	var gradient := Gradient.new()
-	gradient.set_color(0, SKY_TOP)
-	gradient.set_color(1, SKY_BOTTOM)
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill_from = Vector2(0.0, 0.0)
-	texture.fill_to = Vector2(0.0, 1.0)
-	var sky := TextureRect.new()
-	sky.texture = texture
-	sky.stretch_mode = TextureRect.STRETCH_SCALE
-	sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(sky)
-	sky.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
 	# Logo : carré de la hauteur de l'écran, centré (comme l'image de lancement).
 	_logo = TextureRect.new()
 	_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -104,6 +95,13 @@ func _build_ui() -> void:
 
 	if ResourceLoader.exists(LOGO_PATH):
 		_logo.texture = load(LOGO_PATH)
+
+	# Bords du carré fondus dans le dégradé du fond : on ne voit pas le cadre de l'image.
+	var fade_edges := Shader.new()
+	fade_edges.code = EDGE_FADE_SHADER
+	var material := ShaderMaterial.new()
+	material.shader = fade_edges
+	_logo.material = material
 
 	var logo_size := view.y
 	_logo.size = Vector2(logo_size, logo_size)

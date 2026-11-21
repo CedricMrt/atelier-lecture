@@ -1,10 +1,17 @@
 extends RefCounted
 ## Petits outils pour construire l'interface par code (boutons, étiquettes, styles).
 
-const BACKGROUND := Color(0.169, 0.059, 0.039)
+## Palette tirée du logo : fond bleu-vert, boutons orange, étoile dorée, chapeau violet.
+const SKY_TOP := Color(0.0, 0.27, 0.46)
+const SKY_BOTTOM := Color(0.0, 0.46, 0.64)
+const BACKGROUND := SKY_TOP
 const ORANGE := Color(1.0, 0.48, 0.10)
+const GOLD := Color(0.98, 0.72, 0.14)
 const CREAM := Color(1.0, 0.95, 0.88)
-const DARK_TEXT := Color(0.17, 0.10, 0.08)
+const DARK_TEXT := Color(0.07, 0.14, 0.25)
+const NEUTRAL_BUTTON := Color(0.16, 0.33, 0.50)   # « Annuler », « Retour »…
+const TILE := Color(0.04, 0.30, 0.50)             # cartes des joueurs
+const SOFT_TEXT := Color(0.86, 0.96, 1.0)         # texte secondaire sur le fond
 
 const FONT_BOLD := "res://assets/fonts/static/Fredoka-Bold.ttf"
 
@@ -23,6 +30,25 @@ static func bold_font() -> Font:
 			variation.variation_embolden = 0.7
 			_bold_font = variation
 	return _bold_font
+
+
+## Fond de l'appli : dégradé bleu-vert du haut vers le bas. À placer en premier, en plein écran.
+static func sky() -> TextureRect:
+	var gradient := Gradient.new()
+	gradient.set_color(0, SKY_TOP)
+	gradient.set_color(1, SKY_BOTTOM)
+
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill_from = Vector2(0.0, 0.0)
+	texture.fill_to = Vector2(0.0, 1.0)
+
+	var rect := TextureRect.new()
+	rect.texture = texture
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
 
 
 static func flat(

@@ -44,7 +44,7 @@ func _ready() -> void:
 	top.add_child(_manage_button)
 
 	column.add_child(Ui.label("Qui joue ?", 72, Ui.CREAM))
-	column.add_child(Ui.label("Touche ton personnage pour retrouver ta partie.", 28, Color(1, 0.89, 0.76)))
+	column.add_child(Ui.label("Touche ton personnage pour retrouver ta partie.", 28, Ui.SOFT_TEXT))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -104,7 +104,7 @@ func _tile_content(button: Button) -> VBoxContainer:
 
 
 func _make_profile_tile(profile: Dictionary) -> Button:
-	var button := _make_tile_button(Color(0.30, 0.14, 0.10))
+	var button := _make_tile_button(Ui.TILE)
 	var box := _tile_content(button)
 
 	var avatar := AvatarView.new()
@@ -214,7 +214,7 @@ func _open_create_dialog() -> void:
 	actions.add_theme_constant_override("separation", 20)
 	box.add_child(actions)
 
-	var cancel := Ui.button("Annuler", 30, Color(0.45, 0.35, 0.30))
+	var cancel := Ui.button("Annuler", 30, Ui.NEUTRAL_BUTTON)
 	cancel.pressed.connect(_modal.queue_free)
 	actions.add_child(cancel)
 
@@ -251,7 +251,7 @@ func _open_delete_dialog(profile_id: String) -> void:
 	actions.add_theme_constant_override("separation", 20)
 	box.add_child(actions)
 
-	var keep := Ui.button("Garder", 30, Color(0.45, 0.35, 0.30))
+	var keep := Ui.button("Garder", 30, Ui.NEUTRAL_BUTTON)
 	keep.pressed.connect(_modal.queue_free)
 	actions.add_child(keep)
 

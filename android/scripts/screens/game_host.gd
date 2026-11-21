@@ -107,7 +107,7 @@ func _on_finished(result: Dictionary) -> void:
 	actions.add_theme_constant_override("separation", 20)
 	box.add_child(actions)
 
-	var back := Ui.button("Retour aux jeux", 30, Color(0.45, 0.35, 0.30))
+	var back := Ui.button("Retour aux jeux", 30, Ui.NEUTRAL_BUTTON)
 	back.pressed.connect(_exit)
 	actions.add_child(back)
 

@@ -15,8 +15,7 @@ var _current: Control = null
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var background := ColorRect.new()
-	background.color = Ui.BACKGROUND
+	var background := Ui.sky()
 	add_child(background)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 

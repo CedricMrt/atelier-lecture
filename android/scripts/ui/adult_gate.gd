@@ -44,7 +44,7 @@ static func open(parent: Control, title: String, on_success: Callable) -> Contro
 
 	modal.box.add_child(error_label)
 
-	var cancel := Ui.button("Annuler", 28, Color(0.45, 0.35, 0.30))
+	var cancel := Ui.button("Annuler", 28, Ui.NEUTRAL_BUTTON)
 	cancel.pressed.connect(modal.queue_free)
 	modal.box.add_child(cancel)
 
