@@ -1,7 +1,7 @@
 # Publier « Lettres en Quête » sur le Google Play Store
 
 Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Les textes marqués
-**[À COMPLÉTER]** attendent une information que seul l'éditeur connaît (nom, e-mail…).
+**[À COMPLÉTER]** attendent une information qui manque encore (adresse web de la politique, site facultatif…).
 
 | Fichier | Contenu |
 |---|---|
@@ -26,7 +26,7 @@ Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Le
 1. **Version d'Android visée** : depuis le 31 août 2026, une nouvelle appli doit viser **Android 16 (API 36)** ou plus.
    Source : https://developer.android.com/google/play/requirements/target-sdk
 2. **Format** : le Play Store n'accepte que des fichiers **`.aab`** (pas `.apk`) pour les nouvelles applis.
-3. **Comptes personnels créés après le 13 novembre 2023** : avant de publier pour tout le monde, il faut un
+3. **Comptes personnels créés après le 13 novembre 2023** (ton cas : compte personnel) : avant de publier pour tout le monde, il faut un
    **test fermé avec au moins 12 testeurs inscrits en continu pendant 14 jours**, puis demander l'accès à la production
    (examen par Google, en général sous 7 jours). Source : https://support.google.com/googleplay/android-developer/answer/14151465
    Un compte « organisation » n'a pas cette obligation.
@@ -40,6 +40,26 @@ Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Le
 5. **Politique de confidentialité en ligne** : le Play Store demande l'adresse d'une **page web publique** (pas un PDF).
    Options simples : une page GitHub Pages, un Google Sites, ou en attendant la version affichée du fichier
    `privacy-policy-fr.md` sur GitHub une fois la branche fusionnée dans `main`.
+
+## Identifiant du paquet (« package name »)
+
+C'est le nom technique unique de l'appli sur Android, de la forme `lettres.separees.par.des.points`.
+Il n'y a **rien à demander ni à acheter** : tu le choisis toi-même, une seule fois, et Google vérifie à l'envoi
+qu'il n'est pas déjà pris. **Après la première publication, il ne peut plus jamais changer.**
+
+Règles : au moins deux segments séparés par des points ; chaque segment commence par une lettre ; seulement des
+minuscules, des chiffres et des tirets bas (`_`) ; pas de tiret `-`, pas d'accent, pas d'espace.
+
+Par convention on écrit un nom de site à l'envers (`com.exemple.appli`). Comme tu n'as pas de site à toi, la
+convention des projets GitHub est d'utiliser `io.github.` + ton nom d'utilisateur GitHub :
+
+```
+io.github.cedricmrt.lettresenquete
+```
+
+C'est la valeur proposée. Elle ne s'affiche jamais aux enfants (ils voient « Lettres en Quête »).
+Si tu préfères autre chose (par exemple `com.atelierlecture.lettresenquete`), c'est possible tant qu'elle est libre :
+décide **avant** le premier envoi à la Play Console.
 
 ## Ordre conseillé
 

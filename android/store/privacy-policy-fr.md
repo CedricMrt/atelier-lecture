@@ -1,6 +1,6 @@
 # Politique de confidentialité : Lettres en Quête
 
-*Dernière mise à jour : **[À COMPLÉTER : date]***
+*Dernière mise à jour : 22 novembre 2026 (à remettre à jour le jour de la publication)*
 
 > Ce texte décrit l'appli **avec publicités « Familles »**. Si tu publies d'abord sans publicité,
 > supprime la section 4. Ce n'est pas un conseil juridique : relis-le avant publication.
@@ -8,8 +8,8 @@
 ## 1. Qui sommes-nous ?
 
 « Lettres en Quête » est une application de jeux de lecture pour les enfants de 5 à 8 ans.
-Elle est éditée par **[À COMPLÉTER : nom ou raison sociale de l'éditeur]**.
-Contact pour toute question sur la vie privée : **[À COMPLÉTER : adresse e-mail]**.
+Elle est éditée par **Atelier_lecture** (éditeur individuel).
+Contact pour toute question sur la vie privée : **atelierlecture11@gmail.com**.
 
 ## 2. Ce que l'application ne fait pas
 
@@ -64,7 +64,7 @@ Nous ne collectons pas sciemment de données personnelles d'enfants.
 
 Les données du joueur étant uniquement sur l'appareil, vous pouvez les consulter et les supprimer vous-même :
 bouton « Gérer » puis « Supprimer » pour un joueur, ou désinstallation de l'application pour tout effacer.
-Pour toute question ou demande (accès, suppression, réclamation), écrivez à **[À COMPLÉTER : adresse e-mail]**.
+Pour toute question ou demande (accès, suppression, réclamation), écrivez à **atelierlecture11@gmail.com**.
 Vous pouvez aussi saisir la CNIL (https://www.cnil.fr) si vous estimez que vos droits ne sont pas respectés.
 
 ## 8. Modifications

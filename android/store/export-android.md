@@ -37,7 +37,7 @@ Projet → Exporter → Ajouter… → **Android**. Réglages à vérifier :
 | Architectures | **arm64-v8a** (et armeabi-v7a pour de vieilles tablettes si tu veux) |
 | Version Min SDK | 24 (Android 7) ou plus |
 | **Version Target SDK** | **36** (ou plus) : exigé par le Play Store depuis le 31 août 2026 |
-| Identifiant unique du paquet (*Package → Unique Name*) | par exemple `fr.exemple.lettresenquete` (**[À COMPLÉTER]** : ne change plus jamais) |
+| Identifiant unique du paquet (*Package → Unique Name*) | `io.github.cedricmrt.lettresenquete` (proposé : **à confirmer avant le premier envoi, il ne change plus jamais** ; voir `README.md`, section « Identifiant du paquet ») |
 | Nom de l'appli (*Package → Name*) | `Lettres en Quête` |
 | Code de version (*Version → Code*) | `1`, puis +1 à chaque envoi |
 | Nom de version (*Version → Name*) | `0.1.0` |
