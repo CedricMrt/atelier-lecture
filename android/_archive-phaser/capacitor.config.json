@@ -1,8 +1,0 @@
-{
-  "appId": "com.example.lecturejeux",
-  "appName": "Jeux de lecture",
-  "webDir": "dist",
-  "android": {
-    "backgroundColor": "#2b0f0a"
-  }
-}

@@ -6,7 +6,7 @@ const Avatars = preload("res://scripts/data/avatars.gd")
 
 const PORTRAIT_HEIGHT := 1.6
 
-var avatar_id: String = "anne":
+var avatar_id: String = "mage":
 	set(value):
 		avatar_id = value
 

@@ -17,4 +17,8 @@ Règles :
 | `assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/` (montagnes, rochers) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io | 26/04/2024 (création du pack) |
 | `assets/KayKit_Dungeon_Pack_1.1_FREE/` (pas encore utilisé) | Kay Lousberg (KayKit) | CC0 (`License.txt` du pack) | https://kaylousberg.itch.io/kaykit-dungeon-pack | 16/07/2026 (création du pack) |
 | `assets/Pirate Kit - Nov 2023/glTF/Prop_Chest_*` (coffre du Pont du volcan) | Quaternius, Pirate Kit (novembre 2023) | CC0 (indiqué sur la page du pack) | https://quaternius.com/packs/piratekit.html | 2023-11 |
-| `assets/stylized_Nature_kit/` (dalles de pierre) | à compléter | À VÉRIFIER : voir `License_Standard.txt` (republication dans un dépôt public ?) | | |
+| `assets/stylized_Nature_kit/` (dalles de pierre) | Quaternius, Stylized Nature MegaKit (version gratuite) | CC0 (`License_Standard.txt` du pack) | https://quaternius.com | à compléter |
+
+Dossiers retirés du dépôt pour l'alléger : les formats FBX et OBJ, les fichiers Blender (`Blends/`) et les
+`Samples/` de chaque pack. Seuls les modèles glTF/GLB, avec leurs textures, sont conservés ; les packs
+complets restent téléchargeables sur les pages indiquées ci-dessus.

@@ -144,7 +144,7 @@ func _sanitize(item: Dictionary) -> Dictionary:
 	return {
 		"id": str(item["id"]),
 		"name": str(item["name"]).substr(0, MAX_NAME_LENGTH),
-		"avatar_id": str(item.get("avatar_id", "renard")),
+		"avatar_id": str(item.get("avatar_id", "mage")),
 		"created_at": int(item.get("created_at", 0)),
 		"stars": int(item.get("stars", 0)),
 		"progress": progress,
