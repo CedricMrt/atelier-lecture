@@ -16,7 +16,7 @@ const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
 
 const MIN_SECONDS := 2.6
 const TAP_DELAY_MS := 600
-const TITLE_LINES := ["JEUX DE", "LECTURE"]
+const TITLE_LINES := ["LETTRES EN", "QUÊTE"]
 const SUBTITLE := "Joue, écoute, lis !"
 const HEROES := ["mage", "knight", "ranger"]
 
