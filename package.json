@@ -8,6 +8,8 @@
     "build:tablet": "pnpm --filter tablet run build",
     "build:server": "pnpm --filter server run build",
     "build:all": "pnpm run build:tablet && pnpm run build:server",
+    "dev:android": "pnpm --filter lecture-android run dev",
+    "build:android": "pnpm --filter lecture-android run build",
     "start": "pnpm --filter server run start",
     "cert": "pnpm --filter server run cert",
     "backup": "pnpm --filter server run backup",
