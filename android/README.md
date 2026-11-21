@@ -6,7 +6,7 @@ Tout reste sur l'appareil. Indépendante de l'appli de classe (`apps/`).
 ## État actuel
 
 - **Démarrage** : image de lancement Android (le logo), qui glisse à gauche pendant que le titre se forme en tuiles de lettres et que les modèles 3D se chargent en tâche de fond, puis « Touche pour jouer » (`scripts/screens/splash.gd`).
-- Police **Fredoka** (`assets/fonts/`), logo dans `assets/images/logo_appli.png`. Visuels pour le Play Store dans `store/` (icône 512 px) et `assets/icons/` (icône adaptative Android : premier plan + fond).
+- Police **Fredoka** (`assets/fonts/`), logo dans `assets/images/logo_appli.png`. Tout pour la fiche du Play Store dans [`store/`](store/README.md) (textes, politique de confidentialité, icône, image de présentation, guide d'export) ; icône adaptative Android dans `assets/icons/`.
 - **Bienvenue** pour les adultes, au tout premier lancement seulement (`welcome.gd`, mémorisé dans `user://settings.json`).
 - Aucun compte, y compris Google : les joueurs et les réglages sont propres à chaque appareil. Plusieurs tablettes avec le même compte Google ne partagent donc rien.
 - Écran « Qui joue ? » : profils locaux (prénom + avatar), « Gérer » protégé par une question d'adulte.

@@ -1,0 +1,50 @@
+# Publier « Lettres en Quête » sur le Google Play Store
+
+Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Les textes marqués
+**[À COMPLÉTER]** attendent une information que seul l'éditeur connaît (nom, e-mail…).
+
+| Fichier | Contenu |
+|---|---|
+| `icon-512.png` | Icône de l'appli pour la fiche (512 × 512, obligatoire) |
+| `feature-graphic-1024x500.png` | Image de présentation en haut de la fiche (1024 × 500, obligatoire) |
+| `listing-fr.md` | Titre, descriptions, catégorie, réponses aux questionnaires (public cible, classification) |
+| `privacy-policy-fr.md` | Politique de confidentialité (obligatoire pour une appli d'enfants) |
+| `data-safety.md` | Réponses au formulaire « Sécurité des données » |
+| `export-android.md` | Fabriquer le fichier `.aab` avec Godot, étape par étape |
+| `../assets/icons/` | Icône adaptative Android (premier plan + fond), à brancher dans l'export |
+
+## Ce qui manque encore et ne peut pas être fait ici
+
+- **Les captures d'écran** : il faut au moins 2 captures de téléphone, et si possible 7 et 10 pouces
+  (paysage). À prendre dans Godot ou sur la tablette quand les jeux seront finis.
+- **Le vrai SDK publicitaire** (voir `data-safety.md`) : la pub est encore simulée.
+- **Un compte développeur Google Play** (frais uniques, vérification d'identité) : https://play.google.com/console
+- **Une adresse web publique pour la politique de confidentialité** (voir plus bas).
+
+## Les règles du Play Store qui comptent pour cette appli (vérifiées en novembre 2026)
+
+1. **Version d'Android visée** : depuis le 31 août 2026, une nouvelle appli doit viser **Android 16 (API 36)** ou plus.
+   Source : https://developer.android.com/google/play/requirements/target-sdk
+2. **Format** : le Play Store n'accepte que des fichiers **`.aab`** (pas `.apk`) pour les nouvelles applis.
+3. **Comptes personnels créés après le 13 novembre 2023** : avant de publier pour tout le monde, il faut un
+   **test fermé avec au moins 12 testeurs inscrits en continu pendant 14 jours**, puis demander l'accès à la production
+   (examen par Google, en général sous 7 jours). Source : https://support.google.com/googleplay/android-developer/answer/14151465
+   Un compte « organisation » n'a pas cette obligation.
+4. **Programme « Familles »** (appli pour enfants) : https://support.google.com/googleplay/android-developer/answer/9893335
+   - choisir la tranche d'âge **6-8 ans** (la tranche « 5 ans et moins » est réservée aux tout-petits) ;
+   - **uniquement des SDK publicitaires auto-certifiés « Familles »**, **sans publicité personnalisée** ni remarketing ;
+   - **pas d'interstitiel au lancement de l'appli** ; une pub qui interrompt le jeu doit pouvoir être **fermée au bout de 5 secondes** ;
+   - une seule pub à la fois à l'écran ; pubs clairement distinctes du jeu, sans piège à clics ;
+   - **ne pas envoyer l'identifiant publicitaire Android** ; ne pas demander la permission `AD_ID` ; pas de localisation ;
+   - politique de confidentialité exacte, conforme au **RGPD** et au **COPPA** (États-Unis).
+5. **Politique de confidentialité en ligne** : le Play Store demande l'adresse d'une **page web publique** (pas un PDF).
+   Options simples : une page GitHub Pages, un Google Sites, ou en attendant la version affichée du fichier
+   `privacy-policy-fr.md` sur GitHub une fois la branche fusionnée dans `main`.
+
+## Ordre conseillé
+
+1. Terminer les jeux et brancher la pub « Familles » (ou publier d'abord sans pub, c'est permis).
+2. Remplir les **[À COMPLÉTER]** de `privacy-policy-fr.md` et `listing-fr.md`, publier la politique en ligne.
+3. Fabriquer le `.aab` (`export-android.md`), le tester sur une vraie tablette avec le fichier `.apk` de test.
+4. Créer l'appli dans la Play Console, remplir « Contenu de l'appli » (public cible, pubs, classification, sécurité des données).
+5. Lancer le **test fermé** (12 testeurs, 14 jours), puis demander la production.
