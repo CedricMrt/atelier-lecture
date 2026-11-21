@@ -2,7 +2,8 @@ extends Control
 ## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
 ## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
 ## Décor : Pirate Kit (falaises, rochers, coffre, personnage) et Stylized Nature Kit (dalles).
-## Si un modèle est introuvable, une forme simple le remplace : le jeu reste jouable.
+## Si un modèle est introuvable, une forme simple le remplace (et un avertissement
+## « Modèle introuvable ou non importé » s'affiche dans la Sortie de Godot).
 ## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
 
 signal finished(result: Dictionary)
@@ -30,8 +31,8 @@ const START_Z := 2.6
 const HERO_HEIGHT := 1.6
 const HERO_YAW := PI
 const HOP_TIME := 0.5
-const CAM_OFFSET := Vector3(0.0, 8.5, 6.5)
-const CAM_PITCH := -52.0
+const CAM_OFFSET := Vector3(0.0, 9.0, 7.5)
+const CAM_PITCH := -47.0
 const TAP_RADIUS := 1.25
 
 const TINT_CORRECT := Color(0.25, 0.85, 0.45)
@@ -51,11 +52,11 @@ void fragment() {
 	vec2 p = wp.xz;
 	float v = wave(p) + 0.6 * wave(p * 2.3 + 7.0);
 	v = clamp(v / 5.0 + 0.5, 0.0, 1.0);
-	vec3 dark = vec3(0.45, 0.07, 0.02);
-	vec3 mid = vec3(0.95, 0.35, 0.05);
-	vec3 hot = vec3(1.0, 0.85, 0.25);
-	vec3 col = mix(dark, mid, smoothstep(0.15, 0.55, v));
-	col = mix(col, hot, smoothstep(0.55, 0.9, v));
+	vec3 dark = vec3(0.30, 0.04, 0.02);
+	vec3 mid = vec3(0.80, 0.22, 0.03);
+	vec3 hot = vec3(1.0, 0.62, 0.15);
+	vec3 col = mix(dark, mid, smoothstep(0.25, 0.65, v));
+	col = mix(col, hot, smoothstep(0.72, 0.95, v));
 	ALBEDO = col;
 }
 """
@@ -111,6 +112,7 @@ func _ready() -> void:
 	add_child(_container)
 
 	_viewport = SubViewport.new()
+	_viewport.msaa_3d = Viewport.MSAA_2X
 	_container.add_child(_viewport)
 
 	_world = Node3D.new()
@@ -159,11 +161,13 @@ func _process(delta: float) -> void:
 ## Renvoie null si le fichier est absent. La hauteur finale est dans meta « height ».
 func _load_model(path: String, target: float, by_height: bool) -> Node3D:
 	if not ResourceLoader.exists(path):
+		push_warning("Modèle introuvable ou non importé : " + path)
 		return null
 
 	var res := load(path)
 
 	if not (res is PackedScene):
+		push_warning("Ce n'est pas une scène 3D : " + path)
 		return null
 
 	var inst: Node = res.instantiate()
@@ -176,6 +180,7 @@ func _load_model(path: String, target: float, by_height: bool) -> Node3D:
 	_accumulate_aabb(inst, Transform3D.IDENTITY, acc)
 
 	if acc.is_empty():
+		push_warning("Aucun maillage dans : " + path)
 		inst.queue_free()
 		return null
 
@@ -537,7 +542,7 @@ func _build_slots() -> void:
 		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.position = Vector2(x - 32, 34)
 		slot.size = Vector2(64, 76)
-		slot.add_theme_stylebox_override("panel", Ui.flat(Color(0, 0, 0, 0.4), 14, 4, Color(1.0, 0.89, 0.76, 0.9), false))
+		slot.add_theme_stylebox_override("panel", Ui.flat(Color(0.10, 0.03, 0.02, 0.8), 14, 4, Color(1.0, 0.89, 0.76, 0.9), false))
 		_stage.add_child(slot)
 
 		var letter := Ui.label("", 52, Color.WHITE)
@@ -619,7 +624,9 @@ func _create_tile(letter: String, pos: Vector3, delay: float) -> Dictionary:
 
 # ---------- Touches ----------
 
-func _unhandled_input(event: InputEvent) -> void:
+## _input (et non _unhandled_input) : le Control plein écran du jeu et celui de game_host
+## absorbent les clics avant qu'ils n'arrivent à _unhandled_input.
+func _input(event: InputEvent) -> void:
 	if _locked or _camera == null or _position >= _tiles.size():
 		return
 
