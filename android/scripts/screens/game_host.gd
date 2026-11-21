@@ -9,6 +9,7 @@ const Modal = preload("res://scripts/ui/modal.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const AdPlaceholder = preload("res://scripts/ui/ad_placeholder.gd")
 const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
+const DedansGame = preload("res://scripts/games/dedans_game.gd")
 
 var profile_id: String = ""
 var game_id: String = ""
@@ -55,16 +56,22 @@ func _begin() -> void:
 
 func _start_game() -> void:
 	var profile := Profiles.get_profile(profile_id)
+	var known: bool = game_id == "volcan" or game_id == "dedans"
 
-	if profile.is_empty() or game_id != "volcan":
+	if profile.is_empty() or not known:
 		_exit()
 		return
 
 	# Le niveau est lu une seule fois par partie : il change à la fin, pas pendant.
 	var level := Profiles.get_level(profile, game_id)
 
-	_game = VolcanoGame.new()
-	_game.setup(level, 5, profile["avatar_id"])
+	if game_id == "dedans":
+		_game = DedansGame.new()
+		_game.setup(level, 8, profile["avatar_id"])
+	else:
+		_game = VolcanoGame.new()
+		_game.setup(level, 5, profile["avatar_id"])
+
 	_game.finished.connect(_on_finished)
 	add_child(_game)
 	move_child(_quit_button, -1)

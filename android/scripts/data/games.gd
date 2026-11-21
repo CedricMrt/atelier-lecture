@@ -16,7 +16,7 @@ const LIST := [
 		"title": "Dedans ou pas ?",
 		"description": "La lettre est-elle dans la suite qui a clignoté ?",
 		"color": Color(0.25, 0.55, 0.85),
-		"available": false,
+		"available": true,
 	},
 	{
 		"id": "fantomes",
