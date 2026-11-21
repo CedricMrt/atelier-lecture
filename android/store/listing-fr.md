@@ -59,8 +59,8 @@ Lettres en Quête est un jeu pour s'entraîner et se faire plaisir. Il ne rempla
 | Langue par défaut | Français (France) |
 | Nom du développeur | Atelier_lecture |
 | Adresse e-mail de contact (publique sur la fiche) | atelierlecture11@gmail.com |
-| Site web (facultatif) | **[À COMPLÉTER]** |
-| Politique de confidentialité | **[À COMPLÉTER : adresse de la page en ligne]** |
+| Site web (facultatif) | https://cedricmrt.github.io/atelier-lecture/ |
+| Politique de confidentialité | https://cedricmrt.github.io/atelier-lecture/confidentialite.html |
 | Appli gratuite | Oui |
 
 ## Réponses à « Contenu de l'appli »

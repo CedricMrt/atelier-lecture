@@ -1,9 +1,11 @@
 # Politique de confidentialité : Lettres en Quête
 
-*Dernière mise à jour : 22 novembre 2026 (à remettre à jour le jour de la publication)*
+*Dernière mise à jour : 22 novembre 2026*
 
-> Ce texte décrit l'appli **avec publicités « Familles »**. Si tu publies d'abord sans publicité,
-> supprime la section 4. Ce n'est pas un conseil juridique : relis-le avant publication.
+<!-- Note pour l'éditeur (n'apparaît pas sur la page publique) :
+Ce texte décrit l'appli AVEC publicités « Familles ». Si tu publies d'abord sans publicité, supprime la section 4.
+Ce n'est pas un conseil juridique : relis-le avant publication. Remets la date à jour le jour de la publication,
+puis régénère la page (voir store/README.md, « Page de confidentialité »). -->
 
 ## 1. Qui sommes-nous ?
 

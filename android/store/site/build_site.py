@@ -1,0 +1,104 @@
+"""Fabrique le petit site public (GitHub Pages) à partir de store/privacy-policy-fr.md.
+
+Usage (depuis la racine du dépôt) :
+    python3 android/store/site/build_site.py SORTIE
+
+SORTIE reçoit : index.html, confidentialite.html, logo.png, .nojekyll
+Nécessite le module Python « markdown » (pip install markdown).
+"""
+import html
+import re
+import shutil
+import sys
+from pathlib import Path
+
+import markdown
+
+HERE = Path(__file__).resolve().parent
+STORE = HERE.parent
+ANDROID = STORE.parent
+OUT = Path(sys.argv[1])
+
+NAME = "Lettres en Quête"
+EDITOR = "Atelier_lecture"
+EMAIL = "atelierlecture11@gmail.com"
+
+CSS = """
+:root{--bg:#f4fbfd;--text:#10243e;--muted:#4a6176;--card:#ffffff;--line:#cfe3ec;--accent:#e0571a;--top:#00457a;--bot:#0176a3}
+@media (prefers-color-scheme:dark){:root{--bg:#0a1b2b;--text:#e8f3fa;--muted:#a9c0d1;--card:#102a40;--line:#244560;--accent:#ff8a3d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:18px/1.6 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+header{background:linear-gradient(var(--top),var(--bot));color:#fff;padding:20px 16px}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px}
+header .wrap{display:flex;align-items:center;gap:16px;padding:0}
+header img{width:72px;height:72px;object-fit:contain;flex:none}
+header a{color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem}
+main{padding:24px 0 48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 24px;margin:16px 0}
+h1{font-size:1.9rem;line-height:1.2;margin:.2em 0 .4em}
+h2{font-size:1.3rem;margin:1.6em 0 .4em}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:.95rem;margin:1em 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:rgba(1,118,163,.12)}
+footer{color:var(--muted);font-size:.9rem;padding:0 0 32px}
+.hero{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.hero img{width:220px;max-width:100%;height:auto}
+@media (max-width:560px){body{font-size:17px}.card{padding:16px}}
+"""
+
+def page(title, body, description):
+    return f"""<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{html.escape(title)}</title>
+<meta name="description" content="{html.escape(description)}">
+<style>{CSS}</style>
+</head>
+<body>
+<header><div class="wrap"><img src="logo.png" alt=""><a href="index.html">{NAME}</a></div></header>
+<main class="wrap">
+{body}
+</main>
+<footer class="wrap">{NAME} · éditeur : {EDITOR} · <a href="mailto:{EMAIL}">{EMAIL}</a> · <a href="confidentialite.html">Politique de confidentialité</a></footer>
+</body>
+</html>
+"""
+
+md = (STORE / "privacy-policy-fr.md").read_text(encoding="utf-8")
+if "[À COMPLÉTER" in md:
+    sys.exit("Il reste des [À COMPLÉTER] dans privacy-policy-fr.md : corrige-les avant de publier.")
+md = re.sub(r"<!--.*?-->", "", md, flags=re.S)  # notes de l'éditeur
+body = markdown.markdown(md, extensions=["tables", "sane_lists"])
+body = body.replace("<h1>", '<h1 id="top">', 1)
+privacy = page(f"Politique de confidentialité — {NAME}", f'<div class="card">{body}</div>',
+               f"Politique de confidentialité de l'application {NAME}.")
+
+home_body = f"""
+<div class="card hero">
+  <img src="logo.png" alt="Le petit magicien de {NAME}, avec son livre et sa baguette étoilée">
+  <div>
+    <h1>{NAME}</h1>
+    <p>Des jeux de lecture magiques pour les enfants de 5 à 8 ans : écouter les sons, repérer les lettres, construire des mots.</p>
+    <p>Sans compte, sans e-mail : les prénoms et les progrès restent sur l'appareil.</p>
+  </div>
+</div>
+<div class="card">
+  <h2>Pour les parents et les enseignants</h2>
+  <ul>
+    <li><a href="confidentialite.html">Politique de confidentialité</a></li>
+    <li>Une question ? Écrivez à <a href="mailto:{EMAIL}">{EMAIL}</a>.</li>
+  </ul>
+</div>
+"""
+index = page(f"{NAME} — jeux de lecture pour les 5-8 ans", home_body,
+             "Application de jeux de lecture pour les enfants de 5 à 8 ans, sans compte.")
+
+OUT.mkdir(parents=True, exist_ok=True)
+(OUT / "index.html").write_text(index, encoding="utf-8")
+(OUT / "confidentialite.html").write_text(privacy, encoding="utf-8")
+(OUT / ".nojekyll").write_text("", encoding="utf-8")
+shutil.copyfile(ANDROID / "assets/images/logo_appli-removebg.png", OUT / "logo.png")
+print("Site écrit dans", OUT)

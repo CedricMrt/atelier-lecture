@@ -1,7 +1,7 @@
 # Publier « Lettres en Quête » sur le Google Play Store
 
 Ce dossier contient tout ce qu'il faut préparer pour la fiche du Play Store. Les textes marqués
-**[À COMPLÉTER]** attendent une information qui manque encore (adresse web de la politique, site facultatif…).
+Toutes les informations de l'éditeur sont renseignées ; il manque les captures d'écran et la mise en ligne de la page de confidentialité.
 
 | Fichier | Contenu |
 |---|---|
@@ -57,14 +57,27 @@ convention des projets GitHub est d'utiliser `io.github.` + ton nom d'utilisateu
 io.github.cedricmrt.lettresenquete
 ```
 
-C'est la valeur proposée. Elle ne s'affiche jamais aux enfants (ils voient « Lettres en Quête »).
-Si tu préfères autre chose (par exemple `com.atelierlecture.lettresenquete`), c'est possible tant qu'elle est libre :
-décide **avant** le premier envoi à la Play Console.
+**C'est la valeur choisie** (elle ne s'affiche jamais aux enfants, qui voient « Lettres en Quête »). Ne la change plus.
+
+## Page de confidentialité (GitHub Pages)
+
+Adresse publique à donner au Play Store : **https://cedricmrt.github.io/atelier-lecture/confidentialite.html**
+(page d'accueil du site : https://cedricmrt.github.io/atelier-lecture/).
+
+Le site est fabriqué à partir de `privacy-policy-fr.md` par `site/build_site.py` et publié par la branche `gh-pages`
+(qui ne contient que ces pages). **Mise en service, une seule fois** : sur GitHub, dépôt → *Settings* → *Pages* →
+*Build and deployment* → *Source : Deploy from a branch* → *Branch : `gh-pages`*, dossier **`/ (root)`** → *Save*.
+Après 1 à 2 minutes, l'adresse ci-dessus s'ouvre (le haut de la page *Pages* affiche « Your site is live at… »).
+
+**Pour modifier la politique plus tard** : modifie `privacy-policy-fr.md` (et la date), puis demande-moi de régénérer
+la branche `gh-pages` (ou lance `python3 android/store/site/build_site.py <dossier>` avec le module `markdown`, et
+copie le résultat dans la branche `gh-pages`). Le Play Store lit la page en ligne : tant qu'elle n'est pas à jour,
+la politique publique reste l'ancienne.
 
 ## Ordre conseillé
 
 1. Terminer les jeux et brancher la pub « Familles » (ou publier d'abord sans pub, c'est permis).
-2. Remplir les **[À COMPLÉTER]** de `privacy-policy-fr.md` et `listing-fr.md`, publier la politique en ligne.
+2. Mettre la page de confidentialité en ligne (section ci-dessus), puis reporter son adresse dans la Play Console.
 3. Fabriquer le `.aab` (`export-android.md`), le tester sur une vraie tablette avec le fichier `.apk` de test.
 4. Créer l'appli dans la Play Console, remplir « Contenu de l'appli » (public cible, pubs, classification, sécurité des données).
 5. Lancer le **test fermé** (12 testeurs, 14 jours), puis demander la production.
