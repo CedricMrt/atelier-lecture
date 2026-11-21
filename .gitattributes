@@ -1,4 +1,13 @@
-# Les fichiers Windows doivent rester en fins de ligne CRLF, sinon cmd.exe plante.
-*.bat text eol=crlf
-*.cmd text eol=crlf
-*.ps1 text eol=crlf
+# Fins de ligne normalisées, comme le recommande Godot.
+* text=auto eol=lf
+
+# Fichiers binaires
+*.glb binary
+*.gltf text
+*.bin binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.keystore binary
+*.jks binary

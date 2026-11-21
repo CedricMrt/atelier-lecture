@@ -1,35 +1,13 @@
-# Dépendances et builds
-node_modules/
-dist/
-build/
-
-# Configuration locale
-.env
-.env.local
-.env.*.local
-
-# Base de données et données locales du serveur
-apps/server/data/
-apps/server/backups/
-apps/server/logs/
-apps/server/certs/
-backups/
-
-# Fichiers de base de données
-*.db
-*.sqlite
-*.sqlite-journal
-
-# Releases
-/release/
-*.zip
-scratch.txt
-*.tsbuildinfo
-
 # Godot (android/)
 android/.godot/
 android/.import/
 android/export_presets.cfg
 android/android/build/
+
+# Clés de signature Android : ne jamais les versionner
 *.keystore
 *.jks
+
+# Configuration locale
+.env
+.env.*
