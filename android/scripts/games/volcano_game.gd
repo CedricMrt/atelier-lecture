@@ -2,6 +2,7 @@ extends Control
 ## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
 ## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
 ## Décor : Pirate Kit (falaises, rochers, coffre, personnage) et Stylized Nature Kit (dalles).
+## Le personnage est celui choisi par le joueur (voir data/avatars.gd).
 ## Si un modèle est introuvable, une forme simple le remplace (et un avertissement
 ## « Modèle introuvable ou non importé » s'affiche dans la Sortie de Godot).
 ## La logique (mots, pièges, étoiles) est dans logic/volcano_logic.gd, inchangée.
@@ -10,6 +11,7 @@ signal finished(result: Dictionary)
 
 const Ui = preload("res://scripts/ui/ui.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
+const Avatars = preload("res://scripts/data/avatars.gd")
 
 # Interface 2D dessinée dans une scène de 1280 x 720, mise à l'échelle de l'écran.
 const W := 1280.0
@@ -68,7 +70,7 @@ void fragment() {
 
 var level: int = 1
 var rounds_count: int = 5
-var avatar_id: String = "renard"
+var avatar_id: String = "anne"
 
 var _words: Array = []
 var _round_index := 0
@@ -577,7 +579,13 @@ func _build_hero() -> void:
 	_hero = Node3D.new()
 	_world.add_child(_hero)
 
-	var model := _load_model(HERO_MODEL, HERO_HEIGHT, true)
+	# Personnage choisi par le joueur ; Anne (Pirate Kit) si le profil est ancien ou le modèle absent.
+	var avatar: Dictionary = Avatars.get_avatar(avatar_id)
+	var model_path: String = avatar.get("model", HERO_MODEL)
+	var model := _load_model(model_path, HERO_HEIGHT, true)
+
+	if model == null and model_path != HERO_MODEL:
+		model = _load_model(HERO_MODEL, HERO_HEIGHT, true)
 
 	if model == null:
 		var capsule := CapsuleMesh.new()

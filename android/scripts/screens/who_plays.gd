@@ -1,5 +1,5 @@
 extends Control
-## Écran « Qui joue ? » : tuiles avec avatar et prénom, bouton « + » pour créer un joueur.
+## Écran « Qui joue ? » : tuiles avec personnage et prénom, bouton « + » pour créer un joueur.
 ## « Gérer » (protégé par une question d'adulte) permet de supprimer un profil.
 
 signal selected(profile_id: String)
@@ -44,7 +44,7 @@ func _ready() -> void:
 	top.add_child(_manage_button)
 
 	column.add_child(Ui.label("Qui joue ?", 72, Ui.CREAM))
-	column.add_child(Ui.label("Touche ton avatar pour retrouver ta partie.", 28, Color(1, 0.89, 0.76)))
+	column.add_child(Ui.label("Touche ton personnage pour retrouver ta partie.", 28, Color(1, 0.89, 0.76)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -180,7 +180,7 @@ func _open_create_dialog() -> void:
 	box.add_child(field)
 
 	var grid := GridContainer.new()
-	grid.columns = 6
+	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
 	box.add_child(grid)
@@ -192,7 +192,7 @@ func _open_create_dialog() -> void:
 		choice.toggle_mode = true
 		choice.button_group = group
 		choice.focus_mode = Control.FOCUS_NONE
-		choice.custom_minimum_size = Vector2(88, 88)
+		choice.custom_minimum_size = Vector2(130, 130)
 		choice.button_pressed = avatar["id"] == _selected_avatar
 		choice.add_theme_stylebox_override("normal", Ui.flat(Color(0.88, 0.82, 0.74), 20, 0, Color.WHITE, false))
 		choice.add_theme_stylebox_override("hover", Ui.flat(Color(0.92, 0.86, 0.78), 20, 0, Color.WHITE, false))
