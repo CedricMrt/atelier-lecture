@@ -1,7 +1,7 @@
 extends Control
 ## « Pont du volcan » en 3D : écoute le mot, puis touche la bonne dalle de chaque rangée
 ## pour que le personnage saute jusqu'au coffre, au-dessus de la lave.
-## Décor : KayKit Medieval Hexagon (montagnes, rochers), KayKit Dungeon (coffres)
+## Décor : KayKit Medieval Hexagon (montagnes, rochers), Pirate Kit (coffre uniquement)
 ## et Stylized Nature Kit (dalles).
 ## Le personnage est celui choisi par le joueur (voir data/avatars.gd). Les personnages KayKit
 ## (rig « medium ») reçoivent les animations du pack KayKit_Character_Animations : attente, saut, joie.
@@ -22,7 +22,7 @@ const H := 720.0
 const HUD_H := 120.0
 
 const HEX_NATURE := "res://assets/KayKit_Medieval_Hexagon_Pack_1.0_FREE/Assets/gltf/decoration/nature/"
-const DUNGEON := "res://assets/KayKit_Dungeon_Pack_1.1_FREE/Assets/gltf/"
+const PIRATE := "res://assets/Pirate Kit - Nov 2023/glTF/"
 const NATURE := "res://assets/stylized_Nature_kit/glTF/"
 const RIG_ANIMS := "res://assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/"
 const RIG_ANIMATION_FILES := [
@@ -31,8 +31,8 @@ const RIG_ANIMATION_FILES := [
 	RIG_ANIMS + "Rig_Medium_Simulation.glb",
 ]
 const HERO_MODEL := "res://assets/KayKit_Adventurers_2.0_FREE/Characters/gltf/Mage.glb"
-const CHEST_CLOSED := DUNGEON + "chest.gltf"
-const CHEST_MODEL := DUNGEON + "chest_gold.gltf"
+const CHEST_CLOSED := PIRATE + "Prop_Chest_Closed.gltf"
+const CHEST_MODEL := PIRATE + "Prop_Chest_Gold.gltf"
 const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
 const CLIFFS := ["mountain_A.gltf", "mountain_B.gltf", "mountain_C.gltf"]
 const ROCKS := ["rock_single_A.gltf", "rock_single_B.gltf", "rock_single_C.gltf", "rock_single_D.gltf", "rock_single_E.gltf"]
