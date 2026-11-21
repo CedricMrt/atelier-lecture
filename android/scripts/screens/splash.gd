@@ -1,28 +1,43 @@
 extends Control
-## Démarrage de l'appli, avant « Qui joue ? » :
-##   1. le titre, en tuiles de lettres qui sautent l'une après l'autre ;
-##   2. une barre de chargement : les modèles 3D sont chargés en tâche de fond pour que
-##      les jeux et la création de joueur s'ouvrent ensuite sans à-coup ;
-##   3. les personnages apparaissent, puis « Touche pour jouer ».
-## La barre dure au moins MIN_SECONDS, même si tout est déjà prêt : l'animation du titre a le temps de se jouer.
+## Démarrage de l'appli, avant « Qui joue ? ».
+##   1. Le logo apparaît en grand, exactement comme l'image de lancement d'Android (pas de saut visuel).
+##   2. Il glisse à gauche ; à droite, le titre se forme en tuiles de lettres qui sautent l'une après l'autre.
+##   3. Une barre de chargement : les modèles 3D sont chargés en tâche de fond pour que les jeux et
+##      le choix du personnage s'ouvrent ensuite sans à-coup.
+##   4. « Touche pour jouer ».
+## La barre dure au moins MIN_SECONDS, même si tout est déjà prêt : l'animation a le temps de se jouer.
 
 signal finished
 
 const Ui = preload("res://scripts/ui/ui.gd")
-const AvatarView = preload("res://scripts/ui/avatar_view.gd")
-const Games = preload("res://scripts/data/games.gd")
 const Avatars = preload("res://scripts/data/avatars.gd")
 const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
 
-const MIN_SECONDS := 2.6
-const TAP_DELAY_MS := 600
-const TITLE_LINES := ["LETTRES EN", "QUÊTE"]
-const SUBTITLE := "Joue, écoute, lis !"
-const HEROES := ["mage", "knight", "ranger"]
+const LOGO_PATH := "res://assets/images/logo_appli.png"
 
-const TILE_W := 84.0
-const TILE_H := 96.0
-const SPACE_W := 34.0
+const MIN_SECONDS := 3.2
+const TAP_DELAY_MS := 600
+const LOGO_HOLD := 0.5        # le logo reste seul, en grand, avant de glisser
+const LOGO_SLIDE := 0.75
+const TITLE_LINES := ["LETTRES", "EN QUÊTE"]
+const SUBTITLE := "Joue, écoute, lis !"
+
+## Dégradé du fond : mêmes couleurs que les bords du logo.
+const SKY_TOP := Color(0.0, 0.27, 0.46)
+const SKY_BOTTOM := Color(0.0, 0.46, 0.64)
+
+const TILE_COLORS := [
+	Color(0.95, 0.45, 0.10),
+	Color(0.52, 0.30, 0.78),
+	Color(0.98, 0.72, 0.14),
+	Color(0.93, 0.36, 0.55),
+	Color(0.24, 0.70, 0.40),
+	Color(0.88, 0.30, 0.18),
+]
+
+const TILE_W := 70.0
+const TILE_H := 82.0
+const SPACE_W := 26.0
 
 ## Les modèles chargés restent ici tant que l'appli tourne : sinon Godot les libérerait
 ## dès la fin de l'écran de démarrage et il faudrait les recharger.
@@ -38,9 +53,11 @@ var _waiting_tap := false
 var _tap_allowed_at := 0
 var _leaving := false
 
+var _logo: TextureRect
+var _logo_end_scale := 0.6
+var _logo_end_center := Vector2.ZERO
 var _tiles: Array = []
 var _subtitle: Label
-var _heroes_row: HBoxContainer
 var _loading_box: VBoxContainer
 var _bar: ProgressBar
 var _tap_label: Label
@@ -49,7 +66,7 @@ var _tap_label: Label
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
-	_animate_title()
+	_animate()
 	_start_loading()
 
 
@@ -61,21 +78,67 @@ func on_back() -> void:
 # ---------- Interface ----------
 
 func _build_ui() -> void:
-	var center := CenterContainer.new()
-	add_child(center)
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var view := get_viewport_rect().size
+
+	# Fond en dégradé.
+	var gradient := Gradient.new()
+	gradient.set_color(0, SKY_TOP)
+	gradient.set_color(1, SKY_BOTTOM)
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill_from = Vector2(0.0, 0.0)
+	texture.fill_to = Vector2(0.0, 1.0)
+	var sky := TextureRect.new()
+	sky.texture = texture
+	sky.stretch_mode = TextureRect.STRETCH_SCALE
+	sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(sky)
+	sky.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# Logo : carré de la hauteur de l'écran, centré (comme l'image de lancement).
+	_logo = TextureRect.new()
+	_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+
+	if ResourceLoader.exists(LOGO_PATH):
+		_logo.texture = load(LOGO_PATH)
+
+	var logo_size := view.y
+	_logo.size = Vector2(logo_size, logo_size)
+	_logo.pivot_offset = _logo.size / 2.0
+	_logo.position = (view - _logo.size) / 2.0
+	add_child(_logo)
+
+	# Arrivée du logo : à gauche, à environ 70 % de la hauteur de l'écran.
+	_logo_end_scale = minf(0.72, (view.x * 0.46) / logo_size)
+	_logo_end_center = Vector2(view.x * 0.27, view.y * 0.5)
+
+	# Colonne de droite : titre, sous-titre, barre / « Touche pour jouer ».
+	var right := CenterContainer.new()
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(right)
+	right.anchor_left = 0.5
+	right.anchor_right = 1.0
+	right.anchor_top = 0.0
+	right.anchor_bottom = 1.0
+	right.offset_left = 0.0
+	right.offset_right = -view.x * 0.03
+	right.offset_top = 0.0
+	right.offset_bottom = 0.0
 
 	var column := VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 14)
-	center.add_child(column)
+	column.add_theme_constant_override("separation", 16)
+	right.add_child(column)
 
 	var color_index := 0
 
 	for line in TITLE_LINES:
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 10)
+		row.add_theme_constant_override("separation", 8)
 		column.add_child(row)
 
 		for i in line.length():
@@ -87,33 +150,28 @@ func _build_ui() -> void:
 				row.add_child(gap)
 				continue
 
-			var color: Color = Games.LIST[color_index % Games.LIST.size()]["color"]
-			var tile := _make_tile(letter, color)
+			var tile := _make_tile(letter, TILE_COLORS[color_index % TILE_COLORS.size()])
 			row.add_child(tile)
 			_tiles.append(tile)
 			color_index += 1
 
-	_subtitle = Ui.label(SUBTITLE, 40, Ui.CREAM)
+	_subtitle = Ui.label(SUBTITLE, 36, Color.WHITE)
+	_subtitle.add_theme_color_override("font_outline_color", Color(0.0, 0.2, 0.35))
+	_subtitle.add_theme_constant_override("outline_size", 8)
 	_subtitle.modulate.a = 0.0
 	column.add_child(_subtitle)
 
-	# Place réservée aux personnages (ils n'apparaissent qu'une fois les modèles chargés).
-	_heroes_row = HBoxContainer.new()
-	_heroes_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_heroes_row.add_theme_constant_override("separation", 20)
-	_heroes_row.custom_minimum_size = Vector2(0.0, 190.0)
-	column.add_child(_heroes_row)
-
 	# Même emplacement pour la barre de chargement et pour « Touche pour jouer ».
 	var bottom := CenterContainer.new()
-	bottom.custom_minimum_size = Vector2(0.0, 84.0)
+	bottom.custom_minimum_size = Vector2(0.0, 96.0)
 	column.add_child(bottom)
 
 	_loading_box = VBoxContainer.new()
 	_loading_box.add_theme_constant_override("separation", 8)
+	_loading_box.modulate.a = 0.0
 	bottom.add_child(_loading_box)
 
-	_loading_box.add_child(Ui.label("Chargement…", 26, Color(1.0, 0.95, 0.88, 0.8)))
+	_loading_box.add_child(Ui.label("Chargement…", 24, Color(1.0, 1.0, 1.0, 0.85)))
 
 	_bar = ProgressBar.new()
 	_bar.min_value = 0.0
@@ -121,14 +179,14 @@ func _build_ui() -> void:
 	_bar.step = 0.001
 	_bar.value = 0.0
 	_bar.show_percentage = false
-	_bar.custom_minimum_size = Vector2(520.0, 26.0)
-	_bar.add_theme_stylebox_override("background", Ui.flat(Color(0.0, 0.0, 0.0, 0.35), 13, 0, Color.WHITE, false))
-	_bar.add_theme_stylebox_override("fill", Ui.flat(Ui.ORANGE, 13, 0, Color.WHITE, false))
+	_bar.custom_minimum_size = Vector2(420.0, 24.0)
+	_bar.add_theme_stylebox_override("background", Ui.flat(Color(0.0, 0.12, 0.25, 0.45), 12, 0, Color.WHITE, false))
+	_bar.add_theme_stylebox_override("fill", Ui.flat(Color(0.98, 0.72, 0.14), 12, 0, Color.WHITE, false))
 	_loading_box.add_child(_bar)
 
-	_tap_label = Ui.label("Touche pour jouer", 48, Ui.CREAM)
-	_tap_label.add_theme_color_override("font_outline_color", Color(0.17, 0.06, 0.04))
-	_tap_label.add_theme_constant_override("outline_size", 8)
+	_tap_label = Ui.label("Touche pour jouer", 44, Color.WHITE)
+	_tap_label.add_theme_color_override("font_outline_color", Color(0.0, 0.2, 0.35))
+	_tap_label.add_theme_constant_override("outline_size", 10)
 	_tap_label.visible = false
 	bottom.add_child(_tap_label)
 
@@ -142,11 +200,11 @@ func _make_tile(letter: String, color: Color) -> Control:
 
 	var panel := Panel.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", Ui.flat(color, 22, 4, Color(1.0, 1.0, 1.0, 0.6)))
+	panel.add_theme_stylebox_override("panel", Ui.flat(color, 20, 4, Color(1.0, 1.0, 1.0, 0.7)))
 	tile.add_child(panel)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var label := Ui.label(letter, 62, Color.WHITE)
+	var label := Ui.label(letter, 52, Color.WHITE)
 	label.add_theme_color_override("font_outline_color", color.darkened(0.55))
 	label.add_theme_constant_override("outline_size", 8)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -158,19 +216,44 @@ func _make_tile(letter: String, color: Color) -> Control:
 
 # ---------- Animations ----------
 
-func _animate_title() -> void:
+func _animate() -> void:
+	# Le logo glisse à gauche en rétrécissant, puis respire doucement.
+	var target_position := _logo_end_center - _logo.size / 2.0
+	var slide := create_tween().set_parallel(true)
+	slide.tween_property(_logo, "position", target_position, LOGO_SLIDE).set_delay(LOGO_HOLD).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	slide.tween_property(_logo, "scale", Vector2.ONE * _logo_end_scale, LOGO_SLIDE).set_delay(LOGO_HOLD).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+
+	var breathe := create_tween()
+	breathe.tween_interval(LOGO_HOLD + LOGO_SLIDE)
+	breathe.tween_callback(_start_breathing)
+
+	# Les tuiles sautent après le début du glissement du logo.
+	var start := LOGO_HOLD + LOGO_SLIDE * 0.6
 	var index := 0
 
 	for tile in _tiles:
 		var tween := create_tween()
-		tween.tween_interval(0.25 + index * 0.07)
+		tween.tween_interval(start + index * 0.07)
 		tween.tween_property(tile, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tween.tween_callback(_start_wobble.bind(tile, index))
 		index += 1
 
-	var fade := create_tween()
-	fade.tween_interval(0.25 + _tiles.size() * 0.07)
-	fade.tween_property(_subtitle, "modulate:a", 1.0, 0.5)
+	var after_tiles := start + _tiles.size() * 0.07
+
+	var fade_subtitle := create_tween()
+	fade_subtitle.tween_interval(after_tiles)
+	fade_subtitle.tween_property(_subtitle, "modulate:a", 1.0, 0.5)
+
+	var fade_bar := create_tween()
+	fade_bar.tween_interval(start)
+	fade_bar.tween_property(_loading_box, "modulate:a", 1.0, 0.4)
+
+
+func _start_breathing() -> void:
+	var base := _logo_end_scale
+	var tween := create_tween().set_loops()
+	tween.tween_property(_logo, "scale", Vector2.ONE * base * 1.025, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(_logo, "scale", Vector2.ONE * base, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 ## Balancement très léger et sans fin : le titre reste vivant.
@@ -262,39 +345,19 @@ func _show_ready() -> void:
 	hide_bar.tween_property(_loading_box, "modulate:a", 0.0, 0.25)
 	hide_bar.tween_callback(func() -> void: _loading_box.visible = false)
 
-	_add_heroes()
-
 	_tap_label.modulate.a = 0.0
 	_tap_label.visible = true
 
 	var pulse := create_tween()
-	pulse.tween_interval(0.35)
+	pulse.tween_interval(0.3)
 	pulse.tween_property(_tap_label, "modulate:a", 1.0, 0.4)
 	pulse.tween_callback(_start_pulse)
 
 
 func _start_pulse() -> void:
 	var tween := create_tween().set_loops()
-	tween.tween_property(_tap_label, "modulate:a", 0.45, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(_tap_label, "modulate:a", 0.5, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(_tap_label, "modulate:a", 1.0, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-
-## Trois personnages sautent sur scène, l'un après l'autre.
-func _add_heroes() -> void:
-	var delay := 0.0
-
-	for id in HEROES:
-		var view := AvatarView.new()
-		view.avatar_id = id
-		view.custom_minimum_size = Vector2(150.0, 190.0)
-		view.pivot_offset = Vector2(75.0, 190.0)
-		view.scale = Vector2.ZERO
-		_heroes_row.add_child(view)
-
-		var tween := create_tween()
-		tween.tween_interval(delay)
-		tween.tween_property(view, "scale", Vector2.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-		delay += 0.12
 
 
 # ---------- Sortie ----------

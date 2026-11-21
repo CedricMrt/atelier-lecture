@@ -1,3 +1,6 @@
+# Dépendances JavaScript (le projet n'en a plus ; évite de versionner un node_modules oublié)
+node_modules/
+
 # Godot (android/)
 android/.godot/
 android/.import/

@@ -1,4 +1,4 @@
-# Jeux de lecture
+# Lettres en Quête
 
 Application Android (Godot 4) de six mini-jeux de lecture pour les 5-8 ans, sans compte ni serveur.
 

@@ -6,16 +6,22 @@ const ORANGE := Color(1.0, 0.48, 0.10)
 const CREAM := Color(1.0, 0.95, 0.88)
 const DARK_TEXT := Color(0.17, 0.10, 0.08)
 
+const FONT_BOLD := "res://assets/fonts/static/Fredoka-Bold.ttf"
+
 static var _bold_font: Font = null
 
 
-## Police du système mise en gras (la police par défaut n'a qu'une graisse).
+## Police de l'appli : Fredoka Bold. Si le fichier est absent ou pas encore importé,
+## on se rabat sur la police du système mise en gras.
 static func bold_font() -> Font:
 	if _bold_font == null:
-		var variation := FontVariation.new()
-		variation.base_font = ThemeDB.fallback_font
-		variation.variation_embolden = 0.7
-		_bold_font = variation
+		if ResourceLoader.exists(FONT_BOLD):
+			_bold_font = load(FONT_BOLD)
+		else:
+			var variation := FontVariation.new()
+			variation.base_font = ThemeDB.fallback_font
+			variation.variation_embolden = 0.7
+			_bold_font = variation
 	return _bold_font
 
 

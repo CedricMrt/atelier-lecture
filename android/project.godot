@@ -14,15 +14,15 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Jeux de lecture"
+config/name="Lettres en Quête"
 config/description="Six mini-jeux de lecture pour les 5-8 ans, sans compte ni serveur."
 run/main_scene="res://scenes/main.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
-boot_splash/bg_color=Color(0.169, 0.059, 0.039, 1)
+config/icon="res://assets/images/logo_appli.png"
+boot_splash/bg_color=Color(0.0, 0.38, 0.55, 1)
 boot_splash/image="res://assets/images/boot_splash.png"
-boot_splash/fullsize=false
+boot_splash/fullsize=true
 boot_splash/use_filter=true
 
 [autoload]
@@ -39,6 +39,10 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
+
+[gui]
+
+theme/custom_font="res://assets/fonts/static/Fredoka-Medium.ttf"
 
 [rendering]
 

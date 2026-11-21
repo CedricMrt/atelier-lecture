@@ -22,3 +22,5 @@ Règles :
 Dossiers retirés du dépôt pour l'alléger : les formats FBX et OBJ, les fichiers Blender (`Blends/`) et les
 `Samples/` de chaque pack. Seuls les modèles glTF/GLB, avec leurs textures, sont conservés ; les packs
 complets restent téléchargeables sur les pages indiquées ci-dessus.
+| `assets/fonts/` (police Fredoka) | Milena Brandão, Hafontia (Google Fonts) | SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) : usage commercial permis, ne pas vendre la police seule | https://fonts.google.com/specimen/Fredoka | 2026-11 |
+| `assets/images/logo_appli.png`, `boot_splash.png`, `store/`, `assets/icons/` (logo de l'appli) | à compléter : auteur ou outil de création | à compléter : droits d'usage commercial (conserver la preuve) | | 2026-11 |
