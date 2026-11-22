@@ -1,10 +1,9 @@
 extends Control
 ## Racine de l'appli : affiche un écran à la fois
-## (Démarrage → [Bienvenue, la 1re fois] → Qui joue ? → Accueil → Jeu).
+## (Démarrage → Qui joue ? → Accueil → Jeu).
 
 const Ui = preload("res://scripts/ui/ui.gd")
 const Splash = preload("res://scripts/screens/splash.gd")
-const Welcome = preload("res://scripts/screens/welcome.gd")
 const WhoPlays = preload("res://scripts/screens/who_plays.gd")
 const Home = preload("res://scripts/screens/home.gd")
 const GameHost = preload("res://scripts/screens/game_host.gd")
@@ -46,21 +45,10 @@ func _show_splash() -> void:
 	_show(screen)
 
 
-## La bienvenue (pour les adultes) n'est montrée qu'au tout premier lancement.
 func _after_splash() -> void:
 	# Le SDK publicitaire démarre ici, après le chargement, jamais pendant l'écran de démarrage.
 	Ads.start()
-
-	if Settings.welcome_seen:
-		_show_who_plays()
-	else:
-		_show_welcome()
-
-
-func _show_welcome() -> void:
-	var screen := Welcome.new()
-	screen.done.connect(_show_who_plays)
-	_show(screen)
+	_show_who_plays()
 
 
 func _show_who_plays() -> void:

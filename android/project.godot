@@ -27,7 +27,6 @@ boot_splash/use_filter=true
 
 [autoload]
 
-Settings="*res://scripts/autoload/settings.gd"
 Profiles="*res://scripts/autoload/profiles.gd"
 Speech="*res://scripts/autoload/speech.gd"
 Ads="*res://scripts/autoload/ads.gd"

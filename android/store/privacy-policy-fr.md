@@ -29,7 +29,6 @@ Les informations suivantes sont enregistrées **uniquement sur l'appareil** (dan
 | Le prénom ou le surnom du joueur (que l'adulte ou l'enfant tape) | Retrouver sa partie quand plusieurs enfants jouent sur le même appareil |
 | Le personnage choisi | Affichage |
 | Les niveaux et les étoiles gagnés dans chaque jeu | Adapter la difficulté |
-| Un réglage indiquant que l'écran de bienvenue a été vu | Ne pas le répéter |
 
 **Nous conseillons de saisir un prénom ou un surnom, jamais le nom de famille.**
 Ces informations ne quittent pas l'appareil. Elles sont **supprimées quand l'application est désinstallée**,
