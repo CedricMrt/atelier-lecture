@@ -8,6 +8,10 @@
 
 config_version=5
 
+[admob]
+
+general/ios/enabled=false
+
 [animation]
 
 compatibility/default_parent_skeleton_in_mesh_instance_3d=true
@@ -19,11 +23,9 @@ config/description="Six mini-jeux de lecture pour les 5-8 ans, sans compte ni se
 run/main_scene="res://scenes/main.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://assets/images/logo_appli.png"
-boot_splash/bg_color=Color(0.0, 0.38, 0.55, 1)
+boot_splash/bg_color=Color(0, 0.38, 0.55, 1)
 boot_splash/image="res://assets/images/boot_splash.png"
-boot_splash/fullsize=true
-boot_splash/use_filter=true
+config/icon="res://assets/images/logo_appli.png"
 
 [autoload]
 
@@ -39,6 +41,10 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg")
 
 [gui]
 
