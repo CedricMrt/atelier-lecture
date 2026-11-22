@@ -8,9 +8,10 @@ extends RefCounted
 ## Interstitiel de test fourni par Google : affiche des pubs « Test Ad », sans aucun risque pour le compte AdMob.
 const TEST_INTERSTITIAL_ANDROID := "ca-app-pub-3940256099942544/1033173712"
 
-## ID de TON unité « Interstitiel » créée dans AdMob (ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY).
-## À renseigner avant la publication. Tant qu'il est vide, la version publiée n'affiche AUCUNE pub.
-const INTERSTITIAL_ANDROID := ""
+## ID de l'unité « Avant un jeu » (interstitiel) créée dans AdMob.
+## Si on le vide, la version publiée n'affiche AUCUNE pub (publier sans pub reste possible).
+## L'ID de l'APPLI (avec « ~ »), lui, va dans les réglages du plugin : ca-app-pub-4246878331956258~7300870436
+const INTERSTITIAL_ANDROID := "ca-app-pub-4246878331956258/2918772290"
 
 
 ## Pendant le développement (éditeur, export « avec debug ») : toujours les pubs de test,
