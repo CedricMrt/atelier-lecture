@@ -3,8 +3,8 @@ extends RefCounted
 ##
 ## Contraintes Google Play « Familles » : pas de pub à l'ouverture de l'appli,
 ## pas en plein jeu, fermable facilement, une seule à la fois, et jamais trop
-## souvent. Ce module décide QUE du moment ; l'affichage réel (SDK certifié
-## pour enfants) viendra remplacer ui/ad_placeholder.gd.
+## souvent. Ce module décide QUE du moment ; l'affichage réel est dans
+## autoload/ads.gd et ads/ad_backend_admob.gd.
 
 const GAMES_BETWEEN_ADS := 3
 const MIN_MS_BETWEEN_ADS := 3 * 60 * 1000

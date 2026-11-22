@@ -1,6 +1,6 @@
 extends Control
-## SIMULATION de pub avant un jeu. Sera remplacé par le vrai SDK (pubs de test
-## pendant le développement, certifié « Familles » pour la publication).
+## SIMULATION de pub avant un jeu : utilisée seulement en développement quand le vrai SDK n'est pas disponible
+## (éditeur sur ordinateur, plugin AdMob pas installé). Jamais dans une version publiée.
 
 signal closed
 

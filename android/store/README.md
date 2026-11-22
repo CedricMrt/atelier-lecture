@@ -10,6 +10,7 @@ Toutes les informations de l'éditeur sont renseignées ; il manque les captures
 | `listing-fr.md` | Titre, descriptions, catégorie, réponses aux questionnaires (public cible, classification) |
 | `privacy-policy-fr.md` | Politique de confidentialité (obligatoire pour une appli d'enfants) |
 | `data-safety.md` | Réponses au formulaire « Sécurité des données » |
+| `ads-setup.md` | Brancher la vraie pub AdMob (plugin, identifiants, mode enfants, permission AD_ID) |
 | `export-android.md` | Fabriquer le fichier `.aab` avec Godot, étape par étape |
 | `../assets/icons/` | Icône adaptative Android (premier plan + fond), à brancher dans l'export |
 
@@ -17,7 +18,7 @@ Toutes les informations de l'éditeur sont renseignées ; il manque les captures
 
 - **Les captures d'écran** : il faut au moins 2 captures de téléphone, et si possible 7 et 10 pouces
   (paysage). À prendre dans Godot ou sur la tablette quand les jeux seront finis.
-- **Le vrai SDK publicitaire** (voir `data-safety.md`) : la pub est encore simulée.
+- **Le vrai SDK publicitaire** : le code est prêt, reste à installer le plugin et à vérifier sa certification « Familles » (voir `ads-setup.md` et `data-safety.md`), ou publier d'abord sans pub.
 - **Un compte développeur Google Play** (frais uniques, vérification d'identité) : https://play.google.com/console
 - **Une adresse web publique pour la politique de confidentialité** (voir plus bas).
 

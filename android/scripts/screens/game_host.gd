@@ -7,7 +7,6 @@ signal exited
 const Ui = preload("res://scripts/ui/ui.gd")
 const Modal = preload("res://scripts/ui/modal.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
-const AdPlaceholder = preload("res://scripts/ui/ad_placeholder.gd")
 const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
 const DedansGame = preload("res://scripts/games/dedans_game.gd")
 
@@ -46,11 +45,7 @@ func _exit() -> void:
 
 
 func _begin() -> void:
-	if Ads.should_show_ad_before_game():
-		var ad := AdPlaceholder.new()
-		add_child(ad)
-		await ad.closed
-
+	await Ads.show_before_game(self)
 	_start_game()
 
 

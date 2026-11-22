@@ -17,6 +17,8 @@ Google ne les considère pas comme « collectés » (la collecte = envoi hors de
 
 ## Quand le SDK publicitaire sera branché (AdMob en mode enfants)
 
+Le code de branchement existe déjà (voir `ads-setup.md`) ; ces réponses valent dès qu'une version **avec** pub est publiée.
+
 Il faudra alors répondre **Oui** à « collecte des données », parce que le SDK publicitaire envoie des informations
 techniques pour afficher les pubs. Google fournit pour cela un guide à suivre point par point :
 **« Google Mobile Ads SDK et déclaration des données Play »** (documentation AdMob, page « Play data disclosure »).
@@ -25,8 +27,8 @@ des interactions avec les pubs, des diagnostics, une position approximative déd
 
 À ne pas oublier, pour une appli « Familles » :
 
-- activer le traitement destiné aux enfants dans le SDK (en Android : `tagForChildDirectedTreatment = true`,
-  `tagForUnderAgeOfConsent = true`, `maxAdContentRating = G`) ;
+- le traitement destiné aux enfants est activé dans le code (`ad_backend_admob.gd` : `tag_for_child_directed_treatment = TRUE`,
+  contenu maximal « G ») ;
 - **ne pas déclarer la permission `AD_ID`** et ne pas envoyer l'identifiant publicitaire ;
 - n'utiliser qu'une version du SDK **auto-certifiée « Familles »** (liste dans la Google Play SDK Console) ;
 - relire la politique de confidentialité (section 4) pour qu'elle corresponde mot pour mot.

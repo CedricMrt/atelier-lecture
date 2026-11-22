@@ -12,7 +12,7 @@ Tout reste sur l'appareil. Indépendante de l'appli de classe (`apps/`).
 - Écran « Qui joue ? » : profils locaux (prénom + avatar), « Gérer » protégé par une question d'adulte.
 - Progression par jeu et par joueur, niveaux adaptatifs (1 à 3), étoiles. Fichier : `user://profiles.json`.
 - Voix : synthèse vocale du système (`DisplayServer.tts_*`), voix française cherchée au démarrage.
-- Pub : **simulation** avant un jeu (jamais au lancement, un jeu sur quatre au plus, 3 minutes d'écart minimum).
+- Pub : avant un jeu (jamais au lancement, un jeu sur quatre au plus, 3 minutes d'écart minimum). Code AdMob prêt (mode enfants), à activer avec le plugin : [`store/ads-setup.md`](store/ads-setup.md). Sans plugin : simulation sur PC, aucune pub dans une version publiée.
 - Jeu 1 **Pont du volcan** jouable, décor et personnage provisoires (dessinés par code, en 2D).
 - Les cinq autres jeux sont annoncés « Bientôt ».
 - Paysage uniquement, rendu « GL Compatibility » (fonctionne sur les tablettes d'entrée de gamme).
@@ -57,7 +57,8 @@ android/
   scenes/main.tscn          scène de départ (le reste est construit par code)
   scripts/
     main.gd                 passe d'un écran à l'autre, bouton « retour » d'Android
-    autoload/               profiles.gd (sauvegarde), speech.gd (voix), ads.gd (moment des pubs)
+    autoload/               profiles.gd (sauvegarde), speech.gd (voix), ads.gd (moment des pubs), settings.gd (réglages de l'appareil)
+    ads/                    fournisseur de pub (ad_backend_admob.gd : AdMob via plugin, mode enfants)
     data/                   games.gd (catalogue), avatars.gd
     logic/                  règles pures, testées : progression, pubs, Pont du volcan
     screens/                who_plays.gd, home.gd, game_host.gd

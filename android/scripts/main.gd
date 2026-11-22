@@ -48,6 +48,9 @@ func _show_splash() -> void:
 
 ## La bienvenue (pour les adultes) n'est montrée qu'au tout premier lancement.
 func _after_splash() -> void:
+	# Le SDK publicitaire démarre ici, après le chargement, jamais pendant l'écran de démarrage.
+	Ads.start()
+
 	if Settings.welcome_seen:
 		_show_who_plays()
 	else:
