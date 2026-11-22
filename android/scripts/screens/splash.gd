@@ -99,9 +99,9 @@ func _build_ui() -> void:
 	# Bords du carré fondus dans le dégradé du fond : on ne voit pas le cadre de l'image.
 	var fade_edges := Shader.new()
 	fade_edges.code = EDGE_FADE_SHADER
-	var material := ShaderMaterial.new()
-	material.shader = fade_edges
-	_logo.material = material
+	var fade_material := ShaderMaterial.new()
+	fade_material.shader = fade_edges
+	_logo.material = fade_material
 
 	var logo_size := view.y
 	_logo.size = Vector2(logo_size, logo_size)
