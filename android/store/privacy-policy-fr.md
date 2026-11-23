@@ -1,6 +1,6 @@
 # Politique de confidentialité : Lettres en Quête
 
-*Dernière mise à jour : 22 novembre 2026*
+*Dernière mise à jour : 23 novembre 2026*
 
 <!-- Note pour l'éditeur (n'apparaît pas sur la page publique) :
 Ce texte décrit l'appli AVEC publicités « Familles ». Si tu publies d'abord sans publicité, supprime la section 4.
@@ -44,6 +44,7 @@ de l'appareil : c'est un réglage du système, que l'éditeur ne contrôle pas.
 L'application peut afficher des publicités avant le lancement de certains jeux (jamais au démarrage de l'application, et pas à chaque partie).
 
 - Les publicités sont fournies par **Google AdMob**, utilisé en **mode « destiné aux enfants »** (programme « Familles » de Google Play).
+- Elles sont réglées sur la classification **« tous publics »** (contenus adaptés aux enfants).
 - Elles ne sont **jamais personnalisées** : pas de ciblage selon le comportement, pas de remarketing.
 - L'application **n'envoie pas l'identifiant publicitaire** de l'appareil.
 - Pour afficher une publicité, le service de publicité peut traiter des informations techniques de l'appareil (par exemple l'adresse IP, le type d'appareil, la version d'Android) et mesurer l'affichage de la publicité. Ce traitement est décrit par Google : https://policies.google.com/privacy

@@ -52,17 +52,20 @@ Dans `scripts/data/ad_config.gd`, renseigner `INTERSTITIAL_ANDROID` avec l'ID du
 - **Ne jamais cliquer sur de vraies pubs avec son propre compte** (Google peut suspendre le compte).
 
 ### 4. Retirer l'identifiant publicitaire (obligatoire « Familles »)
-Les versions récentes du SDK ajoutent la permission `AD_ID`. Une appli « Familles » ne doit **pas** l'avoir.
-Dans `android/android/build/AndroidManifest.xml` (créé à l'installation du modèle Gradle ; ce dossier n'est pas versionné),
-ajouter dans `<manifest …>` :
+Le SDK de Google réclame la permission `AD_ID`. Une appli « Familles » ne doit **pas** l'avoir.
+C'est **automatique** : le petit plugin `addons/no_ad_id/` (déjà dans le dépôt) ajoute au manifeste de chaque export Android
+la consigne `tools:node="remove"` pour cette permission. Il suffit qu'il soit **activé** (*Projet → Réglages du projet → Plugins*).
+Rien à modifier à la main dans `android/android/build/`.
 
-```xml
-<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+**Vérifier sur l'APK/AAB exporté** (PowerShell, adapter le chemin de l'APK) :
+
+```
+& "$env:LOCALAPPDATA\Android\Sdk\build-tools\35.0.1\aapt2.exe" dump permissions "C:\chemin\vers\lettres-en-quete.apk"
 ```
 
-et vérifier que `xmlns:tools="http://schemas.android.com/tools"` est présent dans la balise `<manifest>`.
-Contrôle final sur le fichier `.aab` exporté (avec `bundletool` ou en l'envoyant dans la Play Console, rubrique
-« Contenu de l'appli → ID de publicité » : réponse **Non**).
+La liste doit contenir `INTERNET` et `ACCESS_NETWORK_STATE`, et **ne pas** contenir `com.google.android.gms.permission.AD_ID`.
+Si la compilation Gradle se plaint d'un préfixe `tools` inconnu, dis-le : on ajoutera la déclaration `xmlns:tools` dans le modèle.
+Dans la Play Console, rubrique « Contenu de l'appli → ID de publicité » : réponse **Non**.
 
 ### 5. Essayer sur la tablette
 1. Export avec debug, installation sur un appareil réel (les pubs ne s'affichent pas dans l'éditeur sur PC).

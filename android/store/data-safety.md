@@ -29,7 +29,7 @@ des interactions avec les pubs, des diagnostics, une position approximative déd
 
 - le traitement destiné aux enfants est activé dans le code (`ad_backend_admob.gd` : `tag_for_child_directed_treatment = TRUE`,
   contenu maximal « G ») ;
-- **ne pas déclarer la permission `AD_ID`** et ne pas envoyer l'identifiant publicitaire ;
+- **ne pas déclarer la permission `AD_ID`** : le plugin `addons/no_ad_id/` la retire de l'export (voir `ads-setup.md`, étape 4) ;
 - n'utiliser qu'une version du SDK **auto-certifiée « Familles »** (liste dans la Google Play SDK Console) ;
 - relire la politique de confidentialité (section 4) pour qu'elle corresponde mot pour mot.
 
