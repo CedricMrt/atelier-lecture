@@ -7,7 +7,12 @@ extends EditorExportPlugin
 ##
 ## Utilise le préfixe « tools » du manifeste modèle de Godot (xmlns:tools déjà présent dans le modèle Gradle).
 
-const AD_ID_PERMISSION := "com.google.android.gms.permission.AD_ID"
+## Deux noms existent selon la version du SDK publicitaire : on retire les deux.
+## (Le SDK « Next-Gen » utilise android.permission.AD_ID, l'ancien com.google.android.gms.permission.AD_ID.)
+const AD_ID_PERMISSIONS := [
+	"android.permission.AD_ID",
+	"com.google.android.gms.permission.AD_ID",
+]
 
 
 func _get_name() -> String:
@@ -19,4 +24,9 @@ func _supports_platform(platform: EditorExportPlatform) -> bool:
 
 
 func _get_android_manifest_element_contents(_platform: EditorExportPlatform, _debug: bool) -> String:
-	return '<uses-permission android:name="%s" tools:node="remove" />\n' % AD_ID_PERMISSION
+	var xml := ""
+
+	for permission in AD_ID_PERMISSIONS:
+		xml += '<uses-permission android:name="%s" tools:node="remove" />\n' % permission
+
+	return xml
