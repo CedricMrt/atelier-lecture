@@ -6,6 +6,7 @@ extends SceneTree
 const Progression = preload("res://scripts/logic/progression.gd")
 const AdRules = preload("res://scripts/logic/ad_rules.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
+const VoiceFiles = preload("res://scripts/logic/voice_files.gd")
 
 var failures := 0
 
@@ -22,6 +23,7 @@ func _init() -> void:
 	test_progression()
 	test_ad_rules()
 	test_volcano()
+	test_voice_files()
 
 	print("")
 	print("%d échec(s)" % failures)
@@ -99,3 +101,23 @@ func test_volcano() -> void:
 	check(Logic.stars_from_errors(20) == 1, "20 erreurs : 1 étoile")
 	check(is_equal_approx(Logic.accuracy_from(10, 0), 1.0), "précision 100 %")
 	check(is_equal_approx(Logic.accuracy_from(0, 0), 0.0), "précision nulle sans lettre")
+
+
+func test_voice_files() -> void:
+	check(VoiceFiles.key("Veux-tu rejouer ?") == VoiceFiles.key("Veux-tu rejouer"), "voix : le « ? » du texte n'empêche pas de trouver le fichier")
+	check(VoiceFiles.key("Cherche la lettre a") == VoiceFiles.key("Cherche la lettre A"), "voix : majuscules sans importance")
+	check(VoiceFiles.key("Écoute encore, puis essaie.") == "écoute encore puis essaie", "voix : virgule et point retirés, accents conservés")
+	check(VoiceFiles.key("Touche le côté vert si elle n’y était pas.") == VoiceFiles.key("Touche le côté vert si elle ny était pas"), "voix : apostrophe typographique ignorée")
+	check(VoiceFiles.key("Trouve le son « ou » ici") == VoiceFiles.key("Trouve le son “ou” ici"), "voix : guillemets « » et “ ” équivalents")
+	check(VoiceFiles.key("  Bien   joué ! ") == "bien joué", "voix : espaces multiples réduits")
+
+	var names := PackedStringArray([
+		"Bien joué !.mp3", "Bien joué !.mp3.import", "Regarde bien..mp3.import",
+		"Veux-tu rejouer.mp3", "Cherche la lettre A.mp3", "notes.txt", "vide.mp3.import.bak",
+	])
+	var index := VoiceFiles.index_from(names)
+	check(index.get(VoiceFiles.key("Bien joué !"), "") == "Bien joué !.mp3", "voix : « .import » retiré du nom, un seul fichier par texte")
+	check(index.get(VoiceFiles.key("Regarde bien."), "") == "Regarde bien..mp3", "voix : nom gardé exactement (double point)")
+	check(index.get(VoiceFiles.key("Veux-tu rejouer ?"), "") == "Veux-tu rejouer.mp3", "voix : fichier sans « ? » retrouvé")
+	check(index.get(VoiceFiles.key("Cherche la lettre a"), "") == "Cherche la lettre A.mp3", "voix : lettre en minuscule retrouve le fichier en majuscule")
+	check(not index.has(VoiceFiles.key("notes")) and not index.has(VoiceFiles.key("vide")), "voix : fichiers qui ne sont pas des sons ignorés")

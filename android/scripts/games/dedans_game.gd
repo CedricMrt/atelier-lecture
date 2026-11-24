@@ -20,6 +20,13 @@ const YELLOW := Color(1.0, 0.82, 0.20)
 const GOLD := Color(1.0, 0.85, 0.3)
 const OUTLINE := Color(0.22, 0.09, 0.04)
 
+# Phrases enregistrées (assets/voix/) ; à défaut de fichier, la synthèse vocale les dit.
+const VOICE_LOOK := "Regarde bien les lettres."
+const VOICE_QUESTION := "La lettre était-elle dans la suite ?"
+const VOICE_RULE := "Touche le côté vert si elle était dedans, ou le côté rouge si elle n’y était pas."
+const VOICE_GOOD := "Bien joué !"
+const VOICE_SLOW := "Prends ton temps."
+
 var level: int = 1
 var rounds_count: int = 8
 
@@ -336,6 +343,15 @@ func _say_target() -> void:
 	await Speech.speak("Cherche la lettre %s" % target.to_lower())
 
 
+## La question est posée à voix haute sans bloquer la réponse : si l'enfant répond, la voix s'arrête.
+## À la première manche, la règle des deux côtés est ajoutée.
+func _ask_question() -> void:
+	await Speech.speak(VOICE_QUESTION)
+
+	if _alive and _accepting and _round_index == 0:
+		await Speech.speak(VOICE_RULE)
+
+
 func _run_round() -> void:
 	_current = _rounds[_round_index]
 	_accepting = false
@@ -348,6 +364,12 @@ func _run_round() -> void:
 	await _say_target()
 	if not _alive:
 		return
+
+	# La toute première manche : on rappelle de bien regarder avant d'ouvrir le disque.
+	if _round_index == 0:
+		await Speech.speak(VOICE_LOOK)
+		if not _alive:
+			return
 
 	await get_tree().create_timer(0.3).timeout
 	if not _alive:
@@ -371,6 +393,7 @@ func _run_round() -> void:
 
 	_message.text = "Dedans ou pas dedans ?"
 	_accepting = true
+	_ask_question()
 
 
 ## Touche sur la moitié gauche (PAS DEDANS) ou droite (DEDANS) de l'écran.
@@ -407,6 +430,7 @@ func _answer(says_inside: bool) -> void:
 		_best_combo = maxi(_best_combo, _combo)
 		_message.text = "Bien !"
 		_sparks()
+		Speech.speak(VOICE_GOOD)
 	else:
 		_errors += 1
 		_combo = 0
@@ -417,6 +441,7 @@ func _answer(says_inside: bool) -> void:
 			_message.text = "Oups ! Pas de %s ici." % target
 
 		_shake()
+		Speech.speak(VOICE_SLOW)
 
 	_score_label.text = str(_correct)
 	_combo_label.text = "Combo x%d" % _combo if _combo >= 2 else ""

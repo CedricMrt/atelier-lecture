@@ -1,22 +1,27 @@
 extends Node
-## Mots du volcan : MP3 locaux en priorité, synthèse système en secours.
-## Les autres textes conservent leur comportement actuel.
+## Voix de l'appli : enregistrements MP3 (dossier assets/voix/) en priorité, synthèse vocale du système en secours.
+## Un texte est joué en MP3 si un fichier porte son nom (voir logic/voice_files.gd : majuscules et ponctuation sans importance).
+## Sur Android, la voix française de la synthèse dépend de l'appareil : has_french_voice() sert à prévenir l'adulte.
 
-const RECORDED_WORDS := [
-	"lit", "rat", "bol", "sac", "mur", "lac", "riz",
-	"lune", "robe", "vase", "cube", "moto", "kiwi", "lama", "sofa",
-	"lapin", "radio", "balai", "pomme", "fusée", "robot", "tigre", "zèbre", "pizza",
-]
+const VoiceFiles = preload("res://scripts/logic/voice_files.gd")
+
+const VOICE_DIR := "res://assets/voix/"
 
 var _utterance_counter := 0
 var _ended_id := -1
 var _generation := 0
 var _player: AudioStreamPlayer
+var _recordings: Dictionary = {}
 
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
 	add_child(_player)
+	_recordings = VoiceFiles.index_from(DirAccess.get_files_at(VOICE_DIR))
+
+	if _recordings.is_empty():
+		push_warning("Voix : aucun enregistrement trouvé dans %s ; synthèse vocale seulement." % VOICE_DIR)
+
 	if _supported():
 		DisplayServer.tts_set_utterance_callback(DisplayServer.TTS_UTTERANCE_ENDED, _on_utterance_done)
 		DisplayServer.tts_set_utterance_callback(DisplayServer.TTS_UTTERANCE_CANCELED, _on_utterance_done)
@@ -55,25 +60,43 @@ func cancel() -> void:
 		DisplayServer.tts_stop()
 
 
+## Vrai si un enregistrement MP3 existe pour ce texte.
+func has_recording(text: String) -> bool:
+	return not _recording_path(text).is_empty()
+
+
+## Chemin du MP3 qui porte ce texte comme nom, ou "" s'il n'y en a pas.
+func _recording_path(text: String) -> String:
+	var exact := VOICE_DIR + text.strip_edges() + ".mp3"
+
+	if ResourceLoader.exists(exact):
+		return exact
+
+	var file_name: String = _recordings.get(VoiceFiles.key(text), "")
+
+	if file_name.is_empty():
+		return ""
+
+	return VOICE_DIR + file_name
+
+
 ## Un nouvel appel interrompt le précédent. L'attente se termine aussi après annulation.
 func speak(text: String, rate: float = 0.85) -> void:
 	cancel()
 	var my_generation := _generation
-	var word := text.strip_edges().to_lower()
-	if RECORDED_WORDS.has(word):
-		var path := "res://assets/voix/%s.mp3" % word
-		if ResourceLoader.exists(path):
-			var recording := load(path) as AudioStream
-			if recording != null and is_instance_valid(_player):
-				_player.stream = recording
-				_player.play()
-				var audio_deadline := Time.get_ticks_msec() + int((recording.get_length() + 2.0) * 1000.0)
-				while my_generation == _generation and _player.playing and Time.get_ticks_msec() < audio_deadline:
-					await get_tree().process_frame
-				if my_generation == _generation:
-					_player.stop()
-				return
-		push_warning("Voix : MP3 absent ou illisible pour %s ; synthèse vocale en secours." % word)
+	var path := _recording_path(text)
+	if not path.is_empty():
+		var recording := load(path) as AudioStream
+		if recording != null and is_instance_valid(_player):
+			_player.stream = recording
+			_player.play()
+			var audio_deadline := Time.get_ticks_msec() + int((recording.get_length() + 2.0) * 1000.0)
+			while my_generation == _generation and _player.playing and Time.get_ticks_msec() < audio_deadline:
+				await get_tree().process_frame
+			if my_generation == _generation:
+				_player.stop()
+			return
+		push_warning("Voix : %s illisible ; synthèse vocale en secours." % path)
 	if not _supported():
 		return
 	var voice_id := _french_voice_id()

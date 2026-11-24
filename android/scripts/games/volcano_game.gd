@@ -42,6 +42,8 @@ const SFX_JUMP := "res://assets/voix/jump.mp3"
 const SFX_ROCK_BREAK := "res://assets/voix/erreur_volcan.mp3"
 const VOICE_PRAISE := "Bravo ! Tu as trouvé !"
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
+const VOICE_INTRO := "Écoute le mot, puis touche les bonnes lettres pour traverser le pont."
+const VOICE_GO := "À toi de jouer !"
 
 # Mots cherchés dans le nom des animations (le premier mot trouvé gagne).
 const ANIM_IDLE := ["idle_a", "idle"]
@@ -838,12 +840,21 @@ func _start_round() -> void:
 	if not _alive:
 		return
 
+	# La toute première manche : la consigne est dite une fois, avant le premier mot.
+	if _round_index == 0:
+		await Speech.speak(VOICE_INTRO)
+		if not _alive:
+			return
+
 	await _say_current_word()
 	if not _alive:
 		return
 
 	_locked = false
 	_message.text = "Touche les bonnes lettres !"
+
+	if _round_index == 0:
+		Speech.speak(VOICE_GO)
 
 
 func _load_clue(word: String) -> void:
@@ -857,7 +868,9 @@ func _load_clue(word: String) -> void:
 
 func _say_current_word() -> void:
 	var item: Dictionary = _words[_round_index]
-	var spoken: String = item.get("spoken", item["word"])
+	var word: String = item["word"]
+	# « spoken » ne sert qu'à la synthèse vocale : l'enregistrement MP3, lui, porte le nom du mot.
+	var spoken: String = word if Speech.has_recording(word) else item.get("spoken", word)
 	await Speech.speak(spoken)
 
 

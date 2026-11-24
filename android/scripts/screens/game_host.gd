@@ -110,10 +110,25 @@ func _on_finished(result: Dictionary) -> void:
 	replay.pressed.connect(_replay)
 	actions.add_child(replay)
 
+	_say_result(int(result["stars"]), _result_modal)
+
+
+## Voix de fin de partie : un compliment, puis la proposition de rejouer (sauf si l'enfant a déjà touché un bouton).
+func _say_result(stars: int, modal: Control) -> void:
+	await Speech.speak("Tu as terminé la partie !" if stars >= 3 else "Tu progresses !")
+
+	if is_instance_valid(modal) and modal == _result_modal and is_inside_tree():
+		await Speech.speak("Veux-tu rejouer ?")
+
 
 func _replay() -> void:
+	Speech.cancel()
+
 	if is_instance_valid(_result_modal):
 		_result_modal.queue_free()
+
+	_result_modal = null
+
 	if is_instance_valid(_game):
 		_game.queue_free()
 
