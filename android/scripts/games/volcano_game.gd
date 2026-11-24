@@ -38,6 +38,11 @@ const TILE_MODEL := NATURE + "RockPath_Square_Wide.gltf"
 const CLIFFS := ["mountain_A.gltf", "mountain_B.gltf", "mountain_C.gltf"]
 const ROCKS := ["rock_single_A.gltf", "rock_single_B.gltf", "rock_single_C.gltf", "rock_single_D.gltf", "rock_single_E.gltf"]
 
+const SFX_JUMP := "res://assets/voix/jump.mp3"
+const SFX_ROCK_BREAK := "res://assets/voix/erreur_volcan.mp3"
+const VOICE_PRAISE := "Bravo ! Tu as trouvé !"
+const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
+
 # Mots cherchés dans le nom des animations (le premier mot trouvé gagne).
 const ANIM_IDLE := ["idle_a", "idle"]
 const ANIM_JUMP := ["jump_full_short", "jump_full_long", "jump_start", "jump"]
@@ -124,6 +129,7 @@ var _slot_labels: Array = []
 var _round_nodes: Array = []
 var _finish_z := 0.0
 var _finish_top := 0.3
+var _sfx_player: AudioStreamPlayer
 
 var _counter: Label
 var _message: Label
@@ -191,6 +197,9 @@ func _ready() -> void:
 	add_child(_stage)
 	resized.connect(_fit_stage)
 	_fit_stage()
+
+	_sfx_player = AudioStreamPlayer.new()
+	add_child(_sfx_player)
 
 	_words = Logic.pick_words(level, rounds_count)
 
@@ -438,6 +447,21 @@ func _apply_overlay(node: Node, overlay: Material) -> void:
 
 
 # ---------- Effets ----------
+
+## Effet sonore court, indépendant de la voix : saut, rocher qui casse, etc.
+func _play_sfx(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		push_warning("Effet sonore introuvable ou non importé : " + path)
+		return
+
+	var sound := load(path) as AudioStream
+
+	if sound == null or not is_instance_valid(_sfx_player):
+		return
+
+	_sfx_player.stream = sound
+	_sfx_player.play()
+
 
 ## Gerbe d'étincelles dorées (particules CPU : légères et compatibles avec toutes les tablettes).
 func _sparks(pos: Vector3, count: int, size_value: float) -> void:
@@ -1028,6 +1052,7 @@ func _hop_to(target: Vector3) -> void:
 	_hopping = true
 	_hero_model.position.y = 0.0
 	_play(ANIM_JUMP, false, HOP_TIME)
+	_play_sfx(SFX_JUMP)
 
 	var tween := create_tween()
 	tween.tween_method(_hop_step.bind(from, target), 0.0, 1.0, HOP_TIME)
@@ -1084,6 +1109,7 @@ func _on_wrong(tile: Dictionary) -> void:
 	_tint(tile["visual"], TINT_WRONG)
 	_shake()
 	_message.text = "Oups, essaie encore !"
+	_play_sfx(SFX_ROCK_BREAK)
 
 	var wrong_pos: Vector3 = tile["pos"]
 	_ring(Vector3(wrong_pos.x, tile["top"], wrong_pos.z), TINT_WRONG)
@@ -1094,19 +1120,26 @@ func _on_wrong(tile: Dictionary) -> void:
 	fall.tween_property(node, "position:y", -1.4, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.tween_property(node, "rotation:z", 0.35, 0.6)
 
-	if _errors_here >= 2:
-		# Aide : on redit le mot et la bonne dalle se met à briller.
-		_say_current_word()
+	# La bonne dalle est repérée tout de suite ; après deux erreurs, une aide vocale est ajoutée.
+	var right_candidates: Array = []
 
-		for candidate in _tiles[_position]:
-			if candidate["letter"] == _letters[_position] and not candidate["done"]:
-				var right: Node3D = candidate["node"]
-				var right_pos: Vector3 = candidate["pos"]
-				_ring(Vector3(right_pos.x, candidate["top"], right_pos.z), Color(1.0, 0.9, 0.4))
+	for candidate in _tiles[_position]:
+		if candidate["letter"] == _letters[_position] and not candidate["done"]:
+			right_candidates.append(candidate)
+			var right: Node3D = candidate["node"]
+			var right_pos: Vector3 = candidate["pos"]
+			_ring(Vector3(right_pos.x, candidate["top"], right_pos.z), Color(1.0, 0.9, 0.4))
 
-				var pulse := create_tween().set_loops(4)
-				pulse.tween_property(right, "scale", Vector3.ONE * 1.15, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-				pulse.tween_property(right, "scale", Vector3.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			var pulse := create_tween().set_loops(4)
+			pulse.tween_property(right, "scale", Vector3.ONE * 1.15, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			pulse.tween_property(right, "scale", Vector3.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+	if _errors_here >= 2 and not right_candidates.is_empty():
+		await Speech.speak(VOICE_RETRY)
+		if not _alive:
+			return
+
+		await _say_current_word()
 
 
 func _shake() -> void:
@@ -1140,7 +1173,11 @@ func _finish_word() -> void:
 	if not _alive:
 		return
 
-	_say_current_word()
+	await Speech.speak(VOICE_PRAISE)
+	if not _alive:
+		return
+
+	await _say_current_word()
 
 	await get_tree().create_timer(1.9).timeout
 	if not _alive:
