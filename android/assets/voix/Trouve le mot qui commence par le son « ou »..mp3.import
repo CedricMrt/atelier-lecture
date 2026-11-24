@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dv2dqp7mwklw4"
+path="res://.godot/imported/Trouve le mot qui commence par le son « ou »..mp3-ad3e2ba0429fde969e445058c2b32ce4.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui commence par le son « ou »..mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui commence par le son « ou »..mp3-ad3e2ba0429fde969e445058c2b32ce4.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

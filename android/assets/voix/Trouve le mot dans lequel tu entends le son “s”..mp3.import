@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cs1cu8aqi6uoc"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son “s”..mp3-7a2ce71c1e888ee73961cb8f56ebad7c.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son “s”..mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son “s”..mp3-7a2ce71c1e888ee73961cb8f56ebad7c.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

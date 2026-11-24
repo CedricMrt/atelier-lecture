@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://be5qip35nhgdy"
+path="res://.godot/imported/Tu progresses !.mp3-6615bd9afa23c041e5016d4380b58319.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Tu progresses !.mp3"
+dest_files=["res://.godot/imported/Tu progresses !.mp3-6615bd9afa23c041e5016d4380b58319.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

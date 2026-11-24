@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://celk1nuewm243"
+path="res://.godot/imported/Regarde bien..mp3-67c9bc9042d48515f5166307609d3995.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Regarde bien..mp3"
+dest_files=["res://.godot/imported/Regarde bien..mp3-67c9bc9042d48515f5166307609d3995.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

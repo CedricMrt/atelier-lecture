@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://fchougi8btck"
+path="res://.godot/imported/Regarde bien les lettres..mp3-6c70a2c419f600473b821abc3c8ed06d.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Regarde bien les lettres..mp3"
+dest_files=["res://.godot/imported/Regarde bien les lettres..mp3-6c70a2c419f600473b821abc3c8ed06d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

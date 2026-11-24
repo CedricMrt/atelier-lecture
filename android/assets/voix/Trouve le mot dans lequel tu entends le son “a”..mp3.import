@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cos5yycvjkilk"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son “a”..mp3-997a653f62707d66cc81042f4e765f96.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son “a”..mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son “a”..mp3-997a653f62707d66cc81042f4e765f96.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

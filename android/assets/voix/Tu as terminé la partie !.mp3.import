@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://hce5urn3rq5a"
+path="res://.godot/imported/Tu as terminé la partie !.mp3-990c6cd5277ab00a52d793399552edea.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Tu as terminé la partie !.mp3"
+dest_files=["res://.godot/imported/Tu as terminé la partie !.mp3-990c6cd5277ab00a52d793399552edea.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

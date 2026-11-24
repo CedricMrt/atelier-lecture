@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://d3ir0vt2kdu3a"
+path="res://.godot/imported/Touche le côté vert si elle était dedans, ou le côté rouge si elle n’y était pas..mp3-242fd35a24b3a70dd5de1b4fae636c65.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Touche le côté vert si elle était dedans, ou le côté rouge si elle n’y était pas..mp3"
+dest_files=["res://.godot/imported/Touche le côté vert si elle était dedans, ou le côté rouge si elle n’y était pas..mp3-242fd35a24b3a70dd5de1b4fae636c65.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

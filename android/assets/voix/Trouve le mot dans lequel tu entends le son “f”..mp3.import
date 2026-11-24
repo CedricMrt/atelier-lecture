@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b2e8i314jnimw"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son “f”..mp3-b4dfbe8c1f5115ae02eba0759d225cb2.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son “f”..mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son “f”..mp3-b4dfbe8c1f5115ae02eba0759d225cb2.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

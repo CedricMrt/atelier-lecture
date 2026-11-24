@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c7n1gb3con1fr"
+path="res://.godot/imported/Cherche la lettre D.mp3-f3e88901edc74ea156bf707a05abe51a.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre D.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre D.mp3-f3e88901edc74ea156bf707a05abe51a.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

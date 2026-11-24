@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://8di227enosg8"
+path="res://.godot/imported/Bien joué !.mp3-7f7604385a8e83263c9eda8691825e3b.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Bien joué !.mp3"
+dest_files=["res://.godot/imported/Bien joué !.mp3-7f7604385a8e83263c9eda8691825e3b.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

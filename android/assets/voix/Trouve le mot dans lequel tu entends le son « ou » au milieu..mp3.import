@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bjsq04txcstmb"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son « ou » au milieu..mp3-b79d92738fa4d84471e23e86ded1d6c1.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son « ou » au milieu..mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son « ou » au milieu..mp3-b79d92738fa4d84471e23e86ded1d6c1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

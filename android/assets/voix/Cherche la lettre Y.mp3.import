@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c2waucr3c5ihp"
+path="res://.godot/imported/Cherche la lettre Y.mp3-f57f96eba16e2cbf2a465c8c3903d2b1.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre Y.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre Y.mp3-f57f96eba16e2cbf2a465c8c3903d2b1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

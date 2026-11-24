@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dmvkjtuku4tho"
+path="res://.godot/imported/Cherche la lettre X.mp3-227597b4bc0349eae5ea39d895a526a4.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre X.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre X.mp3-227597b4bc0349eae5ea39d895a526a4.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://vybv7kcfp3gc"
+path="res://.godot/imported/Choisis le groupe de lettres qui manque pour compléter le mot..mp3-49f4c42e1ac73bcf58abe757fbf5585f.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Choisis le groupe de lettres qui manque pour compléter le mot..mp3"
+dest_files=["res://.godot/imported/Choisis le groupe de lettres qui manque pour compléter le mot..mp3-49f4c42e1ac73bcf58abe757fbf5585f.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

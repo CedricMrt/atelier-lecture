@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://broahey7j7id5"
+path="res://.godot/imported/Cherche la lettre M.mp3-80b9140428f15e2e4d9bb5fc2a4a0b9c.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre M.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre M.mp3-80b9140428f15e2e4d9bb5fc2a4a0b9c.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

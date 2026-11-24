@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bh5jwmqid3ey1"
+path="res://.godot/imported/Cherche la lettre I.mp3-817ffdca2864108bb70204a54595059d.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre I.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre I.mp3-817ffdca2864108bb70204a54595059d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

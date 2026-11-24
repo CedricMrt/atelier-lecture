@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dr5e1nrsse728"
+path="res://.godot/imported/Cherche la lettre W.mp3-35df0aa21731f4660d51c4ae28f03b70.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre W.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre W.mp3-35df0aa21731f4660d51c4ae28f03b70.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

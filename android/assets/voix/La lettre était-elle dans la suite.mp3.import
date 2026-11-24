@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://ca4qe7pu4udep"
+path="res://.godot/imported/La lettre était-elle dans la suite.mp3-ea65fe9fd49fe67016a1b04b4ef09452.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/La lettre était-elle dans la suite.mp3"
+dest_files=["res://.godot/imported/La lettre était-elle dans la suite.mp3-ea65fe9fd49fe67016a1b04b4ef09452.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

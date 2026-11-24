@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bbxj8a5etktrh"
+path="res://.godot/imported/Cherche la lettre T.mp3-d97664a558d6676395bd460e1765aae4.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Cherche la lettre T.mp3"
+dest_files=["res://.godot/imported/Cherche la lettre T.mp3-d97664a558d6676395bd460e1765aae4.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

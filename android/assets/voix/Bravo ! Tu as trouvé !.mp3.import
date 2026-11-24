@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bdgg31qd3kql5"
+path="res://.godot/imported/Bravo ! Tu as trouvé !.mp3-0013774b64ecd0498adf2232992b4af7.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Bravo ! Tu as trouvé !.mp3"
+dest_files=["res://.godot/imported/Bravo ! Tu as trouvé !.mp3-0013774b64ecd0498adf2232992b4af7.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
