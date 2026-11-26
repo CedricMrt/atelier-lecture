@@ -3,8 +3,8 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cu42jmcya4kyc"
-path.s3tc="res://.godot/imported/mannequin_texture.png-e8fd26d13bc9d8060f1e9dc321604993.s3tc.ctex"
-path.etc2="res://.godot/imported/mannequin_texture.png-e8fd26d13bc9d8060f1e9dc321604993.etc2.ctex"
+path.s3tc="res://.godot/imported/mannequin_texture.png-70eae2a79e2189c97e1f78cd009bca99.s3tc.ctex"
+path.etc2="res://.godot/imported/mannequin_texture.png-70eae2a79e2189c97e1f78cd009bca99.etc2.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
@@ -12,8 +12,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/KayKit_Character_Animations_1.1/Mannequin Character/textures/mannequin_texture.png"
-dest_files=["res://.godot/imported/mannequin_texture.png-e8fd26d13bc9d8060f1e9dc321604993.s3tc.ctex", "res://.godot/imported/mannequin_texture.png-e8fd26d13bc9d8060f1e9dc321604993.etc2.ctex"]
+source_file="res://assets/KayKit_Character_Animations_1.1/Mannequin Character/Textures/mannequin_texture.png"
+dest_files=["res://.godot/imported/mannequin_texture.png-70eae2a79e2189c97e1f78cd009bca99.s3tc.ctex", "res://.godot/imported/mannequin_texture.png-70eae2a79e2189c97e1f78cd009bca99.etc2.ctex"]
 
 [params]
 
