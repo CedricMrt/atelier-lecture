@@ -23,7 +23,7 @@ const LIST := [
 		"title": "Chasse aux fantômes",
 		"description": "Touche le fantôme qui porte le mot entendu.",
 		"color": Color(0.45, 0.30, 0.70),
-		"available": false,
+		"available": true,
 	},
 	{
 		"id": "mots-meles",

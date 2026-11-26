@@ -9,6 +9,7 @@ const Modal = preload("res://scripts/ui/modal.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
 const DedansGame = preload("res://scripts/games/dedans_game.gd")
+const GhostGame = preload("res://scripts/games/ghost_game.gd")
 
 var profile_id: String = ""
 var game_id: String = ""
@@ -34,7 +35,6 @@ func _ready() -> void:
 	_begin()
 
 
-## Bouton « retour » d'Android.
 func on_back() -> void:
 	_exit()
 
@@ -51,17 +51,19 @@ func _begin() -> void:
 
 func _start_game() -> void:
 	var profile := Profiles.get_profile(profile_id)
-	var known: bool = game_id == "volcan" or game_id == "dedans"
+	var known: bool = game_id == "volcan" or game_id == "dedans" or game_id == "fantomes"
 
 	if profile.is_empty() or not known:
 		_exit()
 		return
 
-	# Le niveau est lu une seule fois par partie : il change à la fin, pas pendant.
 	var level := Profiles.get_level(profile, game_id)
 
 	if game_id == "dedans":
 		_game = DedansGame.new()
+		_game.setup(level, 8, profile["avatar_id"])
+	elif game_id == "fantomes":
+		_game = GhostGame.new()
 		_game.setup(level, 8, profile["avatar_id"])
 	else:
 		_game = VolcanoGame.new()
@@ -113,7 +115,6 @@ func _on_finished(result: Dictionary) -> void:
 	_say_result(int(result["stars"]), _result_modal)
 
 
-## Voix de fin de partie : un compliment, puis la proposition de rejouer (sauf si l'enfant a déjà touché un bouton).
 func _say_result(stars: int, modal: Control) -> void:
 	await Speech.speak("Tu as terminé la partie !" if stars >= 3 else "Tu progresses !")
 
