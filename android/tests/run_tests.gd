@@ -86,7 +86,7 @@ func test_volcano() -> void:
 
 			for i in columns.size():
 				var column: Array = columns[i]
-				valid = valid and column.size() == Logic.tiles_per_column(level)
+				valid = valid and column.size() == Logic.tiles_in_column(level, i)
 				valid = valid and column.has(letters[i])
 
 				var unique := {}
@@ -96,6 +96,11 @@ func test_volcano() -> void:
 
 			check(valid, "colonnes valides pour « %s »" % item["word"])
 
+	check(Logic.tiles_in_column(1, 0) == 3 and Logic.tiles_in_column(1, 1) == 3, "niveau 1 : 3 dalles partout")
+	check(Logic.tiles_in_column(2, 0) == 3 and Logic.tiles_in_column(2, 1) == 4 and Logic.tiles_in_column(2, 2) == 3 and Logic.tiles_in_column(2, 3) == 4, "niveau 2 : une dalle de plus une ligne sur deux")
+	check(Logic.tiles_in_column(3, 0) == 4 and Logic.tiles_in_column(3, 1) == 4, "niveau 3 : 4 dalles partout")
+	check(Logic.help_after_errors(1) == 1, "niveau 1 : l'aide dès la 1re erreur")
+	check(Logic.help_after_errors(2) == 2 and Logic.help_after_errors(3) == 2, "niveaux 2 et 3 : l'aide après 2 erreurs")
 	check(Logic.stars_from_errors(0) == 3, "0 erreur : 3 étoiles")
 	check(Logic.stars_from_errors(5) == 2, "5 erreurs : 2 étoiles")
 	check(Logic.stars_from_errors(20) == 1, "20 erreurs : 1 étoile")

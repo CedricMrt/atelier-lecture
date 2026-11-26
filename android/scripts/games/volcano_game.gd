@@ -45,6 +45,9 @@ const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 const VOICE_INTRO := "Écoute le mot, puis touche les bonnes lettres pour traverser le pont."
 const VOICE_GO := "À toi de jouer !"
 
+## Petite pause (secondes) avant et après la lecture du mot de la première manche, pour laisser respirer l'enfant.
+const VOICE_PAUSE := 0.9
+
 # Mots cherchés dans le nom des animations (le premier mot trouvé gagne).
 const ANIM_IDLE := ["idle_a", "idle"]
 const ANIM_JUMP := ["jump_full_short", "jump_full_long", "jump_start", "jump"]
@@ -846,9 +849,18 @@ func _start_round() -> void:
 		if not _alive:
 			return
 
+		await get_tree().create_timer(VOICE_PAUSE).timeout
+		if not _alive:
+			return
+
 	await _say_current_word()
 	if not _alive:
 		return
+
+	if _round_index == 0:
+		await get_tree().create_timer(VOICE_PAUSE).timeout
+		if not _alive:
+			return
 
 	_locked = false
 	_message.text = "Touche les bonnes lettres !"
@@ -1133,12 +1145,18 @@ func _on_wrong(tile: Dictionary) -> void:
 	fall.tween_property(node, "position:y", -1.4, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.tween_property(node, "rotation:z", 0.35, 0.6)
 
-	# La bonne dalle est repérée tout de suite ; après deux erreurs, une aide vocale est ajoutée.
-	var right_candidates: Array = []
+	# La bonne dalle brille quand l'aide est active : dès la 1re erreur au niveau 1, après 2 erreurs ensuite.
+	# Après deux erreurs, à tous les niveaux, une aide vocale est ajoutée.
+	var help_now := _errors_here >= Logic.help_after_errors(level)
+	var right_remains := false
 
 	for candidate in _tiles[_position]:
 		if candidate["letter"] == _letters[_position] and not candidate["done"]:
-			right_candidates.append(candidate)
+			right_remains = true
+
+			if not help_now:
+				continue
+
 			var right: Node3D = candidate["node"]
 			var right_pos: Vector3 = candidate["pos"]
 			_ring(Vector3(right_pos.x, candidate["top"], right_pos.z), Color(1.0, 0.9, 0.4))
@@ -1147,7 +1165,7 @@ func _on_wrong(tile: Dictionary) -> void:
 			pulse.tween_property(right, "scale", Vector3.ONE * 1.15, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			pulse.tween_property(right, "scale", Vector3.ONE, 0.26).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-	if _errors_here >= 2 and not right_candidates.is_empty():
+	if _errors_here >= 2 and right_remains:
 		await Speech.speak(VOICE_RETRY)
 		if not _alive:
 			return
