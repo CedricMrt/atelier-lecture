@@ -1,8 +1,8 @@
 extends Control
 ## « Chasse aux fantômes » : décor spatial, sol lunaire, véhicule à gauche, fantômes à droite.
 ## L'enfant écoute la consigne, puis touche le bon fantôme : le véhicule lance un éclair.
-## Fantômes : Ultimate Monsters (Ghost.gltf). Véhicule : Ultimate Space Kit (Rover_1.gltf).
-## L'espace, les planètes, le sol lunaire et l'éclair sont dessinés par code.
+## Fond : assets/images/chasse_aux_fantome_background.png. Fantômes : Ultimate Monsters (Ghost.gltf).
+## Véhicule : Ultimate Space Kit (Rover_1.gltf). L'éclair est dessiné par code.
 ## La logique (niveaux, pièges, étoiles) est dans logic/ghost_logic.gd.
 
 signal finished(result: Dictionary)
@@ -14,6 +14,7 @@ const Logic = preload("res://scripts/logic/ghost_logic.gd")
 const W := 1280.0
 const H := 720.0
 
+const BACKGROUND := "res://assets/images/chasse_aux_fantome_background.png"
 const GHOST_MODEL := "res://assets/Ultimate Monsters/Flying/glTF/Ghost.gltf"
 const CAR_MODEL := "res://assets/Ultimate Space Kit - March 2023/Vehicles/GLTF/Rover_1.gltf"
 
@@ -21,6 +22,7 @@ const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 
 const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
+const VOICE_INTRO_SYLLABLE := "Trouve le fantôme qui porte la syllabe entendue."
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 
 const GHOST_SIZE := 3.0
@@ -73,98 +75,6 @@ var _counter: Label
 var _message: Label
 var _score_label: Label
 var _combo_label: Label
-
-
-## Espace, nébuleuses, étoiles, planètes et sol lunaire : tout est dessiné par code.
-class Backdrop extends Control:
-	var _stars: Array = []
-	var _craters: Array = []
-	var _rocks: Array = []
-
-	func _init() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 777
-
-		for i in 110:
-			_stars.append(Vector3(rng.randf(), rng.randf() * 0.8, rng.randf_range(0.8, 2.4)))
-
-		for i in 9:
-			_craters.append(Vector3(rng.randf(), rng.randf(), rng.randf_range(0.6, 1.4)))
-
-		for i in 14:
-			_rocks.append(Vector3(rng.randf(), rng.randf(), rng.randf_range(0.5, 1.2)))
-
-	func _ellipse(center: Vector2, radius: float, squash: float, color: Color) -> void:
-		draw_set_transform(center, 0.0, Vector2(1.0, squash))
-		draw_circle(Vector2.ZERO, radius, color)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-	func _draw() -> void:
-		var w := size.x
-		var h := size.y
-
-		if w <= 0.0 or h <= 0.0:
-			return
-
-		var top := Color(0.01, 0.01, 0.07)
-		var bottom := Color(0.14, 0.07, 0.32)
-		var steps := 24
-		var sky_h := h * 0.84
-
-		for i in steps:
-			var t := float(i) / float(steps - 1)
-			draw_rect(Rect2(0.0, sky_h * float(i) / steps, w, sky_h / steps + 1.0), top.lerp(bottom, pow(t, 1.6)))
-
-		for k in 4:
-			draw_circle(Vector2(w * 0.68, h * 0.36), h * (0.34 - k * 0.07), Color(0.65, 0.25, 0.85, 0.05))
-			draw_circle(Vector2(w * 0.3, h * 0.5), h * (0.3 - k * 0.06), Color(0.1, 0.7, 0.85, 0.04))
-
-		for star in _stars:
-			draw_circle(Vector2(star.x * w, star.y * h), star.z, Color(1.0, 1.0, 1.0, 0.8))
-
-		var earth := Vector2(w * 0.12, h * 0.22)
-		var er := h * 0.1
-
-		for k in 3:
-			draw_circle(earth, er * (1.5 - k * 0.2), Color(0.4, 0.7, 1.0, 0.06))
-
-		draw_circle(earth, er, Color(0.12, 0.35, 0.8))
-		_ellipse(earth + Vector2(-er * 0.25, -er * 0.2), er * 0.4, 0.7, Color(0.25, 0.65, 0.35))
-		_ellipse(earth + Vector2(er * 0.35, er * 0.3), er * 0.28, 0.8, Color(0.25, 0.65, 0.35))
-		_ellipse(earth + Vector2(er * 0.1, -er * 0.55), er * 0.3, 0.3, Color(1.0, 1.0, 1.0, 0.55))
-
-		var planet := Vector2(w * 0.9, h * 0.45)
-		var pr := h * 0.07
-		draw_circle(planet, pr, Color(0.85, 0.5, 0.3))
-		_ellipse(planet + Vector2(-pr * 0.2, -pr * 0.3), pr * 0.5, 0.3, Color(0.95, 0.65, 0.4))
-		draw_set_transform(planet, -0.35, Vector2(1.0, 0.28))
-		draw_arc(Vector2.ZERO, pr * 1.8, 0.0, TAU, 48, Color(0.95, 0.8, 0.6, 0.8), 5.0)
-		draw_arc(Vector2.ZERO, pr * 1.55, 0.0, TAU, 48, Color(0.95, 0.8, 0.6, 0.5), 3.0)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-		draw_rect(Rect2(0.0, h * 0.74, w, h * 0.07), Color(0.6, 0.35, 0.9, 0.1))
-
-		var ground := PackedVector2Array()
-
-		for i in 21:
-			var x := w * float(i) / 20.0
-			ground.append(Vector2(x, h * 0.8 + sin(float(i) * 0.7) * h * 0.012))
-
-		ground.append(Vector2(w, h))
-		ground.append(Vector2(0.0, h))
-		draw_colored_polygon(ground, Color(0.58, 0.58, 0.66))
-		draw_rect(Rect2(0.0, h * 0.9, w, h * 0.1), Color(0.42, 0.42, 0.52))
-
-		for crater in _craters:
-			var center := Vector2(crater.x * w, h * (0.84 + crater.y * 0.14))
-			var radius: float = h * 0.03 * crater.z * (0.8 + crater.y)
-			_ellipse(center, radius, 0.3, Color(0.7, 0.7, 0.78))
-			_ellipse(center + Vector2(0.0, radius * 0.05), radius * 0.82, 0.3, Color(0.36, 0.36, 0.45))
-
-		for rock in _rocks:
-			var base := Vector2(rock.x * w, h * (0.83 + rock.y * 0.14))
-			_ellipse(base, h * 0.014 * rock.z, 0.7, Color(0.3, 0.3, 0.38))
 
 
 ## Éclair dessiné par code, du véhicule jusqu'au fantôme touché.
@@ -246,7 +156,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	clip_contents = true
 
-	_backdrop = Backdrop.new()
+	_backdrop = _make_background()
 	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_backdrop)
 
@@ -289,6 +199,27 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	_alive = false
 	Speech.cancel()
+
+
+## L'image de fond, ou un fond uni sombre si elle est absente ou pas encore importée.
+func _make_background() -> Control:
+	if ResourceLoader.exists(BACKGROUND):
+		var texture := load(BACKGROUND) as Texture2D
+
+		if texture != null:
+			var picture := TextureRect.new()
+			picture.texture = texture
+			picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			return picture
+
+	push_warning("Fond introuvable ou non importé : " + BACKGROUND)
+
+	var plain := ColorRect.new()
+	plain.color = Color(0.04, 0.03, 0.15)
+	plain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return plain
 
 
 func _fit_stage() -> void:
@@ -610,13 +541,9 @@ func _start_round() -> void:
 	_counter.text = "Manche %d sur %d" % [_round_index + 1, _rounds.size()]
 	_message.text = "Écoute…"
 
-	var shown: String = item["spoken"]
-
-	if item["mode"] != "syllabe":
-		shown = String(item["spoken"]).get_slice("le son ", 1).trim_suffix(".")
-
+	var shown: String = item.get("display", item["spoken"])
 	_bar_label.text = shown
-	_bar_label.add_theme_font_size_override("font_size", 46 if shown.length() <= 8 else 30)
+	_bar_label.add_theme_font_size_override("font_size", 46 if shown.length() <= 8 else 32)
 
 	_build_ghosts(item)
 	_locked = true
@@ -627,7 +554,7 @@ func _start_round() -> void:
 		return
 
 	if _round_index == 0:
-		await Speech.speak(VOICE_INTRO)
+		await Speech.speak(VOICE_INTRO_SYLLABLE if item["mode"] == "syllabe" else VOICE_INTRO)
 
 		if not _alive:
 			return
