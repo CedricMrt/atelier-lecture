@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://wfafk47fj5hq"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son « an » au milieu.mp3-81fdcd0a81a1c04a7e05788ef42893aa.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son « an » au milieu.mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son « an » au milieu.mp3-81fdcd0a81a1c04a7e05788ef42893aa.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

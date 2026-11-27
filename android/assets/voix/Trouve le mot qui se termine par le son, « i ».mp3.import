@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dr2k4x1jokexr"
+path="res://.godot/imported/Trouve le mot qui se termine par le son, « i ».mp3-939950c659106387eb60c622a585691d.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui se termine par le son, « i ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui se termine par le son, « i ».mp3-939950c659106387eb60c622a585691d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

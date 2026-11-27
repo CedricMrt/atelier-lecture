@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dnbu4eivill5"
+path="res://.godot/imported/Trouve le mot qui commence par le son « an ».mp3-46f5cf37a919c33c7c0323e54ecab18f.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui commence par le son « an ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui commence par le son « an ».mp3-46f5cf37a919c33c7c0323e54ecab18f.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

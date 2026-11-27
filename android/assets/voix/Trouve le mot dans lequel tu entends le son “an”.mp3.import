@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://x8t5od1inagh"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son “an”.mp3-d3eb156093652791db0fa9841abc3fc1.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son “an”.mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son “an”.mp3-d3eb156093652791db0fa9841abc3fc1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

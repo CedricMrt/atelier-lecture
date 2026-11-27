@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dr2fqlrt5c6m7"
+path="res://.godot/imported/Trouve le mot qui commence par le son « ch ».mp3-4bcb2a745c84d225285d8a197a2c44a3.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui commence par le son « ch ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui commence par le son « ch ».mp3-4bcb2a745c84d225285d8a197a2c44a3.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

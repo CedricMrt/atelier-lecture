@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dt2seohm02wne"
+path="res://.godot/imported/Trouve le mot qui commence par le son « s ».mp3-43627b0ac6206e4ea2e77eb2fd173b40.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui commence par le son « s ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui commence par le son « s ».mp3-43627b0ac6206e4ea2e77eb2fd173b40.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

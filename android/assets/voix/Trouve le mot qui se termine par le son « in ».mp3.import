@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c0q41tpqoqgt8"
+path="res://.godot/imported/Trouve le mot qui se termine par le son « in ».mp3-e41ddf645fafde58e16bbae3d85e33b3.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui se termine par le son « in ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui se termine par le son « in ».mp3-e41ddf645fafde58e16bbae3d85e33b3.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

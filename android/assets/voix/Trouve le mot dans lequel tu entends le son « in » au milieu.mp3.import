@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c1bswwfc6kv5n"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son « in » au milieu.mp3-fafb935b959c64bc26b833f13a6ef9a6.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son « in » au milieu.mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son « in » au milieu.mp3-fafb935b959c64bc26b833f13a6ef9a6.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

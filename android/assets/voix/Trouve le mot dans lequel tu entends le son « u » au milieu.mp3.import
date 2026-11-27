@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bqnlskmrt8un0"
+path="res://.godot/imported/Trouve le mot dans lequel tu entends le son « u » au milieu.mp3-1d197945884059a9994fa2286c3549b5.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot dans lequel tu entends le son « u » au milieu.mp3"
+dest_files=["res://.godot/imported/Trouve le mot dans lequel tu entends le son « u » au milieu.mp3-1d197945884059a9994fa2286c3549b5.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

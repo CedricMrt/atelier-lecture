@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://vvmlxwmitv4o"
+path="res://.godot/imported/Trouve le mot qui se termine par le son « an ».mp3-d93ee3f32b675870857bbe3be23b187e.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui se termine par le son « an ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui se termine par le son « an ».mp3-d93ee3f32b675870857bbe3be23b187e.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
