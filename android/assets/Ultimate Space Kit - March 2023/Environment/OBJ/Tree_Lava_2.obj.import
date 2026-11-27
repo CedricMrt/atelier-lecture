@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cvludqie3rwcg"
+path="res://.godot/imported/Tree_Lava_2.obj-fb476b77692d37d7dda283075412b57a.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Tree_Lava_2.obj-fb476b77692d37d7dda283075412b57a.mesh"]
+
+source_file="res://assets/Ultimate Space Kit - March 2023/Environment/OBJ/Tree_Lava_2.obj"
+dest_files=["res://.godot/imported/Tree_Lava_2.obj-fb476b77692d37d7dda283075412b57a.mesh", "res://.godot/imported/Tree_Lava_2.obj-fb476b77692d37d7dda283075412b57a.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

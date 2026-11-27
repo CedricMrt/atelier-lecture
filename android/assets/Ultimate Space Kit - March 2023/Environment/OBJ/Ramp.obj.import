@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bmt61vqsuqog7"
+path="res://.godot/imported/Ramp.obj-91f7eaa9c415a39a027560b00e46b7d1.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Ramp.obj-91f7eaa9c415a39a027560b00e46b7d1.mesh"]
+
+source_file="res://assets/Ultimate Space Kit - March 2023/Environment/OBJ/Ramp.obj"
+dest_files=["res://.godot/imported/Ramp.obj-91f7eaa9c415a39a027560b00e46b7d1.mesh", "res://.godot/imported/Ramp.obj-91f7eaa9c415a39a027560b00e46b7d1.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

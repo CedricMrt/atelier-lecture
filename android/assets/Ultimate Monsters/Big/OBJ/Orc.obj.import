@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cjwe6oq0jcbnn"
+path="res://.godot/imported/Orc.obj-70368c39d9671accd6033bf46419616c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Orc.obj-70368c39d9671accd6033bf46419616c.mesh"]
+
+source_file="res://assets/Ultimate Monsters/Big/OBJ/Orc.obj"
+dest_files=["res://.godot/imported/Orc.obj-70368c39d9671accd6033bf46419616c.mesh", "res://.godot/imported/Orc.obj-70368c39d9671accd6033bf46419616c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
