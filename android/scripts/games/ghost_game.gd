@@ -1,9 +1,8 @@
 extends Control
-## « Chasse aux fantômes » en 3D : écoute la consigne, puis touche le fantôme
-## qui correspond. Le vaisseau de l'avatar arrive et capture le fantôme choisi
-## avec un rayon magique (zap_good en cas de réussite, zap_error sinon).
-## Les fantômes viennent de Ultimate Monsters (Ghost.gltf) et le véhicule
-## de Ultimate Space Kit (Spaceship_RaeTheRedPanda.gltf).
+## « Chasse aux fantômes » : décor de cimetière nocturne, voiture à gauche, fantômes à droite.
+## L'enfant écoute la consigne, puis touche le bon fantôme : la voiture lance un éclair.
+## Fantômes : Ultimate Monsters (Ghost.gltf). Voiture : Ultimate Space Kit (Rover_1.gltf).
+## Le ciel, la lune, les tombes et l'éclair sont dessinés par code.
 ## La logique (niveaux, pièges, étoiles) est dans logic/ghost_logic.gd.
 
 signal finished(result: Dictionary)
@@ -14,10 +13,9 @@ const Logic = preload("res://scripts/logic/ghost_logic.gd")
 
 const W := 1280.0
 const H := 720.0
-const HUD_H := 120.0
 
 const GHOST_MODEL := "res://assets/Ultimate Monsters/Flying/glTF/Ghost.gltf"
-const SHIP_MODEL := "res://assets/Ultimate Space Kit - March 2023/Vehicles/GLTF/Spaceship_RaeTheRedPanda.gltf"
+const CAR_MODEL := "res://assets/Ultimate Space Kit - March 2023/Vehicles/GLTF/Rover_1.gltf"
 
 const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
@@ -25,21 +23,23 @@ const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 const VOICE_INTRO := "Écoute la consigne, puis touche le bon fantôme."
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 
-const GHOST_HEIGHT := 1.4
-const SHIP_HEIGHT := 1.1
-const GHOST_GAP := 3.2
-const CAM_OFFSET := Vector3(0.0, 7.0, 8.0)
-const CAM_PITCH := -42.0
-
-const GHOST_TINTS := [
-	Color(0.55, 0.75, 1.0),
-	Color(1.0, 0.75, 0.45),
-	Color(0.65, 1.0, 0.65),
-	Color(1.0, 0.6, 0.8),
+const GHOST_SIZE := 1.9
+const CAR_SIZE := 3.0
+## Si la voiture regarde du mauvais côté, change cette valeur (PI / 2.0, -PI / 2.0, 0.0 ou PI).
+const CAR_YAW := PI / 2.0
+const CAR_POS := Vector3(-5.2, -1.9, 0.0)
+const CAM_POS := Vector3(0.0, 1.2, 12.0)
+## Pieds des fantômes (le centre est environ 0,95 plus haut).
+const GHOST_SPOTS := [
+	Vector3(0.6, 1.25, 0.0),
+	Vector3(1.9, -1.15, 0.0),
+	Vector3(4.3, 1.65, 0.0),
+	Vector3(5.3, -0.85, 0.0),
 ]
 
+const TEAL := Color(0.2, 1.0, 0.85, 0.32)
 const GOLD := Color(1.0, 0.85, 0.3)
-const OUTLINE := Color(0.12, 0.05, 0.18)
+const OUTLINE := Color(0.02, 0.1, 0.14)
 
 var level: int = 1
 var rounds_count: int = 8
@@ -50,41 +50,173 @@ var _round_index := 0
 var _correct := 0
 var _errors := 0
 var _combo := 0
+var _points := 0
 var _locked := true
 var _alive := true
+var _time := 0.0
 
-var _stage: Control
-var _hud_band: ColorRect
+var _backdrop: Control
 var _container: SubViewportContainer
 var _viewport: SubViewport
 var _world: Node3D
 var _round_root: Node3D
 var _camera: Camera3D
-var _ship: Node3D
+var _car: Node3D
 var _ghosts: Array = []
-var _labels: Array = []
+var _panels: Array = []
 var _sfx_player: AudioStreamPlayer
 
+var _stage: Control
+var _fx: Control
+var _bar_label: Label
 var _counter: Label
 var _message: Label
 var _score_label: Label
 var _combo_label: Label
 
 
+## Ciel nocturne, lune, étoiles, brume, collines et tombes : tout est dessiné par code.
+class Backdrop extends Control:
+	var _stars: Array = []
+	var _graves: Array = []
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 424242
+
+		for i in 46:
+			_stars.append(Vector3(rng.randf(), rng.randf() * 0.5, rng.randf_range(1.0, 2.6)))
+
+		for i in 18:
+			_graves.append(Vector3(rng.randf(), rng.randf_range(0.0, 1.0), float(rng.randi() % 3)))
+
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+
+		if w <= 0.0 or h <= 0.0:
+			return
+
+		var top := Color(0.02, 0.10, 0.17)
+		var horizon := Color(0.06, 0.52, 0.54)
+		var steps := 28
+		var sky_h := h * 0.88
+
+		for i in steps:
+			var t := float(i) / float(steps - 1)
+			draw_rect(Rect2(0.0, sky_h * float(i) / steps, w, sky_h / steps + 1.0), top.lerp(horizon, pow(t, 1.4)))
+
+		for star in _stars:
+			draw_circle(Vector2(star.x * w, star.y * h), star.z, Color(1.0, 1.0, 1.0, 0.75))
+
+		var moon := Vector2(w * 0.22, h * 0.3)
+
+		for k in 5:
+			draw_circle(moon, h * (0.26 - k * 0.04), Color(0.7, 1.0, 0.95, 0.05))
+
+		draw_circle(moon, h * 0.1, Color(0.85, 1.0, 0.96, 0.9))
+
+		var hills := PackedVector2Array()
+
+		for i in 17:
+			var x := w * float(i) / 16.0
+			hills.append(Vector2(x, h * 0.72 + sin(float(i) * 0.9) * h * 0.035))
+
+		hills.append(Vector2(w, h))
+		hills.append(Vector2(0.0, h))
+		draw_colored_polygon(hills, Color(0.03, 0.22, 0.26))
+
+		for grave in _graves:
+			var x: float = grave.x * w
+			var base: float = h * (0.76 + grave.y * 0.1)
+			var unit := h * 0.012
+			var dark := Color(0.01, 0.09, 0.12)
+
+			if int(grave.z) == 0:
+				draw_rect(Rect2(x - unit * 0.5, base - unit * 9.0, unit, unit * 9.0), dark)
+				draw_rect(Rect2(x - unit * 2.2, base - unit * 7.0, unit * 4.4, unit), dark)
+			elif int(grave.z) == 1:
+				draw_rect(Rect2(x - unit * 2.0, base - unit * 5.0, unit * 4.0, unit * 5.0), dark)
+				draw_circle(Vector2(x, base - unit * 5.0), unit * 2.0, dark)
+			else:
+				draw_rect(Rect2(x - unit * 0.6, base - unit * 7.0, unit * 1.2, unit * 7.0), dark)
+				draw_rect(Rect2(x - unit * 2.6, base - unit * 5.0, unit * 5.2, unit * 1.2), dark)
+
+		for band in 3:
+			draw_rect(Rect2(0.0, h * (0.6 + band * 0.07), w, h * 0.06), Color(0.55, 1.0, 0.9, 0.05))
+
+		draw_rect(Rect2(0.0, h * 0.86, w, h * 0.14), Color(0.02, 0.11, 0.14))
+		draw_rect(Rect2(0.0, h * 0.86, w, 4.0), Color(0.15, 0.7, 0.62, 0.6))
+
+
+## Éclair dessiné par code, de la voiture jusqu'au fantôme touché.
+class Fx extends Control:
+	var _from := Vector2.ZERO
+	var _to := Vector2.ZERO
+	var _color := Color.WHITE
+	var _remaining := 0.0
+	var _rng := RandomNumberGenerator.new()
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rng.randomize()
+
+	func fire(from: Vector2, to: Vector2, color: Color, duration: float) -> void:
+		_from = from
+		_to = to
+		_color = color
+		_remaining = duration
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		if _remaining > 0.0:
+			_remaining -= delta
+			queue_redraw()
+
+	func _jagged(offset: float) -> PackedVector2Array:
+		var points := PackedVector2Array()
+		var segments := 14
+		var direction := _to - _from
+		var normal := direction.orthogonal().normalized()
+
+		for i in segments + 1:
+			var t := float(i) / float(segments)
+			var p := _from + direction * t
+
+			if i > 0 and i < segments:
+				p += normal * _rng.randf_range(-offset, offset)
+
+			points.append(p)
+
+		return points
+
+	func _draw() -> void:
+		if _remaining <= 0.0:
+			return
+
+		var main := _jagged(30.0)
+		draw_polyline(main, Color(_color, 0.3), 20.0, true)
+		draw_polyline(main, _color, 9.0, true)
+		draw_polyline(main, Color.WHITE, 3.5, true)
+		var branch := _jagged(44.0)
+		draw_polyline(branch, Color(_color, 0.55), 4.0, true)
+
+
 class SpeakerIcon extends Control:
 	func _draw() -> void:
 		var c: Vector2 = size / 2.0
 		var body := PackedVector2Array([
-			c + Vector2(-26.0, -10.0),
-			c + Vector2(-14.0, -10.0),
-			c + Vector2(4.0, -24.0),
-			c + Vector2(4.0, 24.0),
-			c + Vector2(-14.0, 10.0),
-			c + Vector2(-26.0, 10.0),
+			c + Vector2(-20.0, -8.0),
+			c + Vector2(-10.0, -8.0),
+			c + Vector2(4.0, -20.0),
+			c + Vector2(4.0, 20.0),
+			c + Vector2(-10.0, 8.0),
+			c + Vector2(-20.0, 8.0),
 		])
 		draw_colored_polygon(body, Color.WHITE)
-		draw_arc(c + Vector2(4.0, 0.0), 14.0, -0.9, 0.9, 12, Color.WHITE, 4.0)
-		draw_arc(c + Vector2(4.0, 0.0), 26.0, -0.9, 0.9, 16, Color.WHITE, 4.0)
+		draw_arc(c + Vector2(4.0, 0.0), 12.0, -0.9, 0.9, 12, Color.WHITE, 4.0)
+		draw_arc(c + Vector2(4.0, 0.0), 22.0, -0.9, 0.9, 16, Color.WHITE, 4.0)
 
 
 func setup(p_level: int, p_rounds: int, p_avatar_id: String) -> void:
@@ -97,6 +229,10 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	clip_contents = true
 
+	_backdrop = Backdrop.new()
+	_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_backdrop)
+
 	_container = SubViewportContainer.new()
 	_container.stretch = true
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -105,21 +241,22 @@ func _ready() -> void:
 
 	_viewport = SubViewport.new()
 	_viewport.msaa_3d = Viewport.MSAA_2X
+	_viewport.transparent_bg = true
 	_container.add_child(_viewport)
 
 	_world = Node3D.new()
 	_viewport.add_child(_world)
 
-	_hud_band = ColorRect.new()
-	_hud_band.color = Color.html("1b1030")
-	_hud_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_hud_band)
-
 	_stage = Control.new()
 	_stage.size = Vector2(W, H)
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stage)
 	resized.connect(_fit_stage)
 	_fit_stage()
+
+	_fx = Fx.new()
+	_fx.size = Vector2(W, H)
+	_stage.add_child(_fx)
 
 	_sfx_player = AudioStreamPlayer.new()
 	add_child(_sfx_player)
@@ -128,7 +265,7 @@ func _ready() -> void:
 
 	_build_world()
 	_build_hud()
-	_build_ship()
+	_build_car()
 	_start_round()
 
 
@@ -146,24 +283,35 @@ func _fit_stage() -> void:
 	_stage.scale = Vector2(factor, factor)
 	_stage.position = (size - Vector2(W, H) * factor) / 2.0
 
-	var band_height := _stage.position.y + HUD_H * factor
-	_hud_band.position = Vector2.ZERO
-	_hud_band.size = Vector2(size.x, band_height)
-	_container.offset_top = band_height
+
+## Coordonnées écran -> coordonnées de la scène 2D (1280 x 720).
+func _to_stage(point: Vector2) -> Vector2:
+	return (point - _stage.position) / maxf(_stage.scale.x, 0.001)
 
 
-func _process(_delta: float) -> void:
-	if _camera != null and _ship != null:
-		var target := _ship.position + CAM_OFFSET
-		_camera.position = _camera.position.lerp(target, clampf(_delta * 4.0, 0.0, 1.0))
+func _belly(holder: Node3D) -> Vector3:
+	return holder.global_position + Vector3(0.0, 0.85, 0.3)
+
+
+func _process(delta: float) -> void:
+	_time += delta
+
+	if _car != null:
+		_car.position.y = CAR_POS.y + sin(_time * 3.0) * 0.03
 
 	for i in _ghosts.size():
-		var ghost: Node3D = _ghosts[i]
+		var holder: Node3D = _ghosts[i]
 
-		if is_instance_valid(ghost):
-			var phase: float = ghost.get_meta("phase", 0.0)
-			ghost.position.y = 1.2 + sin(Time.get_ticks_msec() / 1000.0 * 2.0 + phase) * 0.12
-			_update_label(i, ghost)
+		if not is_instance_valid(holder):
+			continue
+
+		var base: Vector3 = holder.get_meta("base", holder.position)
+		var phase: float = holder.get_meta("phase", 0.0)
+		holder.position = base + Vector3(cos(_time * 1.1 + phase) * 0.1, sin(_time * 1.8 + phase) * 0.18, 0.0)
+
+		if i < _panels.size() and is_instance_valid(_panels[i]) and _camera != null:
+			var panel: Control = _panels[i]
+			panel.position = _to_stage(_camera.unproject_position(_belly(holder))) - panel.size / 2.0
 
 
 func _load_model(path: String, target: float) -> Node3D:
@@ -190,7 +338,7 @@ func _load_model(path: String, target: float) -> Node3D:
 		return null
 
 	var box: AABB = acc[0]
-	var extent := maxf(box.size.x, box.size.y)
+	var extent := maxf(box.size.x, maxf(box.size.y, box.size.z))
 
 	if extent <= 0.0001:
 		inst.queue_free()
@@ -226,7 +374,7 @@ func _accumulate_aabb(node: Node, xf: Transform3D, acc: Array) -> void:
 
 func _tint(node: Node, color: Color) -> void:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(color, 0.55)
+	mat.albedo_color = color
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_apply_overlay(node, mat)
@@ -267,99 +415,129 @@ func _sparks(pos: Vector3, count: int, color: Color) -> void:
 	var particles := CPUParticles3D.new()
 	particles.mesh = mesh
 	particles.amount = count
-	particles.lifetime = 0.7
+	particles.lifetime = 0.8
 	particles.one_shot = true
 	particles.explosiveness = 1.0
 	particles.direction = Vector3.UP
-	particles.spread = 70.0
+	particles.spread = 180.0
 	particles.initial_velocity_min = 2.0
-	particles.initial_velocity_max = 4.5
-	particles.gravity = Vector3(0.0, -9.0, 0.0)
+	particles.initial_velocity_max = 5.0
+	particles.gravity = Vector3(0.0, -4.0, 0.0)
 	particles.position = pos
 	_world.add_child(particles)
 	particles.emitting = true
 
-	get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
+	get_tree().create_timer(1.6).timeout.connect(particles.queue_free)
 
 
 func _build_world() -> void:
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color.html("120a22")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.8, 0.8, 1.0)
-	env.ambient_light_energy = 0.9
+	env.ambient_light_color = Color(0.75, 0.95, 1.0)
+	env.ambient_light_energy = 1.0
 
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	_world.add_child(world_env)
 
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-55.0, -25.0, 0.0)
-	sun.light_color = Color(0.9, 0.9, 1.0)
-	sun.light_energy = 1.1
-	_world.add_child(sun)
+	var light := DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-15.0, -25.0, 0.0)
+	light.light_color = Color(0.8, 1.0, 0.95)
+	light.light_energy = 1.0
+	_world.add_child(light)
 
 	_camera = Camera3D.new()
-	_camera.fov = 55.0
-	_camera.rotation_degrees = Vector3(CAM_PITCH, 0.0, 0.0)
-	_camera.position = CAM_OFFSET
+	_camera.fov = 40.0
+	_camera.position = CAM_POS
 	_world.add_child(_camera)
 	_camera.current = true
 
-	_build_ground()
 
-
-func _build_ground() -> void:
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(60.0, 60.0)
-
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.16, 0.10, 0.28)
-
-	var ground := MeshInstance3D.new()
-	ground.mesh = plane
-	ground.material_override = mat
-	ground.position = Vector3(0.0, -0.05, -10.0)
-	_world.add_child(ground)
+func _round_button(diameter: float, color: Color) -> Panel:
+	var panel := Panel.new()
+	panel.size = Vector2(diameter, diameter)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", Ui.flat(color, int(diameter / 2.0), 5, Color(0.7, 1.0, 0.95), false))
+	return panel
 
 
 func _build_hud() -> void:
-	_counter = Ui.label("", 24, Color.html("e8dcff"), HORIZONTAL_ALIGNMENT_LEFT)
-	_counter.position = Vector2(190, 26)
-	_counter.size = Vector2(240, 36)
+	var bar := Panel.new()
+	bar.position = Vector2(W / 2.0 - 250.0, 16.0)
+	bar.size = Vector2(500.0, 88.0)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_theme_stylebox_override("panel", Ui.flat(Color(0.03, 0.1, 0.14, 0.92), 44, 5, Color(0.3, 0.9, 0.85), false))
+	_stage.add_child(bar)
+
+	var ring := _round_button(56.0, Color(0.08, 0.28, 0.34))
+	ring.position = Vector2(16.0, 16.0)
+	bar.add_child(ring)
+
+	_bar_label = Ui.label("", 46, Color.WHITE)
+	_bar_label.position = Vector2(84.0, 0.0)
+	_bar_label.size = Vector2(306.0, 88.0)
+	_bar_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_bar_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(_bar_label)
+
+	var speaker := Ui.button("", 30, Ui.ORANGE)
+	speaker.custom_minimum_size = Vector2(84.0, 64.0)
+	speaker.size = Vector2(84.0, 64.0)
+	speaker.position = Vector2(404.0, 12.0)
+
+	var icon := SpeakerIcon.new()
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speaker.add_child(icon)
+
+	speaker.pressed.connect(func() -> void:
+		if _round_index < _rounds.size():
+			Speech.speak(_rounds[_round_index]["spoken"])
+	)
+	bar.add_child(speaker)
+
+	_counter = Ui.label("", 22, Color.html("bff7ee"))
+	_counter.position = Vector2(W / 2.0 - 150.0, 108.0)
+	_counter.size = Vector2(300.0, 30.0)
+	_counter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_counter.add_theme_color_override("font_outline_color", OUTLINE)
+	_counter.add_theme_constant_override("outline_size", 6)
 	_stage.add_child(_counter)
 
 	var score_star := StarView.new()
-	score_star.position = Vector2(1090.0, 16.0)
+	score_star.filled = true
+	score_star.position = Vector2(1090.0, 18.0)
 	score_star.size = Vector2(48.0, 48.0)
 	score_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stage.add_child(score_star)
 
 	_score_label = Ui.label("0", 44, Ui.CREAM, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label.position = Vector2(1146.0, 10.0)
-	_score_label.size = Vector2(100.0, 60.0)
+	_score_label.size = Vector2(110.0, 60.0)
+	_score_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_score_label.add_theme_color_override("font_outline_color", OUTLINE)
 	_score_label.add_theme_constant_override("outline_size", 8)
 	_stage.add_child(_score_label)
 
-	_combo_label = Ui.label("", 32, GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
-	_combo_label.position = Vector2(950.0, 68.0)
+	_combo_label = Ui.label("", 30, GOLD, HORIZONTAL_ALIGNMENT_RIGHT)
+	_combo_label.position = Vector2(950.0, 70.0)
 	_combo_label.size = Vector2(296.0, 44.0)
+	_combo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_combo_label.add_theme_color_override("font_outline_color", OUTLINE)
 	_combo_label.add_theme_constant_override("outline_size", 8)
 	_stage.add_child(_combo_label)
 
-	_message = Ui.label("", 34, Color.WHITE)
-	_message.position = Vector2(0, 662)
-	_message.size = Vector2(W, 50)
+	_message = Ui.label("", 32, Color.WHITE)
+	_message.position = Vector2(0.0, 664.0)
+	_message.size = Vector2(W, 48.0)
+	_message.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_message.add_theme_color_override("font_outline_color", OUTLINE)
 	_message.add_theme_constant_override("outline_size", 8)
 	_stage.add_child(_message)
 
 
 func _update_score() -> void:
-	_score_label.text = str(_correct)
+	_score_label.text = str(_points)
 
 	if _combo >= 2:
 		_combo_label.text = "Combo x%d" % _combo
@@ -367,30 +545,37 @@ func _update_score() -> void:
 		_combo_label.text = ""
 
 
-func _build_ship() -> void:
-	_ship = Node3D.new()
-	_world.add_child(_ship)
+func _build_car() -> void:
+	_car = Node3D.new()
+	_car.position = CAR_POS
+	_world.add_child(_car)
 
-	var model := _load_model(SHIP_MODEL, SHIP_HEIGHT)
+	var model := _load_model(CAR_MODEL, CAR_SIZE)
 
 	if model == null:
-		var capsule := CapsuleMesh.new()
-		capsule.radius = 0.35
-		capsule.height = SHIP_HEIGHT
+		var box := BoxMesh.new()
+		box.size = Vector3(2.6, 0.9, 1.3)
 
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.9, 0.85, 0.4)
+		mat.albedo_color = Color(0.9, 0.9, 0.95)
 
 		var body := MeshInstance3D.new()
-		body.mesh = capsule
+		body.mesh = box
 		body.material_override = mat
-		body.position.y = SHIP_HEIGHT / 2.0
+		body.position.y = 0.6
 
 		model = Node3D.new()
 		model.add_child(body)
+	else:
+		model.rotation.y = CAR_YAW
 
-	_ship.add_child(model)
-	_ship.position = Vector3(0.0, 1.0, 6.0)
+	_car.add_child(model)
+
+
+func _recoil() -> void:
+	var tween := create_tween()
+	tween.tween_property(_car, "position:x", CAR_POS.x - 0.25, 0.08)
+	tween.tween_property(_car, "position:x", CAR_POS.x, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _start_round() -> void:
@@ -398,15 +583,15 @@ func _start_round() -> void:
 		if is_instance_valid(ghost):
 			ghost.queue_free()
 
-	for label in _labels:
-		if is_instance_valid(label):
-			label.queue_free()
+	for panel in _panels:
+		if is_instance_valid(panel):
+			panel.queue_free()
 
 	if is_instance_valid(_round_root):
 		_round_root.queue_free()
 
 	_ghosts.clear()
-	_labels.clear()
+	_panels.clear()
 	_round_root = Node3D.new()
 	_world.add_child(_round_root)
 
@@ -414,10 +599,18 @@ func _start_round() -> void:
 	_counter.text = "Manche %d sur %d" % [_round_index + 1, _rounds.size()]
 	_message.text = "Écoute…"
 
+	var shown: String = item["spoken"]
+
+	if item["mode"] != "syllabe":
+		shown = String(item["spoken"]).get_slice("le son ", 1).trim_suffix(".")
+
+	_bar_label.text = shown
+	_bar_label.add_theme_font_size_override("font_size", 46 if shown.length() <= 8 else 30)
+
 	_build_ghosts(item)
 	_locked = true
 
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(0.7).timeout
 
 	if not _alive:
 		return
@@ -439,52 +632,61 @@ func _start_round() -> void:
 
 func _build_ghosts(item: Dictionary) -> void:
 	var options: Array = item["options"]
-	var first_x := -(options.size() - 1) * GHOST_GAP / 2.0
 
 	for i in options.size():
-		var ghost := _load_model(GHOST_MODEL, GHOST_HEIGHT)
+		var spot: Vector3 = GHOST_SPOTS[i % GHOST_SPOTS.size()]
+		var model := _load_model(GHOST_MODEL, GHOST_SIZE)
 
-		if ghost == null:
+		if model == null:
 			var sphere := SphereMesh.new()
-			sphere.radius = 0.6
+			sphere.radius = 0.8
+			sphere.height = 1.6
 
 			var mat := StandardMaterial3D.new()
-			mat.albedo_color = Color(0.8, 0.8, 1.0, 0.8)
+			mat.albedo_color = Color(0.5, 1.0, 0.9, 0.8)
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 			var body := MeshInstance3D.new()
 			body.mesh = sphere
 			body.material_override = mat
+			body.position.y = 0.8
 
-			ghost = Node3D.new()
-			ghost.add_child(body)
+			model = Node3D.new()
+			model.add_child(body)
 
-		_tint(ghost, GHOST_TINTS[i % GHOST_TINTS.size()])
+		_tint(model, TEAL)
 
 		var holder := Node3D.new()
-		holder.add_child(ghost)
-		holder.position = Vector3(first_x + i * GHOST_GAP, 1.2, -2.0 - (i % 2) * 1.2)
-		holder.set_meta("index", i)
-		holder.set_meta("phase", float(i) * 0.7)
+		holder.add_child(model)
+		holder.position = spot
+		holder.scale = Vector3.ZERO
+		holder.set_meta("base", spot)
+		holder.set_meta("phase", float(i) * 1.3)
+		holder.set_meta("gone", false)
 		_round_root.add_child(holder)
 		_ghosts.append(holder)
 
-		var label := Ui.label(str(options[i]), 30, Color.WHITE)
-		label.size = Vector2(220.0, 44.0)
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_outline_color", OUTLINE)
-		label.add_theme_constant_override("outline_size", 8)
-		_stage.add_child(label)
-		_labels.append(label)
+		var appear := create_tween()
+		appear.tween_interval(0.12 * i)
+		appear.tween_property(holder, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
+		var panel := Panel.new()
+		panel.size = Vector2(170.0, 80.0)
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.modulate.a = 0.0
+		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 22, 5, Color(0.85, 1.0, 0.97), false))
 
-func _update_label(index: int, ghost: Node3D) -> void:
-	if index >= _labels.size() or not is_instance_valid(_labels[index]):
-		return
+		var text := Ui.label(str(options[i]), 40, Color.WHITE)
+		text.size = panel.size
+		text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(text)
+		_stage.add_child(panel)
+		_panels.append(panel)
 
-	var label: Label = _labels[index]
-	var screen: Vector2 = _camera.unproject_position(ghost.global_position + Vector3(0.0, 1.0, 0.0))
-	label.position = screen - label.size / 2.0
+		var fade := panel.create_tween()
+		fade.tween_interval(0.12 * i + 0.2)
+		fade.tween_property(panel, "modulate:a", 1.0, 0.3)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -499,18 +701,17 @@ func _handle_tap(screen_position: Vector2) -> void:
 		return
 
 	var best := -1
-	var best_distance := 999999.0
+	var best_distance := size.y * 0.14
 
 	for i in _ghosts.size():
-		var ghost: Node3D = _ghosts[i]
+		var holder: Node3D = _ghosts[i]
 
-		if not is_instance_valid(ghost):
+		if not is_instance_valid(holder) or bool(holder.get_meta("gone", false)):
 			continue
 
-		var screen: Vector2 = _camera.unproject_position(ghost.global_position)
-		var distance := screen.distance_to(screen_position)
+		var distance := _camera.unproject_position(_belly(holder)).distance_to(screen_position)
 
-		if distance < 130.0 and distance < best_distance:
+		if distance < best_distance:
 			best = i
 			best_distance = distance
 
@@ -518,58 +719,108 @@ func _handle_tap(screen_position: Vector2) -> void:
 		_on_ghost_pressed(best)
 
 
+func _remove_ghost(index: int) -> void:
+	var holder: Node3D = _ghosts[index]
+	holder.set_meta("gone", true)
+
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(holder, "scale", Vector3.ZERO, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+
+	if index < _panels.size() and is_instance_valid(_panels[index]):
+		tween.tween_property(_panels[index], "modulate:a", 0.0, 0.25)
+
+
+func _popup(pos: Vector2) -> void:
+	var label := Ui.label("+10", 64, GOLD)
+	label.size = Vector2(200.0, 80.0)
+	label.position = pos - Vector2(100.0, 40.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_outline_color", OUTLINE)
+	label.add_theme_constant_override("outline_size", 10)
+	_stage.add_child(label)
+
+	var tween := label.create_tween().set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 90.0, 0.9)
+	tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(0.4)
+	tween.finished.connect(label.queue_free)
+
+	for k in 3:
+		var star := StarView.new()
+		star.filled = true
+		star.size = Vector2(40.0, 40.0)
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		star.position = pos + Vector2((k - 1) * 62.0 - 20.0, 34.0 + (k % 2) * 18.0)
+		_stage.add_child(star)
+
+		var star_tween := star.create_tween().set_parallel(true)
+		star_tween.tween_property(star, "position:y", star.position.y - 60.0, 0.9)
+		star_tween.tween_property(star, "modulate:a", 0.0, 0.5).set_delay(0.4)
+		star_tween.finished.connect(star.queue_free)
+
+
 func _on_ghost_pressed(index: int) -> void:
-	if _locked or index < 0 or index >= _rounds[_round_index]["options"].size():
+	if _locked or index < 0 or index >= _ghosts.size():
 		return
 
 	_locked = true
 	var item: Dictionary = _rounds[_round_index]
 	var correct: bool = index == int(item["correct_index"])
+	var holder: Node3D = _ghosts[index]
+	var center := _belly(holder)
+
+	_message.text = ""
+	_play_sfx(SFX_GOOD if correct else SFX_ERROR)
+	_recoil()
+
+	var origin := _to_stage(_camera.unproject_position(_car.global_position + Vector3(1.0, 1.7, 0.0)))
+	var target := _to_stage(_camera.unproject_position(center))
+	_fx.fire(origin, target, Color(0.55, 0.95, 1.0) if correct else Color(1.0, 0.35, 0.6), 0.5)
+
+	await get_tree().create_timer(0.35).timeout
+
+	if not _alive:
+		return
 
 	if correct:
 		_correct += 1
 		_combo += 1
+		_points += 10
+		_update_score()
+		_sparks(center, 30, Color(0.8, 0.4, 1.0))
+		_sparks(center, 20, GOLD)
+		_popup(target)
+		_remove_ghost(index)
+
+		await get_tree().create_timer(1.0).timeout
+
+		if not _alive:
+			return
+
+		_round_index += 1
+
+		if _round_index >= _rounds.size():
+			finished.emit({
+				"stars": Logic.stars_from_errors(_errors),
+				"accuracy": Logic.accuracy_from(_correct, _errors),
+			})
+		else:
+			_start_round()
 	else:
 		_errors += 1
 		_combo = 0
+		_update_score()
+		_sparks(center, 24, Color(1.0, 0.3, 0.4))
+		_remove_ghost(index)
 
-	_update_score()
-	await _fly_and_zap(index, correct)
+		await get_tree().create_timer(0.5).timeout
 
-	if not _alive:
-		return
+		if not _alive:
+			return
 
-	_round_index += 1
-
-	if _round_index >= _rounds.size():
-		finished.emit({
-			"stars": Logic.stars_from_errors(_errors),
-			"accuracy": Logic.accuracy_from(_correct, _errors),
-		})
-	else:
-		_start_round()
-
-
-func _fly_and_zap(index: int, correct: bool) -> void:
-	var target: Vector3 = _ghosts[index].position
-	var go := create_tween()
-	go.tween_property(_ship, "position", target + Vector3(0.0, 0.6, 2.0), 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-	await go.finished
-
-	if not _alive:
-		return
-
-	_play_sfx(SFX_GOOD if correct else SFX_ERROR)
-	_sparks(target, 30, GOLD if correct else Color(1.0, 0.3, 0.3))
-
-	var back := create_tween()
-	back.tween_property(_ship, "position", Vector3(0.0, 1.0, 6.0), 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
-	await back.finished
-
-	if not _alive:
-		return
-
-	if not correct:
 		await Speech.speak(VOICE_RETRY)
+
+		if not _alive:
+			return
+
+		_locked = false
+		_message.text = item["prompt"]
