@@ -56,7 +56,9 @@ func delete_profile(profile_id: String) -> void:
 	_commit()
 
 
-## `result` : {game_id, stars (1 à 3), accuracy (0 à 1)}
+## `result` : {game_id, stars (1 à 3), accuracy (0 à 1), points (facultatif)}
+## Les 1 à 3 étoiles servent à la progression du niveau. Le total d'étoiles du profil augmente de
+## `points` : le score affiché pendant la partie (ou, à défaut, des 1 à 3 étoiles).
 func record_result(profile_id: String, result: Dictionary) -> void:
 	var profile := get_profile(profile_id)
 
@@ -64,7 +66,8 @@ func record_result(profile_id: String, result: Dictionary) -> void:
 		return
 
 	var game_id: String = result["game_id"]
-	profile["stars"] = int(profile["stars"]) + int(result["stars"])
+	var earned: int = maxi(int(result.get("points", result["stars"])), 0)
+	profile["stars"] = int(profile["stars"]) + earned
 	profile["progress"][game_id] = Progression.apply_result(
 		profile["progress"].get(game_id, null),
 		result,

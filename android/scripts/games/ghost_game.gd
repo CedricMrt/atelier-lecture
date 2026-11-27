@@ -33,6 +33,9 @@ const ANIM_CHEER := ["cheer", "wave"]
 
 const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
+## Le rayon part après la sortie audio de l'appareil (latence mesurée) + ce délai en secondes.
+## Le son arrive encore après le rayon : augmente un peu. Le rayon arrive après le son : diminue.
+const SFX_SYNC_DELAY := 0.10
 
 const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
 const VOICE_INTRO_SYLLABLE := "Trouve le fantôme qui porte la syllabe entendue."
@@ -97,6 +100,7 @@ var _avatar_player: AnimationPlayer
 var _ghosts: Array = []
 var _panels: Array = []
 var _sfx_player: AudioStreamPlayer
+var _sfx_streams: Dictionary = {}
 
 var _stage: Control
 var _fx: Control
@@ -217,6 +221,7 @@ func _ready() -> void:
 
 	_sfx_player = AudioStreamPlayer.new()
 	add_child(_sfx_player)
+	_preload_sfx()
 
 	_rounds = Logic.make_rounds(level, rounds_count)
 
@@ -461,12 +466,20 @@ func _apply_overlay(node: Node, overlay: Material) -> void:
 		_apply_overlay(child, overlay)
 
 
-func _play_sfx(path: String) -> void:
-	if not ResourceLoader.exists(path):
-		push_warning("Effet sonore introuvable ou non importé : " + path)
-		return
+## Les deux sons du rayon sont décodés à l'avance : le premier rayon n'a pas de retard en plus.
+func _preload_sfx() -> void:
+	for path in [SFX_GOOD, SFX_ERROR]:
+		if ResourceLoader.exists(path):
+			var sound := load(path) as AudioStream
 
-	var sound := load(path) as AudioStream
+			if sound != null:
+				_sfx_streams[path] = sound
+		else:
+			push_warning("Effet sonore introuvable ou non importé : " + path)
+
+
+func _play_sfx(path: String) -> void:
+	var sound: AudioStream = _sfx_streams.get(path, null)
 
 	if sound == null or not is_instance_valid(_sfx_player):
 		return
@@ -878,7 +891,15 @@ func _on_ghost_pressed(index: int) -> void:
 	var center := _center(holder)
 
 	_message.text = ""
+
+	# Le son est lancé tout de suite ; le rayon attend la sortie audio de l'appareil pour partir en même temps.
 	_play_sfx(SFX_GOOD if correct else SFX_ERROR)
+	var lag: float = AudioServer.get_output_latency() + AudioServer.get_time_to_next_mix() + SFX_SYNC_DELAY
+	await get_tree().create_timer(lag).timeout
+
+	if not _alive:
+		return
+
 	_recoil()
 
 	var origin := _to_stage(_camera.unproject_position(_car.global_position + Vector3(1.0, 1.7, 0.0)))

@@ -11,6 +11,14 @@ const VolcanoGame = preload("res://scripts/games/volcano_game.gd")
 const DedansGame = preload("res://scripts/games/dedans_game.gd")
 const GhostGame = preload("res://scripts/games/ghost_game.gd")
 
+## Variable de chaque jeu qui contient le score affiché pendant la partie (l'étoile en haut à droite).
+## C'est ce score qui s'ajoute au total d'étoiles du joueur.
+const SCORE_PROPERTY := {
+	"volcan": "_total_letters",
+	"dedans": "_correct",
+	"fantomes": "_points",
+}
+
 var profile_id: String = ""
 var game_id: String = ""
 
@@ -74,11 +82,27 @@ func _start_game() -> void:
 	move_child(_quit_button, -1)
 
 
+## Le score affiché dans le jeu ; à défaut, les 1 à 3 étoiles de la partie.
+func _score_of(result: Dictionary) -> int:
+	var points := int(result["stars"])
+
+	if SCORE_PROPERTY.has(game_id) and is_instance_valid(_game):
+		var raw: Variant = _game.get(SCORE_PROPERTY[game_id])
+
+		if raw != null:
+			points = maxi(int(raw), 0)
+
+	return points
+
+
 func _on_finished(result: Dictionary) -> void:
+	var points := _score_of(result)
+
 	Profiles.record_result(profile_id, {
 		"game_id": game_id,
 		"stars": result["stars"],
 		"accuracy": result["accuracy"],
+		"points": points,
 	})
 
 	var profile := Profiles.get_profile(profile_id)
@@ -98,6 +122,9 @@ func _on_finished(result: Dictionary) -> void:
 		star.custom_minimum_size = Vector2(90, 90)
 		star.filled = i < int(result["stars"])
 		stars.add_child(star)
+
+	if points > 0:
+		box.add_child(Ui.label("+%d étoiles" % points, 40, Ui.CREAM))
 
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
