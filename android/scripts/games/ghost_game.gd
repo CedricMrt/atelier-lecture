@@ -50,10 +50,11 @@ const DRIVE_TIME := 1.8
 const CAM_POS := Vector3(0.0, 1.2, 12.0)
 
 ## Avatar sur le toit : taille, enfoncement dans le toit (plus c'est grand, moins on en voit),
-## décalage avant/arrière et de côté, et direction du regard (PI / 4 = vers la droite et la caméra).
+## décalage (x : vers l'avant du véhicule, y : haut/bas, z : vers la caméra), et direction du regard
+## (PI / 4 = vers la droite et la caméra).
 const AVATAR_HEIGHT := 1.8
-const AVATAR_SINK := 0.7
-const AVATAR_OFFSET := Vector3(0.0, 0.0, 0.0)
+const AVATAR_SINK := 1.6
+const AVATAR_OFFSET := Vector3(0.4, 0.0, 0.0)
 const AVATAR_YAW := PI / 4.0
 
 ## Pieds des fantômes : deux colonnes, une rangée haute et une rangée basse.
