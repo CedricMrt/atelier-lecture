@@ -1,8 +1,10 @@
 extends Control
 ## « Chasse aux fantômes » : décor spatial, sol lunaire, véhicule à gauche, fantômes à droite.
-## L'enfant écoute la consigne, puis touche le bon fantôme : le véhicule lance un éclair.
+## Le véhicule arrive par la gauche (roues qui tournent) avec l'avatar du joueur dessus :
+## seul le haut du corps de l'avatar dépasse du toit. Puis l'enfant écoute la consigne et touche
+## le bon fantôme : le véhicule lance un éclair.
 ## Fond : assets/images/chasse_aux_fantome_background.png. Fantômes : Ultimate Monsters (Ghost.gltf).
-## Véhicule : Ultimate Space Kit (Rover_1.gltf). L'éclair est dessiné par code.
+## Véhicule : Ultimate Space Kit (Rover_1.gltf). Avatar : celui du profil (voir data/avatars.gd).
 ## La logique (niveaux, pièges, étoiles) est dans logic/ghost_logic.gd.
 
 signal finished(result: Dictionary)
@@ -10,6 +12,7 @@ signal finished(result: Dictionary)
 const Ui = preload("res://scripts/ui/ui.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/ghost_logic.gd")
+const Avatars = preload("res://scripts/data/avatars.gd")
 
 const W := 1280.0
 const H := 720.0
@@ -17,6 +20,16 @@ const H := 720.0
 const BACKGROUND := "res://assets/images/chasse_aux_fantome_background.png"
 const GHOST_MODEL := "res://assets/Ultimate Monsters/Flying/glTF/Ghost.gltf"
 const CAR_MODEL := "res://assets/Ultimate Space Kit - March 2023/Vehicles/GLTF/Rover_1.gltf"
+const HERO_MODEL := "res://assets/KayKit_Adventurers_2.0_FREE/Characters/gltf/Mage.glb"
+
+const RIG_ANIMS := "res://assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium/"
+const RIG_ANIMATION_FILES := [
+	RIG_ANIMS + "Rig_Medium_General.glb",
+	RIG_ANIMS + "Rig_Medium_MovementBasic.glb",
+	RIG_ANIMS + "Rig_Medium_Simulation.glb",
+]
+const ANIM_IDLE := ["idle_a", "idle"]
+const ANIM_CHEER := ["cheer", "wave"]
 
 const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
@@ -27,10 +40,22 @@ const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 
 const GHOST_SIZE := 3.0
 const CAR_SIZE := 3.0
-## Si la voiture regarde du mauvais côté, change cette valeur (PI / 2.0, -PI / 2.0, 0.0 ou PI).
+## Si la voiture regarde du mauvais côté (elle recule en arrivant), change cette valeur
+## (PI / 2.0 ou -PI / 2.0). Le sens de rotation des roues s'adapte tout seul.
 const CAR_YAW := PI / 2.0
 const CAR_POS := Vector3(-5.2, -1.9, 0.0)
+## Arrivée : le véhicule part hors de l'écran, à gauche.
+const CAR_START_X := -13.5
+const DRIVE_TIME := 1.8
 const CAM_POS := Vector3(0.0, 1.2, 12.0)
+
+## Avatar sur le toit : taille, enfoncement dans le toit (plus c'est grand, moins on en voit),
+## décalage avant/arrière et de côté, et direction du regard (PI / 4 = vers la droite et la caméra).
+const AVATAR_HEIGHT := 1.8
+const AVATAR_SINK := 0.7
+const AVATAR_OFFSET := Vector3(0.0, 0.0, 0.0)
+const AVATAR_YAW := PI / 4.0
+
 ## Pieds des fantômes : deux colonnes, une rangée haute et une rangée basse.
 const GHOST_SPOTS := [
 	Vector3(0.0, 0.5, 0.0),
@@ -64,6 +89,10 @@ var _world: Node3D
 var _round_root: Node3D
 var _camera: Camera3D
 var _car: Node3D
+var _wheels: Array = []
+var _wheel_radius := 0.4
+var _wheel_sign := 1.0
+var _avatar_player: AnimationPlayer
 var _ghosts: Array = []
 var _panels: Array = []
 var _sfx_player: AudioStreamPlayer
@@ -193,6 +222,12 @@ func _ready() -> void:
 	_build_world()
 	_build_hud()
 	_build_car()
+
+	await _drive_in()
+
+	if not _alive:
+		return
+
 	_start_round()
 
 
@@ -250,8 +285,7 @@ func _label_spot(holder: Node3D) -> Vector3:
 func _process(delta: float) -> void:
 	_time += delta
 
-	if _car != null:
-		_car.position.y = CAR_POS.y + sin(_time * 3.0) * 0.03
+	_spin_wheels()
 
 	for i in _ghosts.size():
 		var holder: Node3D = _ghosts[i]
@@ -268,7 +302,21 @@ func _process(delta: float) -> void:
 			panel.position = _to_stage(_camera.unproject_position(_label_spot(holder))) - panel.size / 2.0
 
 
-func _load_model(path: String, target: float) -> Node3D:
+## Les roues tournent selon la distance parcourue par le véhicule (elles roulent sans glisser).
+func _spin_wheels() -> void:
+	if _car == null or _wheels.is_empty():
+		return
+
+	var turn := (_car.position.x - CAR_START_X) / _wheel_radius * _wheel_sign
+
+	for wheel in _wheels:
+		if is_instance_valid(wheel):
+			wheel.rotation.x = turn
+
+
+## Taille voulue : le plus grand côté (par défaut) ou la hauteur (`by_height`).
+## Pieds à y = 0, centré ; la hauteur finale est dans meta « height ».
+func _load_model(path: String, target: float, by_height: bool = false) -> Node3D:
 	if not ResourceLoader.exists(path):
 		push_warning("Modèle introuvable ou non importé : " + path)
 		return null
@@ -292,7 +340,7 @@ func _load_model(path: String, target: float) -> Node3D:
 		return null
 
 	var box: AABB = acc[0]
-	var extent := maxf(box.size.x, maxf(box.size.y, box.size.z))
+	var extent := box.size.y if by_height else maxf(box.size.x, maxf(box.size.y, box.size.z))
 
 	if extent <= 0.0001:
 		inst.queue_free()
@@ -309,6 +357,7 @@ func _load_model(path: String, target: float) -> Node3D:
 
 	var holder := Node3D.new()
 	holder.add_child(model)
+	holder.set_meta("height", box.size.y * s)
 	return holder
 
 
@@ -324,6 +373,75 @@ func _accumulate_aabb(node: Node, xf: Transform3D, acc: Array) -> void:
 	for child in node.get_children():
 		if child is Node3D:
 			_accumulate_aabb(child, xf * child.transform, acc)
+
+
+func _find_player(node: Node) -> AnimationPlayer:
+	if node is AnimationPlayer:
+		return node
+
+	for child in node.get_children():
+		var found := _find_player(child)
+
+		if found != null:
+			return found
+
+	return null
+
+
+## Copie les animations du pack KayKit_Character_Animations (Rig_Medium) dans le personnage.
+func _load_rig_animations(root: Node3D) -> void:
+	if root.find_child("Skeleton3D", true, false) == null:
+		push_warning("Pas de squelette dans le personnage : animations ignorées.")
+		return
+
+	var target := _find_player(root)
+
+	if target == null:
+		target = AnimationPlayer.new()
+		target.name = "RigAnimations"
+		root.add_child(target)
+
+	var library: AnimationLibrary
+
+	if target.has_animation_library(&""):
+		library = target.get_animation_library(&"")
+	else:
+		library = AnimationLibrary.new()
+		target.add_animation_library(&"", library)
+
+	for path in RIG_ANIMATION_FILES:
+		if not ResourceLoader.exists(path):
+			push_warning("Fichier d'animations introuvable ou non importé : " + path)
+			continue
+
+		var scene := load(path)
+
+		if not (scene is PackedScene):
+			continue
+
+		var inst: Node = scene.instantiate()
+		var source := _find_player(inst)
+
+		if source != null:
+			for anim_name in source.get_animation_list():
+				if not library.has_animation(anim_name):
+					library.add_animation(anim_name, source.get_animation(anim_name))
+
+		inst.queue_free()
+
+
+## Joue la première animation de l'avatar dont le nom contient l'un des mots.
+func _play(keywords: Array, loop: bool) -> void:
+	if _avatar_player == null:
+		return
+
+	for keyword in keywords:
+		for anim_name in _avatar_player.get_animation_list():
+			if String(anim_name).to_lower().contains(keyword):
+				var animation := _avatar_player.get_animation(anim_name)
+				animation.loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+				_avatar_player.play(anim_name, 0.1)
+				return
 
 
 func _tint(node: Node, color: Color) -> void:
@@ -487,12 +605,24 @@ func _update_score() -> void:
 		_combo_label.text = ""
 
 
+## Les roues du modèle (nœuds Wheel_1 à Wheel_4) : on garde leur rayon pour les faire rouler juste.
+func _find_wheels(node: Node, scale_factor: float) -> void:
+	if node is MeshInstance3D and String(node.name).begins_with("Wheel") and node.mesh != null:
+		_wheels.append(node)
+		_wheel_radius = maxf(node.mesh.get_aabb().size.y * 0.5 * scale_factor, 0.1)
+
+	for child in node.get_children():
+		_find_wheels(child, scale_factor)
+
+
+## Véhicule placé hors de l'écran, à gauche, avec l'avatar sur le toit.
 func _build_car() -> void:
 	_car = Node3D.new()
-	_car.position = CAR_POS
+	_car.position = Vector3(CAR_START_X, CAR_POS.y, CAR_POS.z)
 	_world.add_child(_car)
 
 	var model := _load_model(CAR_MODEL, CAR_SIZE)
+	var roof := 1.05
 
 	if model == null:
 		var box := BoxMesh.new()
@@ -510,8 +640,45 @@ func _build_car() -> void:
 		model.add_child(body)
 	else:
 		model.rotation.y = CAR_YAW
+		roof = float(model.get_meta("height", CAR_SIZE))
+		_wheel_sign = 1.0 if sin(CAR_YAW) >= 0.0 else -1.0
+
+		if model.get_child_count() > 0:
+			var inner := model.get_child(0) as Node3D
+			_find_wheels(inner, inner.scale.x)
 
 	_car.add_child(model)
+	_build_avatar(roof)
+
+
+## L'avatar du joueur est posé sur le toit, enfoncé : seul le haut du corps dépasse.
+func _build_avatar(roof: float) -> void:
+	var avatar: Dictionary = Avatars.get_avatar(avatar_id)
+	var path: String = avatar.get("model", HERO_MODEL)
+	var model := _load_model(path, AVATAR_HEIGHT, true)
+
+	if model == null and path != HERO_MODEL:
+		model = _load_model(HERO_MODEL, AVATAR_HEIGHT, true)
+
+	if model == null:
+		return
+
+	if avatar.get("rig", "medium") == "medium" and model.get_child_count() > 0:
+		_load_rig_animations(model.get_child(0) as Node3D)
+
+	model.position = Vector3(AVATAR_OFFSET.x, roof - AVATAR_SINK + AVATAR_OFFSET.y, AVATAR_OFFSET.z)
+	model.rotation.y = AVATAR_YAW
+	_car.add_child(model)
+
+	_avatar_player = _find_player(model)
+	_play(ANIM_IDLE, true)
+
+
+## Arrivée par la gauche : le véhicule ralentit en approchant de sa place, les roues tournent.
+func _drive_in() -> void:
+	var tween := create_tween()
+	tween.tween_property(_car, "position:x", CAR_POS.x, DRIVE_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await tween.finished
 
 
 func _recoil() -> void:
@@ -536,6 +703,7 @@ func _start_round() -> void:
 	_panels.clear()
 	_round_root = Node3D.new()
 	_world.add_child(_round_root)
+	_play(ANIM_IDLE, true)
 
 	var item: Dictionary = _rounds[_round_index]
 	_counter.text = "Manche %d sur %d" % [_round_index + 1, _rounds.size()]
@@ -726,6 +894,7 @@ func _on_ghost_pressed(index: int) -> void:
 		_combo += 1
 		_points += 10
 		_update_score()
+		_play(ANIM_CHEER, false)
 		_sparks(center, 30, Color(0.8, 0.4, 1.0))
 		_sparks(center, 20, GOLD)
 		_popup(target)

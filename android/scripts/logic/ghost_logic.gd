@@ -13,7 +13,6 @@ const SOUNDS := ["a", "i", "o", "u", "é", "ou", "ch", "f", "s", "an", "in", "on
 
 ## Niveau 3 : pour chaque son, les positions qui ont leur phrase enregistrée.
 ## Pour en ajouter : enregistrer la phrase, puis ajouter la position ici.
-## Manque encore : « f » au début.
 const POSITION_SOUNDS := {
 	"ou": ["début", "milieu", "fin"],
 	"an": ["début", "milieu", "fin"],
@@ -21,6 +20,7 @@ const POSITION_SOUNDS := {
 	"on": ["milieu", "fin"],
 	"ch": ["début"],
 	"s": ["début"],
+	"f": ["début"],
 	"a": ["milieu", "fin"],
 	"u": ["milieu"],
 	"i": ["fin"],
