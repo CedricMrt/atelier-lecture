@@ -23,21 +23,21 @@ const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 const VOICE_INTRO := "Écoute la consigne, puis touche le bon fantôme."
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 
-const GHOST_SIZE := 1.9
+const GHOST_SIZE := 3.0
 const CAR_SIZE := 3.0
 ## Si la voiture regarde du mauvais côté, change cette valeur (PI / 2.0, -PI / 2.0, 0.0 ou PI).
 const CAR_YAW := PI / 2.0
 const CAR_POS := Vector3(-5.2, -1.9, 0.0)
 const CAM_POS := Vector3(0.0, 1.2, 12.0)
-## Pieds des fantômes (le centre est environ 0,95 plus haut).
+## Pieds des fantômes : deux colonnes, une rangée haute et une rangée basse.
 const GHOST_SPOTS := [
-	Vector3(0.6, 1.25, 0.0),
-	Vector3(1.9, -1.15, 0.0),
-	Vector3(4.3, 1.65, 0.0),
-	Vector3(5.3, -0.85, 0.0),
+	Vector3(0.0, 0.5, 0.0),
+	Vector3(2.0, -1.6, 0.0),
+	Vector3(3.8, 0.5, 0.0),
+	Vector3(5.5, -1.6, 0.0),
 ]
 
-const TEAL := Color(0.2, 1.0, 0.85, 0.32)
+const TEAL := Color(0.45, 1.0, 0.9, 0.5)
 const GOLD := Color(1.0, 0.85, 0.3)
 const OUTLINE := Color(0.02, 0.1, 0.14)
 
@@ -289,8 +289,14 @@ func _to_stage(point: Vector2) -> Vector2:
 	return (point - _stage.position) / maxf(_stage.scale.x, 0.001)
 
 
-func _belly(holder: Node3D) -> Vector3:
-	return holder.global_position + Vector3(0.0, 0.85, 0.3)
+## Centre du corps du fantôme : cible du toucher et de l'éclair.
+func _center(holder: Node3D) -> Vector3:
+	return holder.global_position + Vector3(0.0, GHOST_SIZE * 0.5, 0.3)
+
+
+## Bas du corps : l'étiquette est posée là pour laisser voir le visage.
+func _label_spot(holder: Node3D) -> Vector3:
+	return holder.global_position + Vector3(0.0, GHOST_SIZE * 0.2, 0.3)
 
 
 func _process(delta: float) -> void:
@@ -311,7 +317,7 @@ func _process(delta: float) -> void:
 
 		if i < _panels.size() and is_instance_valid(_panels[i]) and _camera != null:
 			var panel: Control = _panels[i]
-			panel.position = _to_stage(_camera.unproject_position(_belly(holder))) - panel.size / 2.0
+			panel.position = _to_stage(_camera.unproject_position(_label_spot(holder))) - panel.size / 2.0
 
 
 func _load_model(path: String, target: float) -> Node3D:
@@ -453,37 +459,25 @@ func _build_world() -> void:
 	_camera.current = true
 
 
-func _round_button(diameter: float, color: Color) -> Panel:
-	var panel := Panel.new()
-	panel.size = Vector2(diameter, diameter)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", Ui.flat(color, int(diameter / 2.0), 5, Color(0.7, 1.0, 0.95), false))
-	return panel
-
-
 func _build_hud() -> void:
 	var bar := Panel.new()
-	bar.position = Vector2(W / 2.0 - 250.0, 16.0)
-	bar.size = Vector2(500.0, 88.0)
+	bar.position = Vector2(W / 2.0 - 190.0, 16.0)
+	bar.size = Vector2(380.0, 88.0)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_theme_stylebox_override("panel", Ui.flat(Color(0.03, 0.1, 0.14, 0.92), 44, 5, Color(0.3, 0.9, 0.85), false))
 	_stage.add_child(bar)
 
-	var ring := _round_button(56.0, Color(0.08, 0.28, 0.34))
-	ring.position = Vector2(16.0, 16.0)
-	bar.add_child(ring)
-
 	_bar_label = Ui.label("", 46, Color.WHITE)
-	_bar_label.position = Vector2(84.0, 0.0)
-	_bar_label.size = Vector2(306.0, 88.0)
+	_bar_label.position = Vector2(0.0, 0.0)
+	_bar_label.size = Vector2(380.0, 88.0)
 	_bar_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_bar_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(_bar_label)
 
 	var speaker := Ui.button("", 30, Ui.ORANGE)
-	speaker.custom_minimum_size = Vector2(84.0, 64.0)
-	speaker.size = Vector2(84.0, 64.0)
-	speaker.position = Vector2(404.0, 12.0)
+	speaker.custom_minimum_size = Vector2(92.0, 72.0)
+	speaker.size = Vector2(92.0, 72.0)
+	speaker.position = Vector2(W / 2.0 + 206.0, 24.0)
 
 	var icon := SpeakerIcon.new()
 	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -494,7 +488,7 @@ func _build_hud() -> void:
 		if _round_index < _rounds.size():
 			Speech.speak(_rounds[_round_index]["spoken"])
 	)
-	bar.add_child(speaker)
+	_stage.add_child(speaker)
 
 	_counter = Ui.label("", 22, Color.html("bff7ee"))
 	_counter.position = Vector2(W / 2.0 - 150.0, 108.0)
@@ -639,8 +633,8 @@ func _build_ghosts(item: Dictionary) -> void:
 
 		if model == null:
 			var sphere := SphereMesh.new()
-			sphere.radius = 0.8
-			sphere.height = 1.6
+			sphere.radius = GHOST_SIZE * 0.4
+			sphere.height = GHOST_SIZE * 0.8
 
 			var mat := StandardMaterial3D.new()
 			mat.albedo_color = Color(0.5, 1.0, 0.9, 0.8)
@@ -649,7 +643,7 @@ func _build_ghosts(item: Dictionary) -> void:
 			var body := MeshInstance3D.new()
 			body.mesh = sphere
 			body.material_override = mat
-			body.position.y = 0.8
+			body.position.y = GHOST_SIZE * 0.4
 
 			model = Node3D.new()
 			model.add_child(body)
@@ -671,12 +665,12 @@ func _build_ghosts(item: Dictionary) -> void:
 		appear.tween_property(holder, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 		var panel := Panel.new()
-		panel.size = Vector2(170.0, 80.0)
+		panel.size = Vector2(110.0, 52.0)
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.modulate.a = 0.0
-		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 22, 5, Color(0.85, 1.0, 0.97), false))
+		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 16, 4, Color(0.85, 1.0, 0.97), false))
 
-		var text := Ui.label(str(options[i]), 40, Color.WHITE)
+		var text := Ui.label(str(options[i]), 30, Color.WHITE)
 		text.size = panel.size
 		text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -701,7 +695,7 @@ func _handle_tap(screen_position: Vector2) -> void:
 		return
 
 	var best := -1
-	var best_distance := size.y * 0.14
+	var best_distance := size.y * 0.2
 
 	for i in _ghosts.size():
 		var holder: Node3D = _ghosts[i]
@@ -709,7 +703,7 @@ func _handle_tap(screen_position: Vector2) -> void:
 		if not is_instance_valid(holder) or bool(holder.get_meta("gone", false)):
 			continue
 
-		var distance := _camera.unproject_position(_belly(holder)).distance_to(screen_position)
+		var distance := _camera.unproject_position(_center(holder)).distance_to(screen_position)
 
 		if distance < best_distance:
 			best = i
@@ -766,7 +760,7 @@ func _on_ghost_pressed(index: int) -> void:
 	var item: Dictionary = _rounds[_round_index]
 	var correct: bool = index == int(item["correct_index"])
 	var holder: Node3D = _ghosts[index]
-	var center := _belly(holder)
+	var center := _center(holder)
 
 	_message.text = ""
 	_play_sfx(SFX_GOOD if correct else SFX_ERROR)
