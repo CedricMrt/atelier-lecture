@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://br8hvxkvl33ws"
+path="res://.godot/imported/Trouve le mot qui commence par le son « f ».mp3-c2a0a0f71c582efd903f74e4ba088750.mp3str"
+
+[deps]
+
+source_file="res://assets/voix/Trouve le mot qui commence par le son « f ».mp3"
+dest_files=["res://.godot/imported/Trouve le mot qui commence par le son « f ».mp3-c2a0a0f71c582efd903f74e4ba088750.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
