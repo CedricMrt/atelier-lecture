@@ -609,13 +609,14 @@ func _build_ghosts(item: Dictionary) -> void:
 		appear.tween_property(holder, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 		var label_text := str(options[i])
+		var font_size := 28 if label_text.length() <= 8 else 24
 		var panel := Panel.new()
-		panel.size = Vector2(clampf(30.0 + label_text.length() * 19.0, 64.0, 150.0), 42.0)
+		panel.size = Vector2(clampf(26.0 + label_text.length() * font_size * 0.62, 64.0, 240.0), 42.0)
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.modulate.a = 0.0
 		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 12, 3, Color(0.85, 1.0, 0.97), false))
 
-		var text := Ui.label(label_text, 28, Color.WHITE)
+		var text := Ui.label(label_text, font_size, Color.WHITE)
 		text.size = panel.size
 		text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		text.mouse_filter = Control.MOUSE_FILTER_IGNORE

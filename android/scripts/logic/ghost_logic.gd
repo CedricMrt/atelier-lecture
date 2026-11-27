@@ -3,7 +3,8 @@ extends RefCounted
 ## Les sons utilisés sont ceux qui ont déjà un enregistrement MP3 dans assets/voix/.
 ## Niveau 1 : reconnaître une syllabe entendue (un des pièges ressemble à la syllabe).
 ## Niveau 2 : choisir un mot dans lequel on entend le son.
-## Niveau 3 : choisir le mot où le son est au début, au milieu ou à la fin.
+## Niveau 3 : choisir le mot (3 syllabes ou plus) où le son, qui n'y est qu'une fois,
+## est au début, au milieu ou à la fin.
 
 const SYLLABLES := ["ma", "mi", "mou", "pa", "pi", "po", "ta", "ti", "tou", "tan", "tin", "ton"]
 
@@ -11,12 +12,13 @@ const SYLLABLES := ["ma", "mi", "mou", "pa", "pi", "po", "ta", "ti", "tou", "tan
 const SOUNDS := ["a", "i", "o", "u", "é", "ou", "ch", "f", "s"]
 
 ## Sons du niveau 3 qui ont leurs phrases de position enregistrées.
-## Pour en ajouter : enregistrer les phrases, puis ajouter une ligne ici.
+## Pour en ajouter : enregistrer les phrases, puis ajouter une ligne ici
+## (LONG_WORD_SOUNDS contient déjà des mots pour ch, s, f, a, i, o, u et é).
 const POSITION_SOUNDS := {
 	"ou": ["début", "milieu", "fin"],
 }
 
-## Mot -> sons entendus et leur place (« multi » : le son revient plusieurs fois dans le mot).
+## Niveau 2. Mot -> sons entendus et leur place (« multi » : le son revient plusieurs fois).
 ## C'est la prononciation qui compte, pas l'écriture : « soupe » contient le son ou, pas o ni u.
 const WORD_SOUNDS := {
 	"chat": {"ch": "début", "a": "fin"},
@@ -33,7 +35,7 @@ const WORD_SOUNDS := {
 	"roue": {"ou": "fin"},
 	"mouton": {"ou": "milieu"},
 	"poule": {"ou": "milieu"},
-	"tabouret": {"a": "milieu", "ou": "milieu", "é": "fin"},
+	"tabouret": {"a": "milieu", "ou": "milieu"},
 	"ours": {"ou": "début", "s": "fin"},
 	"lit": {"i": "fin"},
 	"riz": {"i": "fin"},
@@ -54,6 +56,44 @@ const WORD_SOUNDS := {
 	"kiwi": {"i": "multi"},
 	"lama": {"a": "multi"},
 	"vélo": {"é": "milieu", "o": "fin"},
+}
+
+## Niveau 3 : uniquement des mots de 3 syllabes ou plus (bonnes réponses et pièges).
+## Les sons qui reviennent dans le mot sont marqués « multi » : ils ne sont jamais choisis.
+const LONG_WORD_SOUNDS := {
+	"ouragan": {"ou": "début", "a": "milieu"},
+	"oublier": {"ou": "début", "i": "milieu", "é": "fin"},
+	"ouvrier": {"ou": "début", "i": "milieu", "é": "fin"},
+	"ouverture": {"ou": "début", "u": "milieu"},
+	"tabouret": {"a": "milieu", "ou": "milieu"},
+	"bijoutier": {"i": "milieu", "ou": "milieu", "é": "fin"},
+	"boulanger": {"ou": "milieu", "é": "fin"},
+	"fourmilière": {"f": "début", "ou": "milieu", "i": "milieu"},
+	"tourterelle": {"ou": "milieu"},
+	"souterrain": {"s": "début", "ou": "milieu"},
+	"poulailler": {"ou": "milieu", "a": "milieu", "é": "fin"},
+	"couverture": {"ou": "milieu", "u": "milieu"},
+	"caribou": {"a": "milieu", "i": "milieu", "ou": "fin"},
+	"marabout": {"a": "multi", "ou": "fin"},
+	"rendez-vous": {"é": "milieu", "ou": "fin"},
+	"chocolat": {"ch": "début", "o": "multi", "a": "fin"},
+	"chevalier": {"ch": "début", "a": "milieu", "é": "fin"},
+	"samedi": {"s": "début", "a": "milieu", "i": "fin"},
+	"salopette": {"s": "début", "a": "milieu", "o": "milieu"},
+	"radio": {"a": "milieu", "o": "fin"},
+	"vidéo": {"i": "milieu", "é": "milieu", "o": "fin"},
+	"cinéma": {"s": "début", "i": "milieu", "é": "milieu", "a": "fin"},
+	"aventure": {"a": "début", "u": "milieu"},
+	"confiture": {"f": "milieu", "i": "milieu", "u": "milieu"},
+	"fenêtre": {"f": "début"},
+	"ordinateur": {"o": "début", "i": "milieu", "a": "milieu"},
+	"tomate": {"o": "milieu", "a": "milieu"},
+	"banane": {"a": "multi"},
+	"papillon": {"a": "milieu", "i": "milieu"},
+	"éléphant": {"é": "multi", "f": "milieu"},
+	"dinosaure": {"i": "milieu", "o": "multi"},
+	"ananas": {"a": "multi"},
+	"animal": {"a": "multi", "i": "milieu"},
 }
 
 const POSITION_PHRASES := {
@@ -178,7 +218,8 @@ static func position_sentence(sound: String, position: String) -> String:
 	return "Trouve le mot dans lequel tu entends le son « %s » au milieu." % sound
 
 
-## Niveau 3 : le mot où le son est à la bonne place ; les pièges ont le son ailleurs ou pas du tout.
+## Niveau 3 : le mot (3 syllabes ou plus) où le son est à la bonne place, une seule fois ;
+## les pièges ont le son une seule fois ailleurs, ou pas du tout.
 static func _position_round(rng: RandomNumberGenerator, previous: String) -> Dictionary:
 	var pairs: Array = []
 
@@ -193,14 +234,16 @@ static func _position_round(rng: RandomNumberGenerator, previous: String) -> Dic
 	var wrong_place: Array = []
 	var absent: Array = []
 
-	for word in WORD_SOUNDS:
-		var info: Dictionary = WORD_SOUNDS[word]
+	for word in LONG_WORD_SOUNDS:
+		var info: Dictionary = LONG_WORD_SOUNDS[word]
 
 		if not info.has(sound):
 			absent.append(word)
+		elif info[sound] == "multi":
+			continue
 		elif info[sound] == position:
 			correct_words.append(word)
-		elif info[sound] != "multi":
+		else:
 			wrong_place.append(word)
 
 	if correct_words.is_empty() or wrong_place.size() < 2 or absent.is_empty():
