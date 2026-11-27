@@ -1,8 +1,8 @@
 extends Control
-## « Chasse aux fantômes » : décor de cimetière nocturne, voiture à gauche, fantômes à droite.
-## L'enfant écoute la consigne, puis touche le bon fantôme : la voiture lance un éclair.
-## Fantômes : Ultimate Monsters (Ghost.gltf). Voiture : Ultimate Space Kit (Rover_1.gltf).
-## Le ciel, la lune, les tombes et l'éclair sont dessinés par code.
+## « Chasse aux fantômes » : décor spatial, sol lunaire, véhicule à gauche, fantômes à droite.
+## L'enfant écoute la consigne, puis touche le bon fantôme : le véhicule lance un éclair.
+## Fantômes : Ultimate Monsters (Ghost.gltf). Véhicule : Ultimate Space Kit (Rover_1.gltf).
+## L'espace, les planètes, le sol lunaire et l'éclair sont dessinés par code.
 ## La logique (niveaux, pièges, étoiles) est dans logic/ghost_logic.gd.
 
 signal finished(result: Dictionary)
@@ -20,7 +20,7 @@ const CAR_MODEL := "res://assets/Ultimate Space Kit - March 2023/Vehicles/GLTF/R
 const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 
-const VOICE_INTRO := "Écoute la consigne, puis touche le bon fantôme."
+const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
 
 const GHOST_SIZE := 3.0
@@ -75,21 +75,30 @@ var _score_label: Label
 var _combo_label: Label
 
 
-## Ciel nocturne, lune, étoiles, brume, collines et tombes : tout est dessiné par code.
+## Espace, nébuleuses, étoiles, planètes et sol lunaire : tout est dessiné par code.
 class Backdrop extends Control:
 	var _stars: Array = []
-	var _graves: Array = []
+	var _craters: Array = []
+	var _rocks: Array = []
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var rng := RandomNumberGenerator.new()
-		rng.seed = 424242
+		rng.seed = 777
 
-		for i in 46:
-			_stars.append(Vector3(rng.randf(), rng.randf() * 0.5, rng.randf_range(1.0, 2.6)))
+		for i in 110:
+			_stars.append(Vector3(rng.randf(), rng.randf() * 0.8, rng.randf_range(0.8, 2.4)))
 
-		for i in 18:
-			_graves.append(Vector3(rng.randf(), rng.randf_range(0.0, 1.0), float(rng.randi() % 3)))
+		for i in 9:
+			_craters.append(Vector3(rng.randf(), rng.randf(), rng.randf_range(0.6, 1.4)))
+
+		for i in 14:
+			_rocks.append(Vector3(rng.randf(), rng.randf(), rng.randf_range(0.5, 1.2)))
+
+	func _ellipse(center: Vector2, radius: float, squash: float, color: Color) -> void:
+		draw_set_transform(center, 0.0, Vector2(1.0, squash))
+		draw_circle(Vector2.ZERO, radius, color)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	func _draw() -> void:
 		var w := size.x
@@ -98,59 +107,67 @@ class Backdrop extends Control:
 		if w <= 0.0 or h <= 0.0:
 			return
 
-		var top := Color(0.02, 0.10, 0.17)
-		var horizon := Color(0.06, 0.52, 0.54)
-		var steps := 28
-		var sky_h := h * 0.88
+		var top := Color(0.01, 0.01, 0.07)
+		var bottom := Color(0.14, 0.07, 0.32)
+		var steps := 24
+		var sky_h := h * 0.84
 
 		for i in steps:
 			var t := float(i) / float(steps - 1)
-			draw_rect(Rect2(0.0, sky_h * float(i) / steps, w, sky_h / steps + 1.0), top.lerp(horizon, pow(t, 1.4)))
+			draw_rect(Rect2(0.0, sky_h * float(i) / steps, w, sky_h / steps + 1.0), top.lerp(bottom, pow(t, 1.6)))
+
+		for k in 4:
+			draw_circle(Vector2(w * 0.68, h * 0.36), h * (0.34 - k * 0.07), Color(0.65, 0.25, 0.85, 0.05))
+			draw_circle(Vector2(w * 0.3, h * 0.5), h * (0.3 - k * 0.06), Color(0.1, 0.7, 0.85, 0.04))
 
 		for star in _stars:
-			draw_circle(Vector2(star.x * w, star.y * h), star.z, Color(1.0, 1.0, 1.0, 0.75))
+			draw_circle(Vector2(star.x * w, star.y * h), star.z, Color(1.0, 1.0, 1.0, 0.8))
 
-		var moon := Vector2(w * 0.22, h * 0.3)
+		var earth := Vector2(w * 0.12, h * 0.22)
+		var er := h * 0.1
 
-		for k in 5:
-			draw_circle(moon, h * (0.26 - k * 0.04), Color(0.7, 1.0, 0.95, 0.05))
+		for k in 3:
+			draw_circle(earth, er * (1.5 - k * 0.2), Color(0.4, 0.7, 1.0, 0.06))
 
-		draw_circle(moon, h * 0.1, Color(0.85, 1.0, 0.96, 0.9))
+		draw_circle(earth, er, Color(0.12, 0.35, 0.8))
+		_ellipse(earth + Vector2(-er * 0.25, -er * 0.2), er * 0.4, 0.7, Color(0.25, 0.65, 0.35))
+		_ellipse(earth + Vector2(er * 0.35, er * 0.3), er * 0.28, 0.8, Color(0.25, 0.65, 0.35))
+		_ellipse(earth + Vector2(er * 0.1, -er * 0.55), er * 0.3, 0.3, Color(1.0, 1.0, 1.0, 0.55))
 
-		var hills := PackedVector2Array()
+		var planet := Vector2(w * 0.9, h * 0.45)
+		var pr := h * 0.07
+		draw_circle(planet, pr, Color(0.85, 0.5, 0.3))
+		_ellipse(planet + Vector2(-pr * 0.2, -pr * 0.3), pr * 0.5, 0.3, Color(0.95, 0.65, 0.4))
+		draw_set_transform(planet, -0.35, Vector2(1.0, 0.28))
+		draw_arc(Vector2.ZERO, pr * 1.8, 0.0, TAU, 48, Color(0.95, 0.8, 0.6, 0.8), 5.0)
+		draw_arc(Vector2.ZERO, pr * 1.55, 0.0, TAU, 48, Color(0.95, 0.8, 0.6, 0.5), 3.0)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-		for i in 17:
-			var x := w * float(i) / 16.0
-			hills.append(Vector2(x, h * 0.72 + sin(float(i) * 0.9) * h * 0.035))
+		draw_rect(Rect2(0.0, h * 0.74, w, h * 0.07), Color(0.6, 0.35, 0.9, 0.1))
 
-		hills.append(Vector2(w, h))
-		hills.append(Vector2(0.0, h))
-		draw_colored_polygon(hills, Color(0.03, 0.22, 0.26))
+		var ground := PackedVector2Array()
 
-		for grave in _graves:
-			var x: float = grave.x * w
-			var base: float = h * (0.76 + grave.y * 0.1)
-			var unit := h * 0.012
-			var dark := Color(0.01, 0.09, 0.12)
+		for i in 21:
+			var x := w * float(i) / 20.0
+			ground.append(Vector2(x, h * 0.8 + sin(float(i) * 0.7) * h * 0.012))
 
-			if int(grave.z) == 0:
-				draw_rect(Rect2(x - unit * 0.5, base - unit * 9.0, unit, unit * 9.0), dark)
-				draw_rect(Rect2(x - unit * 2.2, base - unit * 7.0, unit * 4.4, unit), dark)
-			elif int(grave.z) == 1:
-				draw_rect(Rect2(x - unit * 2.0, base - unit * 5.0, unit * 4.0, unit * 5.0), dark)
-				draw_circle(Vector2(x, base - unit * 5.0), unit * 2.0, dark)
-			else:
-				draw_rect(Rect2(x - unit * 0.6, base - unit * 7.0, unit * 1.2, unit * 7.0), dark)
-				draw_rect(Rect2(x - unit * 2.6, base - unit * 5.0, unit * 5.2, unit * 1.2), dark)
+		ground.append(Vector2(w, h))
+		ground.append(Vector2(0.0, h))
+		draw_colored_polygon(ground, Color(0.58, 0.58, 0.66))
+		draw_rect(Rect2(0.0, h * 0.9, w, h * 0.1), Color(0.42, 0.42, 0.52))
 
-		for band in 3:
-			draw_rect(Rect2(0.0, h * (0.6 + band * 0.07), w, h * 0.06), Color(0.55, 1.0, 0.9, 0.05))
+		for crater in _craters:
+			var center := Vector2(crater.x * w, h * (0.84 + crater.y * 0.14))
+			var radius: float = h * 0.03 * crater.z * (0.8 + crater.y)
+			_ellipse(center, radius, 0.3, Color(0.7, 0.7, 0.78))
+			_ellipse(center + Vector2(0.0, radius * 0.05), radius * 0.82, 0.3, Color(0.36, 0.36, 0.45))
 
-		draw_rect(Rect2(0.0, h * 0.86, w, h * 0.14), Color(0.02, 0.11, 0.14))
-		draw_rect(Rect2(0.0, h * 0.86, w, 4.0), Color(0.15, 0.7, 0.62, 0.6))
+		for rock in _rocks:
+			var base := Vector2(rock.x * w, h * (0.83 + rock.y * 0.14))
+			_ellipse(base, h * 0.014 * rock.z, 0.7, Color(0.3, 0.3, 0.38))
 
 
-## Éclair dessiné par code, de la voiture jusqu'au fantôme touché.
+## Éclair dessiné par code, du véhicule jusqu'au fantôme touché.
 class Fx extends Control:
 	var _from := Vector2.ZERO
 	var _to := Vector2.ZERO
@@ -664,13 +681,14 @@ func _build_ghosts(item: Dictionary) -> void:
 		appear.tween_interval(0.12 * i)
 		appear.tween_property(holder, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
+		var label_text := str(options[i])
 		var panel := Panel.new()
-		panel.size = Vector2(110.0, 52.0)
+		panel.size = Vector2(clampf(30.0 + label_text.length() * 19.0, 64.0, 150.0), 42.0)
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.modulate.a = 0.0
-		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 16, 4, Color(0.85, 1.0, 0.97), false))
+		panel.add_theme_stylebox_override("panel", Ui.flat(Color(0.07, 0.3, 0.38, 0.95), 12, 3, Color(0.85, 1.0, 0.97), false))
 
-		var text := Ui.label(str(options[i]), 30, Color.WHITE)
+		var text := Ui.label(label_text, 28, Color.WHITE)
 		text.size = panel.size
 		text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
