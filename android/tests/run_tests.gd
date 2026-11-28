@@ -140,11 +140,18 @@ func test_score_rules() -> void:
 	check(ScoreRules.answer_points(2) == 10, "combo 2 : 10 étoiles")
 	check(ScoreRules.answer_points(5) == 25, "combo 5 : 25 étoiles")
 	check(ScoreRules.answer_points(0) == 5, "combo à 0 : pas moins de 5 étoiles")
+	check(ScoreRules.answer_points(6) == 25, "combo 6 : plafonné à x5, soit 25 étoiles")
+	check(ScoreRules.answer_points(40) == 25, "combo 40 : toujours 25 étoiles")
 
 	var total := 0
 	for combo in range(1, 5):
 		total += ScoreRules.answer_points(combo)
 	check(total == 50, "4 bonnes réponses d'affilée : 5+10+15+20 = 50")
+
+	total = 0
+	for combo in range(1, 11):
+		total += ScoreRules.answer_points(combo)
+	check(total == 200, "10 bonnes réponses d'affilée : 75 pour les 5 premières, puis 5 x 25 = 200")
 
 
 func test_ghost_data() -> void:
