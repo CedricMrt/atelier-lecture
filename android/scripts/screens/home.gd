@@ -334,7 +334,7 @@ func _capture_for(game_id: String) -> Texture2D:
 	return null
 
 
-func _make_game_tile(profile: Dictionary, game: Dictionary) -> Button:
+func _make_game_tile(_profile: Dictionary, game: Dictionary) -> Button:
 	var available: bool = game["available"]
 	var color: Color = game["color"]
 	var tile_color := color
