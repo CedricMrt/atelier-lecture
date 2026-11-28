@@ -11,7 +11,8 @@ const VERSION := 1
 const MAX_PROFILES := 12
 const MAX_NAME_LENGTH := 14
 
-## Chaque profil : {id, name, avatar_id, created_at, stars, progress: {game_id: {...}}}
+## Chaque profil : {id, name, avatar_id, created_at, stars, progress: {game_id: {...}},
+## owned: [objets achetés], equipped: [pièces portées]}
 var profiles: Array = []
 
 
@@ -44,6 +45,8 @@ func create_profile(player_name: String, avatar_id: String) -> Dictionary:
 		"created_at": int(Time.get_unix_time_from_system()),
 		"stars": 0,
 		"progress": {},
+		"owned": [],
+		"equipped": [],
 	}
 
 	profiles.append(profile)
@@ -81,6 +84,41 @@ func get_level(profile: Dictionary, game_id: String) -> int:
 	if progress.has(game_id):
 		return int(progress[game_id]["level"])
 	return 1
+
+
+# ---------- Boutique ----------
+
+## Achète un objet : retire `price` étoiles et l'ajoute aux objets possédés.
+## Faux si le profil n'existe pas, si l'objet est déjà possédé ou s'il manque des étoiles.
+func buy_item(profile_id: String, item_id: String, price: int) -> bool:
+	var profile := get_profile(profile_id)
+
+	if profile.is_empty() or price < 0 or int(profile["stars"]) < price:
+		return false
+
+	if (profile["owned"] as Array).has(item_id):
+		return false
+
+	profile["stars"] = int(profile["stars"]) - price
+	(profile["owned"] as Array).append(item_id)
+	_commit()
+	return true
+
+
+## Remplace la liste des pièces portées (noms de nœuds du modèle).
+func set_equipped(profile_id: String, nodes: Array) -> void:
+	var profile := get_profile(profile_id)
+
+	if profile.is_empty():
+		return
+
+	profile["equipped"] = nodes.duplicate()
+	_commit()
+
+
+## Les pièces portées par ce joueur.
+func get_worn(profile_id: String) -> Array:
+	return get_profile(profile_id).get("equipped", [])
 
 
 # ---------- Sauvegarde ----------
@@ -151,4 +189,16 @@ func _sanitize(item: Dictionary) -> Dictionary:
 		"created_at": int(item.get("created_at", 0)),
 		"stars": int(item.get("stars", 0)),
 		"progress": progress,
+		"owned": _strings(item.get("owned", [])),
+		"equipped": _strings(item.get("equipped", [])),
 	}
+
+
+func _strings(raw: Variant) -> Array:
+	var out: Array = []
+
+	if typeof(raw) == TYPE_ARRAY:
+		for value in raw:
+			out.append(str(value))
+
+	return out
