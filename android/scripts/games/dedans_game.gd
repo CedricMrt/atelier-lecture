@@ -447,7 +447,7 @@ func _answer(says_inside: bool) -> void:
 		Speech.speak(VOICE_SLOW)
 
 	_score_label.text = str(_points)
-	_combo_label.text = "Combo x%d" % _combo if _combo >= 2 else ""
+	_combo_label.text = "Combo x%d" % Score.multiplier(_combo) if _combo >= 2 else ""
 
 	# On rouvre le disque pour montrer la réponse, plus longtemps après une erreur.
 	_build_letters(_current["sequence"], target)

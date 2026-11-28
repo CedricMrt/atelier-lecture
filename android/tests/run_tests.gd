@@ -141,6 +141,7 @@ func test_score_rules() -> void:
 	check(ScoreRules.answer_points(5) == 25, "combo 5 : 25 étoiles")
 	check(ScoreRules.answer_points(0) == 5, "combo à 0 : pas moins de 5 étoiles")
 	check(ScoreRules.answer_points(6) == 25, "combo 6 : plafonné à x5, soit 25 étoiles")
+	check(ScoreRules.multiplier(3) == 3 and ScoreRules.multiplier(9) == 5 and ScoreRules.multiplier(0) == 1, "multiplicateur affiché : 1 à 5")
 	check(ScoreRules.answer_points(40) == 25, "combo 40 : toujours 25 étoiles")
 
 	var total := 0

@@ -615,7 +615,7 @@ func _update_score() -> void:
 	_score_label.text = str(_points)
 
 	if _combo >= 2:
-		_combo_label.text = "Combo x%d" % _combo
+		_combo_label.text = "Combo x%d" % Score.multiplier(_combo)
 	else:
 		_combo_label.text = ""
 

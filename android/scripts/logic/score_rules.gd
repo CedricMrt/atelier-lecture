@@ -8,7 +8,11 @@ const POINTS_PER_ANSWER := 5
 const MAX_MULTIPLIER := 5
 
 
+## Le multiplicateur du combo : le combo lui-même, de 1 à MAX_MULTIPLIER (c'est lui qu'on affiche).
+static func multiplier(combo: int) -> int:
+	return clampi(combo, 1, MAX_MULTIPLIER)
+
+
 ## Étoiles d'une bonne réponse. `combo` = bonnes réponses d'affilée, celle-ci comprise (1 = pas de combo).
-## Le combo affiché continue de monter, mais le multiplicateur s'arrête à MAX_MULTIPLIER.
 static func answer_points(combo: int) -> int:
-	return POINTS_PER_ANSWER * clampi(combo, 1, MAX_MULTIPLIER)
+	return POINTS_PER_ANSWER * multiplier(combo)
