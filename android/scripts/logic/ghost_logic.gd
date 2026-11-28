@@ -268,8 +268,13 @@ static func _sound_round(rng: RandomNumberGenerator, previous: String) -> Dictio
 		return _syllable_round(rng, previous)
 
 	var correct: String = str(shuffled(with_sound, rng)[0])
-	var spoken := "Trouve le mot dans lequel tu entends le son “%s”." % sound
+	var spoken := sound_sentence(sound)
 	return _build("son", sound, "Touche le fantôme dont le mot contient le son.", spoken, sound, correct, shuffled(without_sound, rng).slice(0, 3), rng)
+
+
+## La phrase dite au niveau 2 (elle a son MP3 dans assets/voix/).
+static func sound_sentence(sound: String) -> String:
+	return "Trouve le mot dans lequel tu entends le son “%s”." % sound
 
 
 static func position_sentence(sound: String, position: String) -> String:

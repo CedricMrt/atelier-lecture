@@ -37,6 +37,10 @@ const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 ## Le son arrive encore après le rayon : augmente un peu. Le rayon arrive après le son : diminue.
 const SFX_SYNC_DELAY := 0.10
 
+## Points (donc étoiles du profil) par bonne réponse : 1, comme « Dedans ou pas dedans ? », pour que les jeux
+## rapportent à peu près autant d'étoiles pour un même temps de jeu.
+const POINTS_PER_ANSWER := 1
+
 const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
 const VOICE_INTRO_SYLLABLE := "Trouve le fantôme qui porte la syllabe entendue."
 const VOICE_RETRY := "Écoute encore, puis essaie une autre réponse."
@@ -853,7 +857,7 @@ func _remove_ghost(index: int) -> void:
 
 
 func _popup(pos: Vector2) -> void:
-	var label := Ui.label("+10", 64, GOLD)
+	var label := Ui.label("+%d" % POINTS_PER_ANSWER, 64, GOLD)
 	label.size = Vector2(200.0, 80.0)
 	label.position = pos - Vector2(100.0, 40.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -914,7 +918,7 @@ func _on_ghost_pressed(index: int) -> void:
 	if correct:
 		_correct += 1
 		_combo += 1
-		_points += 10
+		_points += POINTS_PER_ANSWER
 		_update_score()
 		_play(ANIM_CHEER, false)
 		_sparks(center, 30, Color(0.8, 0.4, 1.0))
