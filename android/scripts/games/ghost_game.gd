@@ -12,6 +12,7 @@ signal finished(result: Dictionary)
 const Ui = preload("res://scripts/ui/ui.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/ghost_logic.gd")
+const Score = preload("res://scripts/logic/score_rules.gd")
 const Avatars = preload("res://scripts/data/avatars.gd")
 
 const W := 1280.0
@@ -36,10 +37,6 @@ const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 ## Le rayon part après la sortie audio de l'appareil (latence mesurée) + ce délai en secondes.
 ## Le son arrive encore après le rayon : augmente un peu. Le rayon arrive après le son : diminue.
 const SFX_SYNC_DELAY := 0.10
-
-## Points (donc étoiles du profil) par bonne réponse : 1, comme « Dedans ou pas dedans ? », pour que les jeux
-## rapportent à peu près autant d'étoiles pour un même temps de jeu.
-const POINTS_PER_ANSWER := 1
 
 const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
 const VOICE_INTRO_SYLLABLE := "Trouve le fantôme qui porte la syllabe entendue."
@@ -591,7 +588,7 @@ func _build_hud() -> void:
 
 	_score_label = Ui.label("0", 44, Ui.CREAM, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label.position = Vector2(1146.0, 10.0)
-	_score_label.size = Vector2(110.0, 60.0)
+	_score_label.size = Vector2(130.0, 60.0)
 	_score_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_score_label.add_theme_color_override("font_outline_color", OUTLINE)
 	_score_label.add_theme_constant_override("outline_size", 8)
@@ -856,8 +853,8 @@ func _remove_ghost(index: int) -> void:
 		tween.tween_property(_panels[index], "modulate:a", 0.0, 0.25)
 
 
-func _popup(pos: Vector2) -> void:
-	var label := Ui.label("+%d" % POINTS_PER_ANSWER, 64, GOLD)
+func _popup(pos: Vector2, gained: int) -> void:
+	var label := Ui.label("+%d" % gained, 64, GOLD)
 	label.size = Vector2(200.0, 80.0)
 	label.position = pos - Vector2(100.0, 40.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -918,12 +915,13 @@ func _on_ghost_pressed(index: int) -> void:
 	if correct:
 		_correct += 1
 		_combo += 1
-		_points += POINTS_PER_ANSWER
+		var gained := Score.answer_points(_combo)
+		_points += gained
 		_update_score()
 		_play(ANIM_CHEER, false)
 		_sparks(center, 30, Color(0.8, 0.4, 1.0))
 		_sparks(center, 20, GOLD)
-		_popup(target)
+		_popup(target, gained)
 		_remove_ghost(index)
 
 		await get_tree().create_timer(1.0).timeout

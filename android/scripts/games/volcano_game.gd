@@ -14,6 +14,7 @@ signal finished(result: Dictionary)
 const Ui = preload("res://scripts/ui/ui.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
+const Score = preload("res://scripts/logic/score_rules.gd")
 const Avatars = preload("res://scripts/data/avatars.gd")
 
 # Interface 2D dessinée dans une scène de 1280 x 720, mise à l'échelle de l'écran.
@@ -104,6 +105,7 @@ var _letters: Array = []
 var _position := 0
 var _errors_here := 0
 var _total_letters := 0
+var _points := 0  # les étoiles gagnées : 5 par bonne lettre x le combo
 var _total_errors := 0
 var _combo := 0
 var _locked := true
@@ -781,7 +783,7 @@ func _build_hud() -> void:
 
 	_score_label = Ui.label("0", 44, Ui.CREAM, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label.position = Vector2(1146.0, 10.0)
-	_score_label.size = Vector2(100.0, 60.0)
+	_score_label.size = Vector2(130.0, 60.0)
 	_outline(_score_label, 8)
 	_stage.add_child(_score_label)
 
@@ -800,7 +802,7 @@ func _build_hud() -> void:
 
 
 func _update_score() -> void:
-	_score_label.text = str(_total_letters)
+	_score_label.text = str(_points)
 
 	if _combo >= 2:
 		_combo_label.text = "Combo x%d" % _combo
@@ -1100,6 +1102,7 @@ func _on_correct(tile: Dictionary) -> void:
 	_locked = true
 	_total_letters += 1
 	_combo += 1
+	_points += Score.answer_points(_combo)
 	_errors_here = 0
 	tile["done"] = true
 	_update_score()

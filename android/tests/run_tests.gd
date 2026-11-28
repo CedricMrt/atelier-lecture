@@ -7,6 +7,7 @@ const Progression = preload("res://scripts/logic/progression.gd")
 const AdRules = preload("res://scripts/logic/ad_rules.gd")
 const Logic = preload("res://scripts/logic/volcano_logic.gd")
 const VoiceFiles = preload("res://scripts/logic/voice_files.gd")
+const ScoreRules = preload("res://scripts/logic/score_rules.gd")
 const GhostLogic = preload("res://scripts/logic/ghost_logic.gd")
 
 var failures := 0
@@ -25,6 +26,7 @@ func _init() -> void:
 	test_ad_rules()
 	test_volcano()
 	test_voice_files()
+	test_score_rules()
 	test_ghost_data()
 	test_ghost_rounds()
 
@@ -132,6 +134,19 @@ func test_voice_files() -> void:
 
 
 ## Données de « Chasse aux fantômes » : cohérence des tables et présence des MP3 de chaque phrase dite.
+func test_score_rules() -> void:
+	# 5 étoiles par bonne réponse, multipliées par le combo (bonnes réponses d'affilée).
+	check(ScoreRules.answer_points(1) == 5, "1re bonne réponse : 5 étoiles")
+	check(ScoreRules.answer_points(2) == 10, "combo 2 : 10 étoiles")
+	check(ScoreRules.answer_points(5) == 25, "combo 5 : 25 étoiles")
+	check(ScoreRules.answer_points(0) == 5, "combo à 0 : pas moins de 5 étoiles")
+
+	var total := 0
+	for combo in range(1, 5):
+		total += ScoreRules.answer_points(combo)
+	check(total == 50, "4 bonnes réponses d'affilée : 5+10+15+20 = 50")
+
+
 func test_ghost_data() -> void:
 	var recordings: Dictionary = VoiceFiles.index_from(DirAccess.get_files_at("res://assets/voix/"))
 	check(not recordings.is_empty(), "fantômes : le dossier assets/voix est lisible")

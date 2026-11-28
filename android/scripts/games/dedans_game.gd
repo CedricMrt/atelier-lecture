@@ -10,6 +10,7 @@ signal finished(result: Dictionary)
 const Ui = preload("res://scripts/ui/ui.gd")
 const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/inside_logic.gd")
+const Score = preload("res://scripts/logic/score_rules.gd")
 
 # Interface dessinée dans une scène de 1280 x 720, mise à l'échelle de l'écran.
 const W := 1280.0
@@ -34,6 +35,7 @@ var _rounds: Array = []
 var _round_index := 0
 var _current: Dictionary = {}
 var _correct := 0
+var _points := 0  # les étoiles gagnées : 5 par bonne réponse x le combo
 var _errors := 0
 var _combo := 0
 var _best_combo := 0
@@ -273,7 +275,7 @@ func _build_hud() -> void:
 
 	_score_label = Ui.label("0", 44, Ui.CREAM, HORIZONTAL_ALIGNMENT_LEFT)
 	_score_label.position = Vector2(1146.0, 10.0)
-	_score_label.size = Vector2(100.0, 60.0)
+	_score_label.size = Vector2(130.0, 60.0)
 	_outline(_score_label, 8)
 	_stage.add_child(_score_label)
 
@@ -427,6 +429,7 @@ func _answer(says_inside: bool) -> void:
 	if good:
 		_correct += 1
 		_combo += 1
+		_points += Score.answer_points(_combo)
 		_best_combo = maxi(_best_combo, _combo)
 		_message.text = "Bien !"
 		_sparks()
@@ -443,7 +446,7 @@ func _answer(says_inside: bool) -> void:
 		_shake()
 		Speech.speak(VOICE_SLOW)
 
-	_score_label.text = str(_correct)
+	_score_label.text = str(_points)
 	_combo_label.text = "Combo x%d" % _combo if _combo >= 2 else ""
 
 	# On rouvre le disque pour montrer la réponse, plus longtemps après une erreur.

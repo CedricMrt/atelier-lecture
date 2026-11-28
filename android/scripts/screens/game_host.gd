@@ -14,8 +14,8 @@ const GhostGame = preload("res://scripts/games/ghost_game.gd")
 ## Variable de chaque jeu qui contient le score affiché pendant la partie (l'étoile en haut à droite).
 ## C'est ce score qui s'ajoute au total d'étoiles du joueur.
 const SCORE_PROPERTY := {
-	"volcan": "_total_letters",
-	"dedans": "_correct",
+	"volcan": "_points",
+	"dedans": "_points",
 	"fantomes": "_points",
 }
 
