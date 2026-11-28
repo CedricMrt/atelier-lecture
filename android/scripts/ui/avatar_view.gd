@@ -3,6 +3,7 @@ extends Control
 ## le dessin de secours fait par code (modèle introuvable).
 
 const Avatars = preload("res://scripts/data/avatars.gd")
+const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
 
 const PORTRAIT_HEIGHT := 1.6
 
@@ -135,6 +136,7 @@ func _make_model(path: String) -> Node3D:
 
 	var holder := Node3D.new()
 	holder.add_child(body)
+	Outfit.apply(holder)
 	return holder
 
 

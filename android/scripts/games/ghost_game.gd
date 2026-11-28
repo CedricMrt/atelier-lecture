@@ -14,6 +14,7 @@ const StarView = preload("res://scripts/ui/star_view.gd")
 const Logic = preload("res://scripts/logic/ghost_logic.gd")
 const Score = preload("res://scripts/logic/score_rules.gd")
 const Avatars = preload("res://scripts/data/avatars.gd")
+const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
 
 const W := 1280.0
 const H := 720.0
@@ -677,6 +678,8 @@ func _build_avatar(roof: float) -> void:
 
 	if model == null:
 		return
+
+	Outfit.apply(model)
 
 	if avatar.get("rig", "medium") == "medium" and model.get_child_count() > 0:
 		_load_rig_animations(model.get_child(0) as Node3D)
