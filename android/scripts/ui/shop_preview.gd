@@ -100,9 +100,9 @@ func _add_disc(parent: Node, top: float, bottom: float, height: float, color: Co
 	mesh.top_radius = top
 	mesh.bottom_radius = bottom
 	mesh.height = height
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	mesh.material = material
+	var disc_material := StandardMaterial3D.new()
+	disc_material.albedo_color = color
+	mesh.material = disc_material
 
 	var disc := MeshInstance3D.new()
 	disc.mesh = mesh

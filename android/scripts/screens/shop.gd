@@ -38,7 +38,7 @@ var _toast: Control = null
 
 
 ## Fond : ciel bleu clair avec quelques nuages.
-class Sky extends Control:
+class ShopSky extends Control:
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		resized.connect(queue_redraw)
@@ -99,7 +99,7 @@ func _ready() -> void:
 
 	_items = Shop.items_for(profile["avatar_id"])
 
-	var sky := Sky.new()
+	var sky := ShopSky.new()
 	add_child(sky)
 	sky.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 

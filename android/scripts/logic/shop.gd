@@ -57,7 +57,7 @@ static func items_for(avatar_id: String) -> Array:
 		var price: int = info["price"]
 
 		if piece == "Helmet":
-			var visor := node_name.trim_suffix("Helmet") + "HelmetVisor"
+			var visor: String = node_name.trim_suffix("Helmet") + "HelmetVisor"
 
 			if names.has(visor):
 				parts.append(visor)

@@ -5,6 +5,7 @@ extends Control
 
 signal play(game_id: String)
 signal change_player
+signal open_shop
 
 const Ui = preload("res://scripts/ui/ui.gd")
 const AvatarView = preload("res://scripts/ui/avatar_view.gd")
@@ -283,7 +284,7 @@ func _make_shop_button() -> Button:
 
 ## La boutique n'est pas encore codée : un petit message, en attendant.
 func _on_shop_pressed() -> void:
-	_show_toast("La boutique arrive bientôt !")
+	open_shop.emit()
 
 
 func _show_toast(text: String) -> void:
