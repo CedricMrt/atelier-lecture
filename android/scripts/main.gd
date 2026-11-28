@@ -7,6 +7,7 @@ const Splash = preload("res://scripts/screens/splash.gd")
 const WhoPlays = preload("res://scripts/screens/who_plays.gd")
 const Home = preload("res://scripts/screens/home.gd")
 const GameHost = preload("res://scripts/screens/game_host.gd")
+const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
 
 var _current: Control = null
 
@@ -14,11 +15,19 @@ var _current: Control = null
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# Les accessoires des personnages (cape, casque, chapeau…) sont masqués partout, dans tous les jeux.
+	get_tree().node_added.connect(_on_node_added)
+
 	var background := Ui.sky()
 	add_child(background)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	_show_splash()
+
+
+func _on_node_added(node: Node) -> void:
+	if Outfit.HIDE_ALL and node is MeshInstance3D and Outfit.is_accessory(String(node.name)):
+		node.visible = false
 
 
 func _notification(what: int) -> void:
