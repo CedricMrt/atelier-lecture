@@ -42,6 +42,7 @@ func _build() -> void:
 	if not (inst is Node3D):
 		inst.queue_free()
 		return
+	inst.set_meta("no_weapons", true)
 
 	var viewport := SubViewport.new()
 	viewport.own_world_3d = true

@@ -271,7 +271,7 @@ func _refresh_grid() -> void:
 		child.queue_free()
 
 	var profile := Profiles.get_profile(profile_id)
-	var shown := _items.filter(func(item: Dictionary) -> bool: return item["slot"] == _tab)
+	var shown := _items.filter(func(item: Dictionary) -> bool: return String(item["slot"]).begins_with(_tab))
 
 	if shown.is_empty():
 		var text := "Les armes et les boucliers arrivent bientôt !" if _tab == "hand" else "Rien à acheter ici pour ce personnage."

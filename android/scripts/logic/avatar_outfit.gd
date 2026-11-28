@@ -77,6 +77,9 @@ static func owns_skeleton(skeleton: Node) -> bool:
 	var node := skeleton.get_parent()
 
 	while node != null:
+		if node.has_meta("no_weapons"):
+			return false
+
 		if node.scene_file_path == model_path:
 			return true
 
