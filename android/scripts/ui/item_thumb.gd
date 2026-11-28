@@ -1,7 +1,9 @@
 extends SubViewportContainer
-## Petite vignette 3D d'un objet de la boutique : la pièce seule, prise sur le modèle du personnage.
+## Petite vignette 3D d'un objet de la boutique : la pièce seule prise sur le modèle du personnage,
+## ou l'arme / le bouclier seul (identifiant « weapon_xxx »).
 
 const Avatars = preload("res://scripts/data/avatars.gd")
+const Weapons = preload("res://scripts/data/weapons.gd")
 
 var avatar_id := "mage"
 var nodes: Array = []
@@ -19,7 +21,13 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var path: String = Avatars.get_avatar(avatar_id).get("model", "")
+	var weapon := {}
+
+	if not nodes.is_empty() and Weapons.is_weapon_id(String(nodes[0])):
+		weapon = Weapons.get_weapon(String(nodes[0]))
+
+	var is_weapon := not weapon.is_empty()
+	var path: String = String(weapon["scene"]) if is_weapon else String(Avatars.get_avatar(avatar_id).get("model", ""))
 
 	if not ResourceLoader.exists(path):
 		return
@@ -60,9 +68,10 @@ func _build() -> void:
 	viewport.add_child(holder)
 	holder.add_child(inst)
 
-	# Seule la pièce de l'objet reste visible.
-	for mesh in inst.find_children("*", "MeshInstance3D", true, false):
-		mesh.visible = nodes.has(String(mesh.name))
+	# Pour une pièce du personnage, seule cette pièce reste visible.
+	if not is_weapon:
+		for mesh in inst.find_children("*", "MeshInstance3D", true, false):
+			mesh.visible = nodes.has(String(mesh.name))
 
 	var acc: Array = []
 	_accumulate_aabb(inst, Transform3D.IDENTITY, acc)
@@ -74,10 +83,15 @@ func _build() -> void:
 	(inst as Node3D).position = -box.get_center()
 	holder.rotation.y = (PI + 0.45) if from_behind else 0.45
 
+	var longest := maxf(box.size.x, box.size.y)
+
+	if is_weapon:
+		longest = maxf(longest, box.size.z)
+
 	var camera := Camera3D.new()
 	camera.fov = 30.0
 	camera.near = 0.01
-	var half := maxf(box.size.x, box.size.y) * 0.5 * 1.2
+	var half := longest * 0.5 * 1.2
 	camera.position = Vector3(0.0, 0.0, half / tan(deg_to_rad(15.0)) + box.size.z * 0.5)
 	viewport.add_child(camera)
 	camera.current = true

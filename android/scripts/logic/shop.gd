@@ -1,10 +1,12 @@
 extends RefCounted
-## Catalogue de la boutique et règles d'achat (étape 1 : pièces d'origine des personnages KayKit).
-## Les objets sont repérés dans le modèle du personnage : seules les pièces qui existent sont proposées.
+## Catalogue de la boutique et règles d'achat : pièces d'origine des personnages KayKit (onglets Tête et Dos)
+## et objets tenus en main (onglet Main, voir weapons.gd).
+## Les pièces sont repérées dans le modèle du personnage : seules celles qui existent sont proposées.
 ## Prix : voir docs/boutique.md. La visière du casque est vendue avec le casque.
 
 const Avatars = preload("res://scripts/data/avatars.gd")
 const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
+const Weapons = preload("res://scripts/data/weapons.gd")
 
 const PIECES := {
 	"Cape": {"slot": "back", "label": "Cape", "price": 200},
@@ -26,6 +28,7 @@ static func piece_of(node_name: String) -> String:
 
 
 ## Les objets en vente pour ce personnage : {id, avatar_id, piece, label, slot, price, nodes}.
+## `slot` : head, back, hand_r (main droite) ou hand_l (main gauche) ; un seul objet par emplacement.
 static func items_for(avatar_id: String) -> Array:
 	var items: Array = []
 	var path: String = Avatars.get_avatar(avatar_id).get("model", "")
@@ -73,6 +76,25 @@ static func items_for(avatar_id: String) -> Array:
 			"nodes": parts,
 		})
 
+	for weapon in Weapons.LIST:
+		if not (weapon["avatars"] as Array).has(avatar_id):
+			continue
+
+		if not ResourceLoader.exists(String(weapon["scene"])):
+			continue
+
+		var weapon_id: String = Weapons.ID_PREFIX + String(weapon["id"])
+
+		items.append({
+			"id": weapon_id,
+			"avatar_id": avatar_id,
+			"piece": "Weapon",
+			"label": weapon["label"],
+			"slot": "hand_" + String(weapon["hand"]),
+			"price": weapon["price"],
+			"nodes": [weapon_id],
+		})
+
 	return items
 
 
@@ -85,7 +107,7 @@ static func is_equipped(profile: Dictionary, item: Dictionary) -> bool:
 
 
 ## Liste des pièces portées après un appui sur l'objet : on l'enlève s'il est porté,
-## sinon on le met à la place de celui du même emplacement (tête ou dos).
+## sinon on le met à la place de celui du même emplacement (tête, dos, main droite ou main gauche).
 static func after_toggle(profile: Dictionary, items: Array, item: Dictionary) -> Array:
 	var equipped: Array = (profile.get("equipped", []) as Array).duplicate()
 

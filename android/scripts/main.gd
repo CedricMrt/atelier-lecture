@@ -9,6 +9,7 @@ const Home = preload("res://scripts/screens/home.gd")
 const GameHost = preload("res://scripts/screens/game_host.gd")
 const ShopScreen = preload("res://scripts/screens/shop.gd")
 const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
+const Avatars = preload("res://scripts/data/avatars.gd")
 
 var _current: Control = null
 
@@ -17,7 +18,8 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	# Les accessoires des personnages (cape, casque, chapeau…) sont masqués partout, dans tous les jeux,
-	# sauf ceux que le joueur a achetés et équipés dans la boutique.
+	# sauf ceux que le joueur a achetés et équipés dans la boutique. Ses armes et boucliers sont
+	# fixés à la main de son personnage.
 	get_tree().node_added.connect(_on_node_added)
 
 	var background := Ui.sky()
@@ -30,6 +32,14 @@ func _ready() -> void:
 func _on_node_added(node: Node) -> void:
 	if node is MeshInstance3D and Outfit.is_hidden(String(node.name)):
 		node.visible = false
+	elif node is Skeleton3D and not Outfit.weapon_ids.is_empty() and Outfit.owns_skeleton(node):
+		# Les enfants du squelette ne sont pas encore prêts : on pose les armes juste après.
+		call_deferred("_attach_weapons", node)
+
+
+func _attach_weapons(skeleton: Skeleton3D) -> void:
+	if is_instance_valid(skeleton) and skeleton.is_inside_tree():
+		Outfit.attach_list(skeleton, Outfit.weapon_ids)
 
 
 func _notification(what: int) -> void:
@@ -71,8 +81,10 @@ func _show_who_plays() -> void:
 
 
 func _show_home(profile_id: String) -> void:
-	# Les pièces achetées et équipées par ce joueur s'affichent sur son personnage.
-	Outfit.set_worn(Profiles.get_worn(profile_id))
+	# Les pièces et objets achetés et équipés par ce joueur s'affichent sur son personnage.
+	var profile := Profiles.get_profile(profile_id)
+	var model_path: String = Avatars.get_avatar(String(profile.get("avatar_id", ""))).get("model", "")
+	Outfit.set_worn(Profiles.get_worn(profile_id), model_path)
 
 	var screen := Home.new()
 	screen.setup(profile_id)

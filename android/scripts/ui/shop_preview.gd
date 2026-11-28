@@ -1,9 +1,10 @@
 extends Control
 ## Aperçu 3D du personnage sur un petit socle, qu'on fait tourner du doigt.
-## show_pieces() choisit les accessoires visibles (portés, ou à l'essai).
+## show_pieces() choisit les accessoires visibles et les objets tenus en main (portés, ou à l'essai).
 
 const Avatars = preload("res://scripts/data/avatars.gd")
 const Outfit = preload("res://scripts/logic/avatar_outfit.gd")
+const Weapons = preload("res://scripts/data/weapons.gd")
 
 const HEIGHT := 1.7
 
@@ -38,11 +39,22 @@ func _apply_pieces() -> void:
 	if _model == null:
 		return
 
+	var weapon_ids: Array = []
+
+	for entry in shown:
+		if Weapons.is_weapon_id(String(entry)):
+			weapon_ids.append(String(entry))
+
 	for mesh in _model.find_children("*", "MeshInstance3D", true, false):
 		var mesh_name := String(mesh.name)
 
 		if Outfit.is_accessory(mesh_name):
 			mesh.visible = shown.has(mesh_name)
+
+	var skeletons := _model.find_children("*", "Skeleton3D", true, false)
+
+	if not skeletons.is_empty():
+		Outfit.attach_list(skeletons[0] as Skeleton3D, weapon_ids)
 
 
 func _build() -> void:
