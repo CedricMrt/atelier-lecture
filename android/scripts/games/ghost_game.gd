@@ -35,8 +35,8 @@ const ANIM_CHEER := ["cheer", "wave"]
 const SFX_GOOD := "res://assets/voix/zap_good.mp3"
 const SFX_ERROR := "res://assets/voix/zap_error.mp3"
 ## Le rayon part après la sortie audio de l'appareil (latence mesurée) + ce délai en secondes.
-## Le son arrive encore après le rayon : augmente un peu. Le rayon arrive après le son : diminue.
-const SFX_SYNC_DELAY := 0.10
+## Le son arrive encore après le rayon : augmente (0.4, 0.5…). Le rayon arrive après le son : diminue.
+const SFX_SYNC_DELAY := 0.30
 
 const VOICE_INTRO := "Écoute bien, puis touche le bon fantôme."
 const VOICE_INTRO_SYLLABLE := "Trouve le fantôme qui porte la syllabe entendue."
